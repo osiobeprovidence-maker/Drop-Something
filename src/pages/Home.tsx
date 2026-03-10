@@ -76,7 +76,9 @@ export function Home() {
             transition={{ delay: 0.2 }}
             className="text-[16px] md:text-[20px] text-ink/60 max-w-3xl mx-auto font-black leading-relaxed"
           >
-            Drop Something is a platform where fans support creators with small tips. If a creator makes you laugh, teaches you something new, or inspires you, you can drop something to show appreciation. Every drop helps creators keep creating.
+            A simple way to support creators, communities, and projects you love.
+            <br />
+            Send small tips, leave a message, and help creators keep doing what they do best.
           </motion.p>
 
           <motion.div
@@ -86,29 +88,32 @@ export function Home() {
             className="flex flex-col sm:flex-row items-center justify-center gap-6"
           >
             <Link
-              to="/explore"
+              to="/setup-profile"
               className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-primary text-white rounded-2xl font-black text-base md:text-lg hover:scale-105 transition-all shadow-[0_8px_0_0_#111111] active:shadow-none active:translate-y-1 flex items-center justify-center gap-3"
             >
-              Drop Something
-              <ArrowRight size={24} className="md:w-7 md:h-7" />
+              Create Your Page
+              <ArrowRight size={20} className="md:w-6 md:h-6" />
             </Link>
-            {user ? (
-              <Link
-                to="/dashboard"
-                className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-white text-ink border-4 border-ink rounded-2xl font-black text-base md:text-lg hover:bg-cream transition-all shadow-[0_8px_0_0_#111111] active:shadow-none active:translate-y-1"
-              >
-                Go to Dashboard
-              </Link>
-            ) : (
-              <button
-                onClick={signInWithGoogle}
-                className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-secondary text-white rounded-2xl font-black text-base md:text-lg hover:scale-105 transition-all shadow-[0_8px_0_0_#111111] active:shadow-none active:translate-y-1"
-              >
-                Become a Creator
-              </button>
-            )}
+
+            <Link
+              to="/explore"
+              className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-white text-ink border-4 border-ink rounded-2xl font-black text-base md:text-lg hover:bg-cream transition-all shadow-[0_8px_0_0_#111111] active:shadow-none active:translate-y-1"
+            >
+              Explore Creators
+            </Link>
           </motion.div>
         </div>
+      </section>
+
+      {/* What is Drop Something? */}
+      <section className="max-w-4xl mx-auto px-6 py-12 text-center">
+        <h2 className="text-3xl md:text-5xl font-display font-black text-ink">What is Drop Something?</h2>
+        <p className="mt-4 text-lg md:text-xl text-ink/60 font-black leading-relaxed">
+          Drop Something is a platform that allows fans and supporters to send small financial tips to creators and communities online.
+        </p>
+        <p className="mt-4 text-lg md:text-xl text-ink/60 font-black leading-relaxed">
+          Instead of relying only on ads or sponsorships, creators can receive direct support from the people who enjoy their work. Create your page, share your link, and let supporters drop something.
+        </p>
       </section>
 
       {/* How It Works Section */}
@@ -122,23 +127,23 @@ export function Home() {
           {[
             {
               step: "01",
-              icon: Search,
-              title: "Discover Creators",
-              description: "Find creators sharing content, ideas, and inspiration online.",
+              icon: Heart,
+              title: "Create Your Page",
+              description: "Sign up and create your personal support page with your name, photo, and bio.",
               color: "bg-ink text-white"
             },
             {
               step: "02",
-              icon: Heart,
-              title: "Drop Something",
-              description: "Send a small tip in seconds. Choose an amount or enter your own.",
+              icon: ExternalLink,
+              title: "Share Your Link",
+              description: "Share your page link on your social media, WhatsApp, or anywhere your audience follows you.",
               color: "bg-primary text-white"
             },
             {
               step: "03",
               icon: Sparkles,
-              title: "Support the Hustle",
-              description: "Your support helps creators continue doing what they love.",
+              title: "Receive Support",
+              description: "Fans can drop small tips like ₦500 or ₦1000 and leave messages of encouragement.",
               color: "bg-white text-ink border-4 border-ink"
             }
           ].map((item, i) => (
@@ -167,21 +172,19 @@ export function Home() {
       <section className="bg-ink p-8 md:p-24 rounded-[3rem] md:rounded-[4rem] text-white overflow-hidden relative mx-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 items-center">
           <div className="space-y-8">
-            <h2 className="text-4xl md:text-8xl font-display font-black leading-tight">Built for Creators.</h2>
+            <h2 className="text-4xl md:text-8xl font-display font-black leading-tight">Why Creators Love It</h2>
             <p className="text-lg md:text-2xl text-white/80 font-black leading-relaxed">
-              Create your own page where supporters can send tips anytime. Share your link anywhere online and start receiving support.
+              Simple, direct, and secure — built to help creators get paid by their audience.
             </p>
             
             <div className="space-y-4">
-              <p className="text-xl font-black text-secondary uppercase tracking-widest">Your page includes:</p>
+              <p className="text-xl font-black text-secondary uppercase tracking-widest">Benefits for creators</p>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  "Profile picture",
-                  "Creator bio",
-                  "Social links",
-                  "Tip button",
-                  "Suggested amounts",
-                  "Supporter messages"
+                  "Simple Setup",
+                  "Direct Support",
+                  "Secure Payments",
+                  "Share Anywhere"
                 ].map((feature, i) => (
                   <li key={i} className="flex items-center gap-3 text-white/90 font-black text-base md:text-lg">
                     <CheckCircle2 size={20} className="text-secondary" />
@@ -205,6 +208,10 @@ export function Home() {
             >
               Create Your Page
             </button>
+
+            <p className="mt-6 text-white/70 font-black leading-relaxed">
+              Community Support: Drop Something is not just for individuals. Communities, podcasts, student groups, and projects can also create pages to receive support from their audience.
+            </p>
           </div>
 
           <div className="relative">
@@ -223,10 +230,10 @@ export function Home() {
                 </div>
               </div>
               <div className="space-y-4 md:space-y-6">
-                <div className="grid grid-cols-3 gap-2 md:gap-3">
-                  {[500, 1000, 5000].map(v => (
+                <div className="grid grid-cols-4 gap-2 md:gap-3">
+                  {[500, 1000, 2000, 'Custom'].map(v => (
                     <div key={v} className="py-3 md:py-4 bg-cream border-2 md:border-4 border-ink/10 rounded-xl md:rounded-2xl text-center font-black text-ink/20 text-sm md:text-lg">
-                      ₦{v}
+                      {typeof v === 'number' ? `₦${v}` : 'Custom Amount'}
                     </div>
                   ))}
                 </div>
@@ -235,7 +242,7 @@ export function Home() {
                 </button>
               </div>
               <div className="p-4 md:p-6 bg-cream rounded-2xl md:rounded-3xl border-2 md:border-4 border-ink/10 italic text-sm md:text-lg font-black text-ink/50">
-                "Tunde just dropped ₦1,000 for Riderezzy 💸"
+                "Your content helped me learn design. Keep going."
               </div>
             </motion.div>
           </div>
