@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { LogIn, User, LayoutDashboard, ShieldCheck, LogOut, Sparkles, Menu, X } from 'lucide-react';
+import { LogIn, User, LayoutDashboard, ShieldCheck, LogOut, Sparkles, Menu, X, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, profile, signInWithGoogle, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, show: !!user },
@@ -25,6 +28,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
+            {/* Search form for creators */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchQuery.trim()) navigate(`/explore?q=${encodeURIComponent(searchQuery.trim())}`);
+              }}
+              className="flex items-center gap-2 mr-2"
+            >
+              <input
+                aria-label="Search creators"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search creators"
+                className="hidden md:inline-block w-64 px-3 py-2 rounded-full border-2 border-ink bg-white text-sm font-black placeholder:font-black"
+              />
+              <button type="submit" className="px-3 py-2 rounded-full bg-white border-2 border-ink text-ink hidden md:inline-flex items-center">
+                <Search size={16} />
+              </button>
+            </form>
             {navItems.filter(item => item.show).map(item => (
               <Link
                 key={item.path}
@@ -40,6 +62,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-4">
+            {/* Sign Up / Sign In actions */}
+            {!user && (
+              <Link to="/setup-profile" className="hidden md:inline-flex items-center px-4 py-2 border-2 border-ink rounded-2xl font-black text-ink hover:bg-cream">
+                Create Account
+              </Link>
+            )}
             {user ? (
               <div className="flex items-center gap-6">
                 <Link to={`/${profile?.username || 'setup'}`} className="flex items-center gap-2 md:gap-3 hover:scale-105 transition-transform">
