@@ -1,0 +1,5 @@
+{
+  "name": "Drop Something",
+  "description": "A Nigerian creator support platform where fans can send tips to creators using Paystack.",
+  "requestFramePermissions": ["camera"]
+}

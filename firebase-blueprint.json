@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Public profile information for creators and supporters.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "username": { "type": "string", "description": "Unique username" },
+        "displayName": { "type": "string", "description": "Display name" },
+        "bio": { "type": "string", "description": "Creator bio" },
+        "photoURL": { "type": "string", "description": "Profile photo URL" },
+        "isVerified": { "type": "boolean", "description": "KYC verification status" },
+        "socialLinks": {
+          "type": "object",
+          "properties": {
+            "twitter": { "type": "string" },
+            "instagram": { "type": "string" },
+            "website": { "type": "string" }
+          }
+        },
+        "createdAt": { "type": "number", "description": "Timestamp" },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User role" }
+      },
+      "required": ["uid", "username", "displayName", "createdAt"]
+    },
+    "KYCData": {
+      "title": "KYC Data",
+      "description": "Identity verification data for creators.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "fullName": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "dateOfBirth": { "type": "string" },
+        "idType": { "type": "string", "enum": ["NIN", "DriversLicense", "Passport", "VotersCard"] },
+        "idNumber": { "type": "string" },
+        "idImageUrl": { "type": "string" },
+        "selfieUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "submittedAt": { "type": "number" },
+        "reviewedAt": { "type": "number" },
+        "rejectionReason": { "type": "string" }
+      },
+      "required": ["uid", "fullName", "phoneNumber", "status", "submittedAt"]
+    },
+    "Tip": {
+      "title": "Tip",
+      "description": "A tip sent from a supporter to a creator.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "supporterName": { "type": "string" },
+        "amount": { "type": "number" },
+        "message": { "type": "string" },
+        "isAnonymous": { "type": "boolean" },
+        "paymentReference": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "success", "failed"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["creatorId", "amount", "paymentReference", "status", "createdAt"]
+    },
+    "Withdrawal": {
+      "title": "Withdrawal",
+      "description": "A withdrawal request from a creator.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "amount": { "type": "number" },
+        "bankName": { "type": "string" },
+        "accountNumber": { "type": "string" },
+        "accountName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed", "rejected"] },
+        "createdAt": { "type": "number" },
+        "processedAt": { "type": "number" }
+      },
+      "required": ["creatorId", "amount", "bankName", "accountNumber", "accountName", "status", "createdAt"]
+    },
+    "BankDetails": {
+      "title": "Bank Details",
+      "description": "Private bank account information for payouts.",
+      "type": "object",
+      "properties": {
+        "bankName": { "type": "string" },
+        "accountNumber": { "type": "string" },
+        "accountName": { "type": "string" },
+        "bankCode": { "type": "string" }
+      },
+      "required": ["bankName", "accountNumber", "accountName"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "User profile documents."
+    },
+    "/kyc/{uid}": {
+      "schema": "KYCData",
+      "description": "KYC verification documents."
+    },
+    "/tips/{tipId}": {
+      "schema": "Tip",
+      "description": "Tip transaction records."
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": "Withdrawal",
+      "description": "Withdrawal request records."
+    },
+    "/users/{uid}/private/bankDetails": {
+      "schema": "BankDetails",
+      "description": "Private bank details for the user."
+    }
+  }
+}
