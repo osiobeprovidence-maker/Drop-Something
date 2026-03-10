@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { db } from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { BankDetails } from '../types';
+import React, { useState } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useAuth } from '../AuthContext';
 import { Building2, CreditCard, User, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -27,41 +26,37 @@ const NIGERIAN_BANKS = [
 
 export function PayoutSettings() {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  
-  const [bankDetails, setBankDetails] = useState<BankDetails>({
-    bankName: '',
-    accountNumber: '',
-    accountName: '',
-  });
 
-  useEffect(() => {
-    const fetchBankDetails = async () => {
-      if (!user) return;
-      try {
-        const docRef = doc(db, 'users', user.uid, 'private', 'bankDetails');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setBankDetails(docSnap.data() as BankDetails);
-        }
-      } catch (err) {
-        console.error('Error fetching bank details:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Convex query + mutation
+  const existingDetails = useQuery(
+    api.bankDetails.getBankDetails,
+    user ? { userId: user.uid } : 'skip'
+  );
+  const saveBankDetails = useMutation(api.bankDetails.saveBankDetails);
 
-    fetchBankDetails();
-  }, [user]);
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName] = useState('');
+
+  // Pre-fill when existing data arrives
+  React.useEffect(() => {
+    if (existingDetails) {
+      setBankName(existingDetails.bankName);
+      setAccountNumber(existingDetails.accountNumber);
+      setAccountName(existingDetails.accountName);
+    }
+  }, [existingDetails]);
+
+  const loading = existingDetails === undefined && user !== null;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    
-    if (!bankDetails.bankName) {
+
+    if (!bankName) {
       setError('Please select a bank');
       return;
     }
@@ -71,8 +66,12 @@ export function PayoutSettings() {
     setSuccess(false);
 
     try {
-      const docRef = doc(db, 'users', user.uid, 'private', 'bankDetails');
-      await setDoc(docRef, bankDetails);
+      await saveBankDetails({
+        userId: user.uid,
+        bankName,
+        accountNumber,
+        accountName,
+      });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -111,8 +110,8 @@ export function PayoutSettings() {
               </label>
               <select
                 required
-                value={bankDetails.bankName}
-                onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
                 className="w-full px-4 py-4 bg-cream/50 border-2 border-ink rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-black appearance-none"
               >
                 <option value="">Choose your bank...</option>
@@ -132,8 +131,8 @@ export function PayoutSettings() {
                 required
                 pattern="[0-9]{10}"
                 maxLength={10}
-                value={bankDetails.accountNumber}
-                onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value.replace(/\D/g, '') })}
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))}
                 placeholder="10-digit account number"
                 className="w-full px-4 py-4 bg-cream/50 border-2 border-ink rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-black"
               />
@@ -147,8 +146,8 @@ export function PayoutSettings() {
               <input
                 type="text"
                 required
-                value={bankDetails.accountName}
-                onChange={(e) => setBankDetails({ ...bankDetails, accountName: e.target.value })}
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
                 placeholder="Name as it appears on your bank account"
                 className="w-full px-4 py-4 bg-cream/50 border-2 border-ink rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-black"
               />
@@ -183,7 +182,7 @@ export function PayoutSettings() {
         <div className="p-6 bg-cream rounded-3xl border-2 border-ink/10">
           <p className="text-xs text-ink/50 font-bold leading-relaxed">
             <span className="font-black text-ink block mb-1 uppercase tracking-widest">Security Note:</span>
-            Your bank details are stored securely and are only used to process your withdrawal requests. We never share this information with third parties.
+            Your bank details are stored securely in Convex and are only used to process your withdrawal requests. We never share this information with third parties.
           </p>
         </div>
       </div>

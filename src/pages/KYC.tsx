@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { db } from '../firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { motion } from 'motion/react';
 import { Shield, Camera, Upload, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -19,19 +19,19 @@ export function KYC() {
     idNumber: '',
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submitKYC = useMutation(api.kyc.submitKYC);
+
+  const handleSubmit = async (e: React.MouseEvent | React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     setIsSubmitting(true);
 
     try {
-      await setDoc(doc(db, 'kyc', user.uid), {
+      await submitKYC({
         uid: user.uid,
         ...formData,
         idImageUrl: 'https://picsum.photos/seed/id/400/300', // Placeholder
         selfieUrl: 'https://picsum.photos/seed/selfie/400/400', // Placeholder
-        status: 'pending',
-        submittedAt: Date.now()
       });
       setStep(3);
     } catch (err) {
@@ -64,7 +64,7 @@ export function KYC() {
                     <input
                       type="text"
                       value={formData.fullName}
-                      onChange={e => setFormData({...formData, fullName: e.target.value})}
+                      onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                       className="w-full px-4 py-3 bg-cream border-2 border-ink rounded-xl focus:outline-none focus:border-primary transition-all font-black"
                       placeholder="As on your ID"
                     />
@@ -74,7 +74,7 @@ export function KYC() {
                     <input
                       type="tel"
                       value={formData.phoneNumber}
-                      onChange={e => setFormData({...formData, phoneNumber: e.target.value})}
+                      onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })}
                       className="w-full px-4 py-3 bg-cream border-2 border-ink rounded-xl focus:outline-none focus:border-primary transition-all font-black"
                       placeholder="080..."
                     />
@@ -85,7 +85,7 @@ export function KYC() {
                   <label className="text-sm font-black text-ink/70 uppercase tracking-widest ml-1">ID Type</label>
                   <select
                     value={formData.idType}
-                    onChange={e => setFormData({...formData, idType: e.target.value as any})}
+                    onChange={e => setFormData({ ...formData, idType: e.target.value as any })}
                     className="w-full px-4 py-3 bg-cream border-2 border-ink rounded-xl focus:outline-none focus:border-primary transition-all font-black"
                   >
                     <option value="NIN">National ID (NIN)</option>
@@ -100,7 +100,7 @@ export function KYC() {
                   <input
                     type="text"
                     value={formData.idNumber}
-                    onChange={e => setFormData({...formData, idNumber: e.target.value})}
+                    onChange={e => setFormData({ ...formData, idNumber: e.target.value })}
                     className="w-full px-4 py-3 bg-cream border-2 border-ink rounded-xl focus:outline-none focus:border-primary transition-all font-black"
                     placeholder="Enter ID number"
                   />

@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
-import { db } from '../firebase';
-import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { Tip, Withdrawal } from '../types';
 import { motion } from 'motion/react';
-import { 
-  Wallet, 
-  Users, 
-  MessageSquare, 
-  Settings, 
-  ArrowUpRight, 
-  CheckCircle2, 
-  Clock, 
+import {
+  Wallet,
+  Users,
+  MessageSquare,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock,
   AlertCircle,
   ExternalLink,
   Copy,
@@ -22,17 +21,12 @@ import {
 import { formatCurrency, cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import { PayoutSettings } from '../components/PayoutSettings';
-import { addDoc, getDoc, doc } from 'firebase/firestore';
-import { BankDetails } from '../types';
 
 export function Dashboard() {
   const { user, profile } = useAuth();
-  const [tips, setTips] = useState<Tip[]>([]);
-  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'tips' | 'payouts'>('overview');
-  
+
   // Withdrawal State
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -40,40 +34,31 @@ export function Dashboard() {
   const [withdrawError, setWithdrawError] = useState('');
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
+  // Convex queries
+  const tips = useQuery(
+    api.tips.getTipsByCreator,
+    user ? { creatorId: user.uid } : 'skip'
+  );
+  const withdrawals = useQuery(
+    api.withdrawals.getWithdrawalsByCreator,
+    user ? { creatorId: user.uid } : 'skip'
+  );
+  const bankDetails = useQuery(
+    api.bankDetails.getBankDetails,
+    user ? { userId: user.uid } : 'skip'
+  );
 
-    const tipsQ = query(
-      collection(db, 'tips'),
-      where('creatorId', '==', user.uid),
-      where('status', '==', 'success'),
-      orderBy('createdAt', 'desc')
-    );
+  const createWithdrawal = useMutation(api.withdrawals.createWithdrawal);
 
-    const withdrawalsQ = query(
-      collection(db, 'withdrawals'),
-      where('creatorId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
+  const loading = tips === undefined || withdrawals === undefined;
 
-    const unsubscribeTips = onSnapshot(tipsQ, (snap) => {
-      setTips(snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as Tip)));
-      setLoading(false);
-    });
-
-    const unsubscribeWithdrawals = onSnapshot(withdrawalsQ, (snap) => {
-      setWithdrawals(snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as Withdrawal)));
-    });
-
-    return () => {
-      unsubscribeTips();
-      unsubscribeWithdrawals();
-    };
-  }, [user]);
-
-  const totalEarnings = tips.reduce((acc, tip) => acc + tip.amount, 0);
-  const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending').reduce((acc, w) => acc + w.amount, 0);
-  const availableBalance = totalEarnings - withdrawals.filter(w => w.status === 'completed').reduce((acc, w) => acc + w.amount, 0);
+  const successfulTips = (tips ?? []).filter((t) => t.status === 'success');
+  const totalEarnings = successfulTips.reduce((acc, tip) => acc + tip.amount, 0);
+  const availableBalance =
+    totalEarnings -
+    (withdrawals ?? [])
+      .filter((w) => w.status === 'completed')
+      .reduce((acc, w) => acc + w.amount, 0);
 
   const copyLink = () => {
     const link = `${window.location.origin}/${profile?.username}`;
@@ -116,30 +101,21 @@ export function Dashboard() {
       return;
     }
 
+    if (!bankDetails) {
+      setWithdrawError('Please set up your payout settings first');
+      return;
+    }
+
     setWithdrawLoading(true);
     setWithdrawError('');
 
     try {
-      // Fetch bank details
-      const bankRef = doc(db, 'users', user.uid, 'private', 'bankDetails');
-      const bankSnap = await getDoc(bankRef);
-      
-      if (!bankSnap.exists()) {
-        setWithdrawError('Please set up your payout settings first');
-        setWithdrawLoading(false);
-        return;
-      }
-
-      const bankData = bankSnap.data() as BankDetails;
-
-      await addDoc(collection(db, 'withdrawals'), {
+      await createWithdrawal({
         creatorId: user.uid,
         amount,
-        bankName: bankData.bankName,
-        accountNumber: bankData.accountNumber,
-        accountName: bankData.accountName,
-        status: 'pending',
-        createdAt: Date.now()
+        bankName: bankDetails.bankName,
+        accountNumber: bankDetails.accountNumber,
+        accountName: bankDetails.accountName,
       });
 
       setWithdrawSuccess(true);
@@ -220,6 +196,7 @@ export function Dashboard() {
           </motion.div>
         </div>
       )}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl md:text-4xl font-black text-ink">Welcome back, {profile?.displayName}</h1>
@@ -249,15 +226,15 @@ export function Dashboard() {
           </button>
         </div>
       </div>
-      
+
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-ink/5 p-1 rounded-2xl w-fit border-2 border-ink">
         <button
           onClick={() => setActiveTab('overview')}
           className={cn(
             "px-6 py-2.5 rounded-xl text-sm font-black transition-all",
-            activeTab === 'overview' 
-              ? "bg-white text-ink shadow-[2px_2px_0_0_#111111] border-2 border-ink" 
+            activeTab === 'overview'
+              ? "bg-white text-ink shadow-[2px_2px_0_0_#111111] border-2 border-ink"
               : "text-ink/60 hover:text-ink"
           )}
         >
@@ -267,8 +244,8 @@ export function Dashboard() {
           onClick={() => setActiveTab('tips')}
           className={cn(
             "px-6 py-2.5 rounded-xl text-sm font-black transition-all",
-            activeTab === 'tips' 
-              ? "bg-white text-ink shadow-[2px_2px_0_0_#111111] border-2 border-ink" 
+            activeTab === 'tips'
+              ? "bg-white text-ink shadow-[2px_2px_0_0_#111111] border-2 border-ink"
               : "text-ink/60 hover:text-ink"
           )}
         >
@@ -278,8 +255,8 @@ export function Dashboard() {
           onClick={() => setActiveTab('payouts')}
           className={cn(
             "px-6 py-2.5 rounded-xl text-sm font-black transition-all",
-            activeTab === 'payouts' 
-              ? "bg-white text-ink shadow-[2px_2px_0_0_#111111] border-2 border-ink" 
+            activeTab === 'payouts'
+              ? "bg-white text-ink shadow-[2px_2px_0_0_#111111] border-2 border-ink"
               : "text-ink/60 hover:text-ink"
           )}
         >
@@ -319,7 +296,7 @@ export function Dashboard() {
                 <p className="text-sm font-black text-ink/40 uppercase tracking-widest">Available Balance</p>
                 <p className="text-3xl font-black text-ink">{formatCurrency(availableBalance)}</p>
               </div>
-              <button 
+              <button
                 onClick={() => setIsWithdrawing(true)}
                 className="w-full py-3 bg-primary text-white rounded-xl font-black text-sm hover:scale-[1.02] transition-all shadow-[0_4px_0_0_#111111] active:shadow-none active:translate-y-1"
               >
@@ -333,7 +310,7 @@ export function Dashboard() {
               </div>
               <div>
                 <p className="text-sm font-black text-ink/40 uppercase tracking-widest">Total Supporters</p>
-                <p className="text-3xl font-black text-ink">{tips.length}</p>
+                <p className="text-3xl font-black text-ink">{successfulTips.length}</p>
               </div>
               <p className="text-sm text-ink/60 font-black uppercase tracking-widest">Across all time</p>
             </div>
@@ -358,8 +335,8 @@ export function Dashboard() {
                 Recent Supporters
               </h2>
               <div className="bg-white rounded-[2rem] border-4 border-ink shadow-[8px_8px_0_0_#111111] divide-y-4 divide-ink overflow-hidden">
-                {tips.slice(0, 5).map((tip) => (
-                  <div key={tip.id} className="p-6 flex gap-4">
+                {successfulTips.slice(0, 5).map((tip) => (
+                  <div key={tip._id} className="p-6 flex gap-4">
                     <div className="w-10 h-10 bg-cream border-2 border-ink rounded-xl flex items-center justify-center text-ink font-black flex-shrink-0">
                       {tip.supporterName[0].toUpperCase()}
                     </div>
@@ -377,7 +354,7 @@ export function Dashboard() {
                     </div>
                   </div>
                 ))}
-                {tips.length === 0 && (
+                {successfulTips.length === 0 && (
                   <div className="p-12 text-center text-ink/40">
                     <p className="font-black">No tips yet. Share your link to start earning!</p>
                   </div>
@@ -392,8 +369,8 @@ export function Dashboard() {
                 Withdrawal History
               </h2>
               <div className="bg-white rounded-[2rem] border-4 border-ink shadow-[8px_8px_0_0_#111111] divide-y-4 divide-ink overflow-hidden">
-                {withdrawals.slice(0, 5).map((w) => (
-                  <div key={w.id} className="p-6 flex items-center justify-between">
+                {(withdrawals ?? []).slice(0, 5).map((w) => (
+                  <div key={w._id} className="p-6 flex items-center justify-between">
                     <div className="space-y-1">
                       <p className="font-black text-ink">{formatCurrency(w.amount)}</p>
                       <p className="text-xs text-ink/60 font-black uppercase tracking-widest">{w.bankName} • {w.accountNumber}</p>
@@ -404,14 +381,14 @@ export function Dashboard() {
                     <div className={cn(
                       "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border-2 border-ink",
                       w.status === 'completed' ? "bg-primary/10 text-primary" :
-                      w.status === 'pending' ? "bg-accent/10 text-accent" :
-                      "bg-red-100 text-red-700"
+                        w.status === 'pending' ? "bg-accent/10 text-accent" :
+                          "bg-red-100 text-red-700"
                     )}>
                       {w.status}
                     </div>
                   </div>
                 ))}
-                {withdrawals.length === 0 && (
+                {(withdrawals ?? []).length === 0 && (
                   <div className="p-12 text-center text-ink/40">
                     <p className="font-black">No withdrawals yet.</p>
                   </div>
@@ -424,9 +401,9 @@ export function Dashboard() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-black text-ink">Tip History</h2>
-            <p className="text-ink/60 font-black uppercase tracking-widest text-sm">{tips.length} successful tips received</p>
+            <p className="text-ink/60 font-black uppercase tracking-widest text-sm">{successfulTips.length} successful tips received</p>
           </div>
-          
+
           <div className="bg-white rounded-[2.5rem] border-4 border-ink shadow-[12px_12px_0_0_#111111] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -439,8 +416,8 @@ export function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y-4 divide-ink">
-                  {tips.map((tip) => (
-                    <tr key={tip.id} className="hover:bg-cream/50 transition-colors">
+                  {successfulTips.map((tip) => (
+                    <tr key={tip._id} className="hover:bg-cream/50 transition-colors">
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-primary/10 text-primary border-2 border-ink rounded-xl flex items-center justify-center font-black">
@@ -473,8 +450,8 @@ export function Dashboard() {
                 </tbody>
               </table>
             </div>
-            
-            {tips.length === 0 && (
+
+            {successfulTips.length === 0 && (
               <div className="py-20 text-center space-y-4">
                 <div className="w-16 h-16 bg-cream border-4 border-ink rounded-full flex items-center justify-center mx-auto text-ink/20">
                   <MessageSquare size={32} />

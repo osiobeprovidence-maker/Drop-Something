@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { db } from '../firebase';
-import { collection, query, where, getDocs, addDoc, doc, onSnapshot, limit, orderBy } from 'firebase/firestore';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { UserProfile, Tip } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Coffee, Heart, Share2, MessageSquare, ShieldCheck, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -12,12 +12,19 @@ declare const PaystackPop: any;
 
 export function CreatorPage() {
   const { username } = useParams();
-  const [creator, setCreator] = useState<UserProfile | null>(null);
-  const [tips, setTips] = useState<Tip[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  
-  // Tip Form State
+
+  const creator = useQuery(
+    api.users.getUserByUsername,
+    username ? { username: username.toLowerCase() } : 'skip'
+  );
+
+  const tips = useQuery(
+    api.tips.getTipsByCreator,
+    creator ? { creatorId: creator.uid } : 'skip'
+  );
+
+  const createTip = useMutation(api.tips.createTip);
+
   const [amount, setAmount] = useState<number>(1000);
   const [customAmount, setCustomAmount] = useState('');
   const [name, setName] = useState('');
@@ -26,43 +33,8 @@ export function CreatorPage() {
   const [isPaying, setIsPaying] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  useEffect(() => {
-    const fetchCreator = async () => {
-      if (!username) return;
-      try {
-        const q = query(collection(db, 'users'), where('username', '==', username.toLowerCase()));
-        const snap = await getDocs(q);
-        if (snap.empty) {
-          setError('Creator not found');
-        } else {
-          const data = snap.docs[0].data() as UserProfile;
-          setCreator(data);
-          
-          // Fetch recent tips
-          const tipsQ = query(
-            collection(db, 'tips'),
-            where('creatorId', '==', data.uid),
-            where('status', '==', 'success'),
-            orderBy('createdAt', 'desc'),
-            limit(10)
-          );
-          
-          const unsubscribe = onSnapshot(tipsQ, (tipsSnap) => {
-            setTips(tipsSnap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as Tip)));
-          });
-          
-          return unsubscribe;
-        }
-      } catch (err) {
-        console.error(err);
-        setError('Something went wrong');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCreator();
-  }, [username]);
+  const loading = creator === undefined;
+  const successfulTips = (tips ?? []).filter(t => t.status === 'success');
 
   const triggerConfetti = () => {
     const duration = 3 * 1000;
@@ -71,13 +43,9 @@ export function CreatorPage() {
 
     const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
 
-    const interval: any = setInterval(function() {
+    const interval: any = setInterval(function () {
       const timeLeft = animationEnd - Date.now();
-
-      if (timeLeft <= 0) {
-        return clearInterval(interval);
-      }
-
+      if (timeLeft <= 0) return clearInterval(interval);
       const particleCount = 50 * (timeLeft / duration);
       confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
       confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
@@ -88,7 +56,7 @@ export function CreatorPage() {
     if (!creator) return;
     const finalAmount = customAmount ? parseInt(customAmount) : amount;
     if (isNaN(finalAmount) || finalAmount < 100) {
-      alert("Minimum tip is ₦100");
+      alert('Minimum tip is ₦100');
       return;
     }
 
@@ -97,12 +65,11 @@ export function CreatorPage() {
     const handler = PaystackPop.setup({
       key: (import.meta as any).env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder',
       email: 'supporter@dropsomething.ng',
-      amount: finalAmount * 100, // Paystack uses kobo
+      amount: finalAmount * 100,
       currency: 'NGN',
       callback: async (response: any) => {
-        // Handle success
         try {
-          await addDoc(collection(db, 'tips'), {
+          await createTip({
             creatorId: creator.uid,
             supporterName: isAnonymous ? 'Anonymous' : (name || 'Someone'),
             amount: finalAmount,
@@ -110,11 +77,9 @@ export function CreatorPage() {
             isAnonymous,
             paymentReference: response.reference,
             status: 'success',
-            createdAt: Date.now()
           });
           setShowSuccess(true);
           triggerConfetti();
-          // Reset form
           setName('');
           setMessage('');
           setCustomAmount('');
@@ -133,10 +98,10 @@ export function CreatorPage() {
   };
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="animate-spin text-primary" /></div>;
-  if (error || !creator) return (
+  if (!creator) return (
     <div className="text-center py-20 space-y-4">
       <AlertCircle size={48} className="mx-auto text-ink/20" />
-      <h1 className="text-2xl font-black text-ink">{error || 'Creator not found'}</h1>
+      <h1 className="text-2xl font-black text-ink">Creator not found</h1>
       <Link to="/" className="text-primary font-black hover:underline decoration-4 underline-offset-8">Go back home</Link>
     </div>
   );
@@ -163,7 +128,7 @@ export function CreatorPage() {
               <div className="space-y-2">
                 <h2 className="text-3xl font-black text-ink">Thank You!</h2>
                 <p className="text-ink/60 font-bold">
-                  Your support means the world to <span className="font-black text-ink">{creator.displayName}</span>. 
+                  Your support means the world to <span className="font-black text-ink">{creator.displayName}</span>.
                   You've just made their hustle a little easier!
                 </p>
               </div>
@@ -179,7 +144,6 @@ export function CreatorPage() {
                       });
                     } else {
                       navigator.clipboard.writeText(link);
-                      alert('Link copied to clipboard!');
                     }
                   }}
                   className="w-full py-4 bg-primary text-white rounded-2xl font-black hover:scale-[1.02] transition-all shadow-[0_4px_0_0_#111111] active:shadow-none active:translate-y-1 flex items-center justify-center gap-2"
@@ -198,6 +162,7 @@ export function CreatorPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
       {/* Left Column: Profile Info */}
       <div className="md:col-span-5 space-y-8">
         <div className="bg-white p-8 rounded-[2.5rem] border-4 border-ink shadow-[8px_8px_0_0_#111111] text-center space-y-6">
@@ -229,7 +194,7 @@ export function CreatorPage() {
 
           <div className="pt-4 border-t-4 border-ink/5 flex items-center justify-center gap-6">
             <div className="text-center">
-              <p className="text-2xl font-black text-ink">{tips.length}+</p>
+              <p className="text-2xl font-black text-ink">{successfulTips.length}+</p>
               <p className="text-xs text-ink/40 uppercase font-black tracking-widest">Supporters</p>
             </div>
           </div>
@@ -240,9 +205,9 @@ export function CreatorPage() {
           <h3 className="text-sm font-black text-ink/40 uppercase tracking-widest px-4">Recent Support</h3>
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
-              {tips.map((tip) => (
+              {successfulTips.slice(0, 10).map((tip) => (
                 <motion.div
-                  key={tip.id}
+                  key={tip._id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   className="bg-white p-4 rounded-2xl border-4 border-ink shadow-[4px_4px_0_0_#111111] flex gap-4"
@@ -261,7 +226,7 @@ export function CreatorPage() {
                 </motion.div>
               ))}
             </AnimatePresence>
-            {tips.length === 0 && (
+            {successfulTips.length === 0 && (
               <p className="text-center py-8 text-ink/40 text-sm font-black italic">Be the first to support!</p>
             )}
           </div>
@@ -286,8 +251,8 @@ export function CreatorPage() {
                   onClick={() => { setAmount(val); setCustomAmount(''); }}
                   className={cn(
                     "py-4 rounded-2xl font-black text-lg transition-all border-4",
-                    amount === val && !customAmount 
-                      ? "bg-primary/10 border-primary text-primary shadow-[2px_2px_0_0_#FF4D8D]" 
+                    amount === val && !customAmount
+                      ? "bg-primary/10 border-primary text-primary shadow-[2px_2px_0_0_#FF4D8D]"
                       : "bg-cream border-ink text-ink/40 hover:border-primary hover:text-primary"
                   )}
                 >

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import { db } from '../firebase';
-import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { motion } from 'motion/react';
 import { User, AtSign, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -13,8 +13,6 @@ export function SetupProfile() {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [bio, setBio] = useState('');
-  const [isChecking, setIsChecking] = useState(false);
-  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,27 +22,20 @@ export function SetupProfile() {
     }
   }, [profile, navigate]);
 
-  const checkUsername = async (val: string) => {
-    if (val.length < 3) {
-      setIsAvailable(null);
-      return;
-    }
-    setIsChecking(true);
-    try {
-      const q = query(collection(db, 'users'), where('username', '==', val.toLowerCase()));
-      const snap = await getDocs(q);
-      setIsAvailable(snap.empty);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsChecking(false);
-    }
-  };
+  // Check username availability via Convex
+  const usernameCheck = useQuery(
+    api.users.checkUsername,
+    username.length >= 3 ? { username } : 'skip'
+  );
+
+  const isChecking = username.length >= 3 && usernameCheck === undefined;
+  const isAvailable = username.length < 3 ? null : usernameCheck?.available ?? null;
+
+  const createUser = useMutation(api.users.createUser);
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
     setUsername(val);
-    checkUsername(val);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,16 +46,12 @@ export function SetupProfile() {
     setError('');
 
     try {
-      await setDoc(doc(db, 'users', user.uid), {
+      await createUser({
         uid: user.uid,
         username,
         displayName,
         bio,
         photoURL: user.photoURL || '',
-        isVerified: false,
-        socialLinks: {},
-        createdAt: Date.now(),
-        role: 'user'
       });
       navigate('/dashboard');
     } catch (err) {
@@ -104,9 +91,9 @@ export function SetupProfile() {
                 placeholder="username"
                 className={cn(
                   "w-full pl-11 pr-12 py-4 bg-cream border-4 rounded-2xl focus:outline-none transition-all font-black",
-                  isAvailable === true ? "border-primary shadow-[2px_2px_0_0_#FF4D8D]" : 
-                  isAvailable === false ? "border-red-500 shadow-[2px_2px_0_0_#ef4444]" : 
-                  "border-ink focus:border-primary"
+                  isAvailable === true ? "border-primary shadow-[2px_2px_0_0_#FF4D8D]" :
+                    isAvailable === false ? "border-red-500 shadow-[2px_2px_0_0_#ef4444]" :
+                      "border-ink focus:border-primary"
                 )}
                 required
               />

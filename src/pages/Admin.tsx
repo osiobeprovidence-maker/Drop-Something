@@ -1,55 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase';
-import { collection, query, onSnapshot, doc, updateDoc, orderBy } from 'firebase/firestore';
-import { KYCData, Tip, Withdrawal } from '../types';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { motion } from 'motion/react';
-import { 
-  ShieldCheck, 
-  Users, 
-  CreditCard, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  ShieldCheck,
+  Users,
+  CreditCard,
+  CheckCircle2,
+  XCircle,
   Clock,
   Eye
 } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
+import { Id } from '../../convex/_generated/dataModel';
 
 export function Admin() {
-  const [kycList, setKycList] = useState<KYCData[]>([]);
-  const [tips, setTips] = useState<Tip[]>([]);
-  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Convex queries
+  const kycList = useQuery(api.kyc.getAllKYC);
+  const tips = useQuery(api.tips.getAllTips);
+  const withdrawals = useQuery(api.withdrawals.getAllWithdrawals);
 
-  useEffect(() => {
-    const unsubscribeKyc = onSnapshot(query(collection(db, 'kyc'), orderBy('submittedAt', 'desc')), (snap) => {
-      setKycList(snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as KYCData)));
-    });
+  const updateKYCStatus = useMutation(api.kyc.updateKYCStatus);
 
-    const unsubscribeTips = onSnapshot(query(collection(db, 'tips'), orderBy('createdAt', 'desc')), (snap) => {
-      setTips(snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as Tip)));
-    });
-
-    const unsubscribeWithdrawals = onSnapshot(query(collection(db, 'withdrawals'), orderBy('createdAt', 'desc')), (snap) => {
-      setWithdrawals(snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as Withdrawal)));
-      setLoading(false);
-    });
-
-    return () => {
-      unsubscribeKyc();
-      unsubscribeTips();
-      unsubscribeWithdrawals();
-    };
-  }, []);
+  const loading = kycList === undefined || tips === undefined || withdrawals === undefined;
 
   const handleKycAction = async (uid: string, status: 'approved' | 'rejected') => {
     try {
-      await updateDoc(doc(db, 'kyc', uid), { 
-        status, 
-        reviewedAt: Date.now() 
-      });
-      if (status === 'approved') {
-        await updateDoc(doc(db, 'users', uid), { isVerified: true });
-      }
+      await updateKYCStatus({ uid, status });
     } catch (err) {
       console.error(err);
     }
@@ -72,10 +49,10 @@ export function Admin() {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'Total Volume', value: formatCurrency(tips.reduce((a, b) => a + b.amount, 0)), icon: CreditCard, color: 'text-primary', bg: 'bg-primary/10', shadow: 'shadow-[4px_4px_0_0_#FF4D8D]' },
-          { label: 'Pending KYC', value: kycList.filter(k => k.status === 'pending').length, icon: Users, color: 'text-secondary', bg: 'bg-secondary/10', shadow: 'shadow-[4px_4px_0_0_#6B3CF6]' },
-          { label: 'Pending Payouts', value: withdrawals.filter(w => w.status === 'pending').length, icon: Clock, color: 'text-accent', bg: 'bg-accent/10', shadow: 'shadow-[4px_4px_0_0_#FF7A00]' },
-          { label: 'Total Tips', value: tips.length, icon: CheckCircle2, color: 'text-ink', bg: 'bg-ink/10', shadow: 'shadow-[4px_4px_0_0_#111111]' },
+          { label: 'Total Volume', value: formatCurrency((tips ?? []).reduce((a, b) => a + b.amount, 0)), icon: CreditCard, color: 'text-primary', bg: 'bg-primary/10', shadow: 'shadow-[4px_4px_0_0_#FF4D8D]' },
+          { label: 'Pending KYC', value: (kycList ?? []).filter(k => k.status === 'pending').length, icon: Users, color: 'text-secondary', bg: 'bg-secondary/10', shadow: 'shadow-[4px_4px_0_0_#6B3CF6]' },
+          { label: 'Pending Payouts', value: (withdrawals ?? []).filter(w => w.status === 'pending').length, icon: Clock, color: 'text-accent', bg: 'bg-accent/10', shadow: 'shadow-[4px_4px_0_0_#FF7A00]' },
+          { label: 'Total Tips', value: (tips ?? []).length, icon: CheckCircle2, color: 'text-ink', bg: 'bg-ink/10', shadow: 'shadow-[4px_4px_0_0_#111111]' },
         ].map((stat, i) => (
           <div key={i} className={cn("bg-white p-6 rounded-3xl border-4 border-ink space-y-2", stat.shadow)}>
             <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border-2 border-ink", stat.bg, stat.color)}>
@@ -105,7 +82,7 @@ export function Admin() {
                 </tr>
               </thead>
               <tbody className="divide-y-4 divide-ink/5">
-                {kycList.map((kyc) => (
+                {(kycList ?? []).map((kyc) => (
                   <tr key={kyc.uid} className="hover:bg-cream/50 transition-colors">
                     <td className="px-6 py-4">
                       <p className="font-black text-ink">{kyc.fullName}</p>
@@ -116,22 +93,22 @@ export function Admin() {
                       <span className={cn(
                         "px-2 py-1 rounded-full text-[10px] font-black uppercase border-2 border-ink",
                         kyc.status === 'approved' ? "bg-primary/10 text-primary border-primary" :
-                        kyc.status === 'pending' ? "bg-secondary/10 text-secondary border-secondary" :
-                        "bg-red-100 text-red-700 border-red-500"
+                          kyc.status === 'pending' ? "bg-secondary/10 text-secondary border-secondary" :
+                            "bg-red-100 text-red-700 border-red-500"
                       )}>
                         {kyc.status}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <button 
+                        <button
                           onClick={() => handleKycAction(kyc.uid, 'approved')}
                           className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors border-2 border-transparent hover:border-primary"
                           title="Approve"
                         >
                           <CheckCircle2 size={18} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleKycAction(kyc.uid, 'rejected')}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border-2 border-transparent hover:border-red-500"
                           title="Reject"
@@ -145,7 +122,7 @@ export function Admin() {
                     </td>
                   </tr>
                 ))}
-                {kycList.length === 0 && (
+                {(kycList ?? []).length === 0 && (
                   <tr>
                     <td colSpan={4} className="px-6 py-12 text-center text-ink/40 font-black italic">No KYC submissions yet.</td>
                   </tr>
@@ -172,8 +149,8 @@ export function Admin() {
                 </tr>
               </thead>
               <tbody className="divide-y-4 divide-ink/5">
-                {tips.slice(0, 10).map((tip) => (
-                  <tr key={tip.id} className="hover:bg-cream/50 transition-colors">
+                {(tips ?? []).slice(0, 10).map((tip) => (
+                  <tr key={tip._id} className="hover:bg-cream/50 transition-colors">
                     <td className="px-6 py-4 font-black text-ink">{tip.supporterName}</td>
                     <td className="px-6 py-4 font-black text-primary">{formatCurrency(tip.amount)}</td>
                     <td className="px-6 py-4">
@@ -189,6 +166,11 @@ export function Admin() {
                     </td>
                   </tr>
                 ))}
+                {(tips ?? []).length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-ink/40 font-black italic">No transactions yet.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
