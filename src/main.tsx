@@ -4,7 +4,21 @@ import App from './App.tsx';
 import './index.css';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
 
-const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
+// Primary: Vite env baked at build-time. Secondary: runtime override via
+// `window.__CONVEX_URL` or a `<meta name="convex-url" content="...">`.
+const bakedConvexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
+function readRuntimeConvexUrl(): string | null {
+  try {
+    const w = (window as any).__CONVEX_URL;
+    if (typeof w === 'string' && w) return w;
+    const m = document.querySelector('meta[name="convex-url"]');
+    if (m) return m.getAttribute('content');
+  } catch {
+    // ignore
+  }
+  return null;
+}
+const convexUrl = (readRuntimeConvexUrl() || bakedConvexUrl) as string | undefined;
 
 function renderMissingEnv(message: string) {
   const root = document.getElementById('root');
@@ -28,13 +42,23 @@ if (!convexUrl) {
   console.error('Missing VITE_CONVEX_URL environment variable');
   renderMissingEnv('Missing required environment variable: VITE_CONVEX_URL.\nPlease set it in your deployment environment (e.g. Vercel project settings).');
 } else {
-  const convex = new ConvexReactClient(convexUrl);
+  try {
+    const convex = new ConvexReactClient(convexUrl);
 
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <ConvexProvider client={convex}>
-        <App />
-      </ConvexProvider>
-    </StrictMode>,
-  );
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <ConvexProvider client={convex}>
+          <App />
+        </ConvexProvider>
+      </StrictMode>,
+    );
+  } catch (err: any) {
+    // If the Convex URL is wrong or the client validation fails, render a helpful message
+    console.error('Convex client initialization failed', err);
+    renderMissingEnv(
+      `Failed to initialize Convex client: ${err?.message ?? String(err)}\n` +
+        'You can override the deployment URL at runtime by adding a meta tag ' +
+        '<meta name="convex-url" content="https://your-deployment.convex.cloud">',
+    );
+  }
 }

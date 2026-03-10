@@ -106,3 +106,16 @@ export const updateUser = mutation({
         await ctx.db.patch(user._id, patch);
     },
 });
+
+// Simple test query that returns a mock user object (no DB access).
+export const getUserById = query({
+    args: { userId: v.string() },
+    handler: async (_ctx, args) => {
+        // Return a mock user for testing frontend -> Convex connectivity.
+        return {
+            id: args.userId,
+            name: "Test User",
+            email: "test@example.com",
+        };
+    },
+});
