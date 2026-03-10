@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { LogIn, User, LayoutDashboard, ShieldCheck, LogOut, Sparkles } from 'lucide-react';
+import { LogIn, User, LayoutDashboard, ShieldCheck, LogOut, Sparkles, Menu, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, profile, signInWithGoogle, logout } = useAuth();
   const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, show: !!user },
@@ -69,6 +70,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </button>
             )}
           </div>
+
+          {/* Mobile hamburger (only when signed in) */}
+          <div className="md:hidden">
+            {user && (
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                aria-expanded={mobileOpen}
+                aria-label="Open menu"
+                className="p-2 text-stone-600 hover:text-primary transition-colors"
+              >
+                {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -78,6 +93,48 @@ export function Layout({ children }: { children: React.ReactNode }) {
       )}>
         {children}
       </main>
+
+      {/* Mobile menu panel */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-x-0 top-16 z-40 bg-white shadow-lg border-t-4 border-ink">
+          <div className="max-w-7xl mx-auto px-4 py-4 space-y-3">
+            {navItems.filter(item => item.show).map(item => (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setMobileOpen(false)}
+                className="block text-lg font-black transition-all hover:text-primary text-ink"
+              >
+                {item.name}
+              </Link>
+            ))}
+
+            <div className="pt-2 border-t border-ink/10">
+              <Link
+                to={`/${profile?.username || 'setup'}`}
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white border-2 border-ink overflow-hidden">
+                  {user?.photoURL ? (
+                    <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={20} className="m-2 text-stone-500" />
+                  )}
+                </div>
+                <div className="text-sm font-black uppercase tracking-wider text-ink">{user?.displayName}</div>
+              </Link>
+
+              <button
+                onClick={() => { setMobileOpen(false); logout(); }}
+                className="w-full text-left mt-3 px-2 py-2 font-black text-ink hover:text-primary"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!isHomePage && (
         <footer className="border-t-4 border-ink py-16 bg-white mt-20">
