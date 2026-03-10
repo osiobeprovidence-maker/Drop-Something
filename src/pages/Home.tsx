@@ -50,35 +50,33 @@ export function Home() {
 
   return (
     <div className="space-y-20 md:space-y-32 pb-20 overflow-x-hidden bg-white">
-      {/* Final CTA Section */}
-      <section className="max-w-6xl mx-auto px-6">
-        <div className="bg-primary py-16 md:py-20 px-6 md:px-12 rounded-[3rem] md:rounded-[5rem] text-center space-y-8 md:space-y-12 text-white relative overflow-visible border-8 border-ink shadow-[20px_20px_0_0_#111111]">
-          <h2 className="font-display font-extrabold leading-[1.05] text-center">
-            <span className="block text-[36px] md:text-[56px] lg:text-[72px]">Support the Hustle.</span>
-            <span className="block text-[36px] md:text-[56px] lg:text-[72px] mt-2">Drop something.</span>
-          </h2>
-          <p className="text-[16px] md:text-[20px] text-white/90 font-black max-w-3xl mx-auto">
-            If someone's content has helped you, entertained you, or inspired you, show appreciation. Every drop matters.
-          </p>
+      {/* Hero Section */}
+      <section className="relative py-16 md:py-20 border-b-4 border-ink bg-cream">
+        <div className="max-w-5xl mx-auto px-6 text-center space-y-8 md:space-y-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-primary/10 text-primary font-black border-2 border-primary/20"
+          >
+            <span className="uppercase tracking-widest text-xs md:text-sm">Support the hustle. Drop something.</span>
+          </motion.div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-8">
-            <Link
-              to="/explore"
-              className="w-full sm:w-auto px-6 py-3 bg-white text-ink rounded-2xl font-semibold text-base md:text-lg hover:scale-105 transition-all shadow-[0_8px_0_0_#111111] active:shadow-none active:translate-y-1"
-            >
-              Start Supporting
-            </Link>
-            <button
-              onClick={signInWithGoogle}
-              className="w-full sm:w-auto px-6 py-3 bg-ink text-white rounded-2xl font-semibold text-base md:text-lg hover:scale-105 transition-all shadow-[0_8px_0_0_#FF7A00] active:shadow-none active:translate-y-1"
-            >
-              Create Your Page
-            </button>
-          </div>
-        </div>
-      </section>
-            If a creator makes you laugh, teaches you something new, or inspires you, you can drop something to show appreciation.
-            Every drop helps creators keep creating.
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-5xl sm:text-7xl md:text-9xl font-display font-extrabold tracking-tight text-ink leading-[0.85]"
+          >
+            Drop Something
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-[16px] md:text-[20px] text-ink/60 max-w-3xl mx-auto font-black leading-relaxed"
+          >
+            Drop Something is a platform where fans support creators with small tips. If a creator makes you laugh, teaches you something new, or inspires you, you can drop something to show appreciation. Every drop helps creators keep creating.
           </motion.p>
 
           <motion.div
@@ -89,7 +87,7 @@ export function Home() {
           >
             <Link
               to="/explore"
-              className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-primary text-white rounded-2xl font-black text-lg md:text-2xl hover:scale-105 transition-all shadow-[0_8px_0_0_#111111] active:shadow-none active:translate-y-1 flex items-center justify-center gap-3"
+              className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-primary text-white rounded-2xl font-black text-base md:text-lg hover:scale-105 transition-all shadow-[0_8px_0_0_#111111] active:shadow-none active:translate-y-1 flex items-center justify-center gap-3"
             >
               Drop Something
               <ArrowRight size={24} className="md:w-7 md:h-7" />
@@ -97,14 +95,14 @@ export function Home() {
             {user ? (
               <Link
                 to="/dashboard"
-                className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-white text-ink border-4 border-ink rounded-2xl font-black text-lg md:text-2xl hover:bg-cream transition-all shadow-[0_8px_0_0_#111111] active:shadow-none active:translate-y-1"
+                className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-white text-ink border-4 border-ink rounded-2xl font-black text-base md:text-lg hover:bg-cream transition-all shadow-[0_8px_0_0_#111111] active:shadow-none active:translate-y-1"
               >
                 Go to Dashboard
               </Link>
             ) : (
               <button
                 onClick={signInWithGoogle}
-                className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-secondary text-white rounded-2xl font-black text-lg md:text-2xl hover:scale-105 transition-all shadow-[0_8px_0_0_#111111] active:shadow-none active:translate-y-1"
+                className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 md:px-12 md:py-6 bg-secondary text-white rounded-2xl font-black text-base md:text-lg hover:scale-105 transition-all shadow-[0_8px_0_0_#111111] active:shadow-none active:translate-y-1"
               >
                 Become a Creator
               </button>
