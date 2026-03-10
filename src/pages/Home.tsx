@@ -385,8 +385,9 @@ export function Home() {
       {/* Final CTA Section */}
       <section className="max-w-6xl mx-auto px-6">
         <div className="bg-primary p-12 md:p-24 rounded-[3rem] md:rounded-[5rem] text-center space-y-12 text-white relative overflow-hidden border-8 border-ink shadow-[20px_20px_0_0_#111111]">
-          <h2 className="font-display font-black leading-[0.9] text-center overflow-visible md:whitespace-nowrap text-[clamp(2.25rem,6.5vw,9rem)]">
-            Support the Hustle. Drop something.
+          <h2 className="font-display font-black leading-tight text-center">
+            <span className="block text-[clamp(2rem,6vw,5.5rem)] sm:text-[clamp(2.5rem,6.5vw,6.5rem)] md:text-[clamp(3.5rem,7.5vw,8.5rem)] lg:text-[clamp(4rem,8vw,9rem)]">Support the Hustle.</span>
+            <span className="block text-[clamp(2rem,5.5vw,5.5rem)] sm:text-[clamp(2.5rem,6.5vw,6.5rem)] md:text-[clamp(3.5rem,7.5vw,8.5rem)] lg:text-[clamp(4rem,8vw,9rem)] mt-2">Drop something.</span>
           </h2>
           <p className="text-xl md:text-3xl text-white/90 font-black max-w-3xl mx-auto">
             If someone's content has helped you, entertained you, or inspired you, show appreciation. Every drop matters.
