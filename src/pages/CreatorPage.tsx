@@ -31,6 +31,13 @@ export function CreatorPage() {
   const [message, setMessage] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [paystackAvailable, setPaystackAvailable] = useState<boolean>(() => {
+    try {
+      return typeof (window as any).PaystackPop !== 'undefined';
+    } catch (e) {
+      return false;
+    }
+  });
   const [showSuccess, setShowSuccess] = useState(false);
 
   const loading = creator === undefined;
@@ -61,8 +68,33 @@ export function CreatorPage() {
     }
 
     setIsPaying(true);
+    // Ensure Paystack script is loaded
+    if (typeof (window as any).PaystackPop === 'undefined') {
+      const key = (import.meta as any).env.VITE_PAYSTACK_PUBLIC_KEY;
+      if (!key) {
+        alert('Paystack is not configured for this environment.');
+        setIsPaying(false);
+        return;
+      }
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://js.paystack.co/v1/inline.js';
+          s.async = true;
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error('Failed to load Paystack script'));
+          document.head.appendChild(s);
+        });
+        setPaystackAvailable(true);
+      } catch (err) {
+        console.error('Paystack load error', err);
+        alert('Unable to load payment provider. Please try again later.');
+        setIsPaying(false);
+        return;
+      }
+    }
 
-    const handler = PaystackPop.setup({
+    const handler = (window as any).PaystackPop.setup({
       key: (import.meta as any).env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder',
       email: 'supporter@dropsomething.ng',
       amount: finalAmount * 100,

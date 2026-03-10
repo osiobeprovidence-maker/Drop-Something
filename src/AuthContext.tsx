@@ -86,6 +86,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error('Google Sign-In Error:', error);
+      // Surface a user-friendly message in production so the user knows why sign-in failed
+      try {
+        const msg = (error as any)?.message || String(error);
+        alert('Sign-in failed: ' + msg);
+      } catch {}
     }
   };
 
