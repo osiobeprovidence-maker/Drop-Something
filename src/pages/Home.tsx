@@ -20,12 +20,20 @@ import {
   Smartphone,
   Sparkles
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { cn } from '../lib/utils';
 
 export function Home() {
   const { user, signInWithGoogle } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect logged-in users to the dashboard when they visit the landing page
+  React.useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const creatorTypes = [
     { name: "Content Creators", icon: Youtube },

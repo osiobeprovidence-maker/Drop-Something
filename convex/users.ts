@@ -89,6 +89,14 @@ export const updateUser = mutation({
                 website: v.optional(v.string()),
             })
         ),
+            suggestedAmounts: v.optional(v.array(v.number())),
+            supportMessage: v.optional(v.string()),
+            goal: v.optional(v.object({
+                title: v.string(),
+                target: v.number(),
+                current: v.number(),
+                createdAt: v.number(),
+            })),
     },
     handler: async (ctx, args) => {
         const user = await ctx.db

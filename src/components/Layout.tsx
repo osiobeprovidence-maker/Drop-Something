@@ -98,23 +98,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {mobileOpen && (
         <div className="md:hidden fixed inset-x-0 top-16 z-40 bg-white shadow-lg border-t-4 border-ink">
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-3">
-            {navItems.filter(item => item.show).map(item => (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileOpen(false)}
-                className="block text-lg font-black transition-all hover:text-primary text-ink"
-              >
-                {item.name}
-              </Link>
-            ))}
+            <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="block text-lg font-black hover:text-primary text-ink">Dashboard</Link>
+            <Link to={`/${profile?.username || 'setup'}`} onClick={() => setMobileOpen(false)} className="block text-lg font-black hover:text-primary text-ink">My Page</Link>
+            <Link to="/edit-profile" onClick={() => setMobileOpen(false)} className="block text-lg font-black hover:text-primary text-ink">Edit Profile</Link>
 
             <div className="pt-2 border-t border-ink/10">
-              <Link
-                to={`/${profile?.username || 'setup'}`}
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3"
-              >
+              <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white border-2 border-ink overflow-hidden">
                   {user?.photoURL ? (
                     <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full object-cover" />
@@ -123,7 +112,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   )}
                 </div>
                 <div className="text-sm font-black uppercase tracking-wider text-ink">{user?.displayName}</div>
-              </Link>
+              </div>
 
               <button
                 onClick={() => { setMobileOpen(false); logout(); }}

@@ -7,6 +7,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
 import { CreatorPage } from './pages/CreatorPage';
 import { SetupProfile } from './pages/SetupProfile';
+import { EditProfile } from './pages/EditProfile';
 import { KYC } from './pages/KYC';
 
 function PrivateRoute({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) {
@@ -34,6 +35,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/setup" element={<PrivateRoute><SetupProfile /></PrivateRoute>} />
+            <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
             <Route path="/kyc" element={<PrivateRoute><KYC /></PrivateRoute>} />
             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
             <Route path="/admin" element={<PrivateRoute adminOnly><Admin /></PrivateRoute>} />

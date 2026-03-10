@@ -224,6 +224,22 @@ export function CreatorPage() {
             {creator.bio || "Supporting the hustle!"}
           </p>
 
+          {/* Goal progress */}
+          {creator.goal && (
+            <div className="mt-4 px-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm font-black text-ink">{creator.goal.title}</div>
+                <div className="text-sm font-black text-ink">₦{creator.goal.current.toLocaleString()} / ₦{creator.goal.target.toLocaleString()}</div>
+              </div>
+              <div className="w-full bg-cream rounded-full h-4 overflow-hidden border-2 border-ink/10">
+                <div
+                  className="h-4 bg-primary"
+                  style={{ width: `${Math.min(100, Math.round((creator.goal.current / creator.goal.target) * 100))}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="pt-4 border-t-4 border-ink/5 flex items-center justify-center gap-6">
             <div className="text-center">
               <p className="text-2xl font-black text-ink">{successfulTips.length}+</p>

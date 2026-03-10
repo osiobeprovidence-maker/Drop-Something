@@ -17,6 +17,14 @@ export interface UserProfile {
     instagram?: string;
     website?: string;
   };
+  suggestedAmounts?: number[];
+  supportMessage?: string;
+  goal?: {
+    title: string;
+    target: number;
+    current: number;
+    createdAt: number;
+  };
   bankDetails?: BankDetails;
   createdAt: number;
   role?: 'user' | 'admin';

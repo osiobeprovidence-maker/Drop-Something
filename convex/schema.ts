@@ -14,6 +14,15 @@ export default defineSchema({
       instagram: v.optional(v.string()),
       website: v.optional(v.string()),
     }),
+    // Optional creator settings
+    suggestedAmounts: v.optional(v.array(v.number())),
+    supportMessage: v.optional(v.string()),
+    goal: v.optional(v.object({
+      title: v.string(),
+      target: v.number(),
+      current: v.number(),
+      createdAt: v.number(),
+    })),
     role: v.union(v.literal("user"), v.literal("admin")),
     createdAt: v.number(),
   })
