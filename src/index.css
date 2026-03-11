@@ -5,12 +5,14 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Bricolage Grotesque", sans-serif;
 
-  --color-primary: #FF8CDB;
-  --color-secondary: #00E5FF;
-  --color-cream: #FFFFFF;
-  --color-ink: #000000;
-  --color-accent: #FFD700;
+  --color-primary: #FF8BA7; /* Softer premium pink */
+  --color-secondary: #C3F0FB; /* Softer cyan */
+  --color-accent: #FFDD00; /* BMAC Yellow */
+  --color-cream: #FDFDFD;
+  --color-ink: #1A1A1A;
   
+  --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --shadow-premium-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   --shadow-brutal: 8px 8px 0px 0px #000000;
   --shadow-brutal-sm: 4px 4px 0px 0px #000000;
   --shadow-brutal-lg: 12px 12px 0px 0px #000000;
@@ -23,19 +25,27 @@
 }
 
 @layer components {
+  .premium-card {
+    @apply bg-white rounded-3xl p-6 shadow-[var(--shadow-premium)] border border-gray-100 transition-all duration-300 hover:shadow-[var(--shadow-premium-hover)] hover:-translate-y-1;
+  }
+  
+  .premium-btn {
+    @apply px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 active:scale-95 hover:shadow-lg;
+  }
+
+  .premium-btn-primary {
+    @apply premium-btn bg-accent text-black hover:bg-accent/90;
+  }
+
+  .premium-btn-white {
+    @apply premium-btn bg-white text-black border border-gray-200 hover:bg-gray-50;
+  }
+
   .brutal-card {
-    @apply border-4 border-black bg-white shadow-[var(--shadow-brutal)] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_#000];
+    @apply border-2 border-black bg-white shadow-[var(--shadow-brutal-sm)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[var(--shadow-brutal)];
   }
   
   .brutal-btn {
-    @apply border-4 border-black px-8 py-4 font-black text-xl shadow-[var(--shadow-brutal-sm)] transition-all active:translate-x-1 active:translate-y-1 active:shadow-none hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#000];
-  }
-
-  .brutal-btn-primary {
-    @apply brutal-btn bg-primary text-black hover:bg-primary/90;
-  }
-
-  .brutal-btn-white {
-    @apply brutal-btn bg-white text-black hover:bg-gray-50;
+    @apply border-2 border-black px-8 py-4 font-black text-xl shadow-[var(--shadow-brutal-sm)] transition-all active:translate-x-1 active:translate-y-1 active:shadow-none hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[var(--shadow-brutal)];
   }
 }
