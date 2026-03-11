@@ -38,36 +38,53 @@ export function Home() {
 
   return (
     <div className="min-h-screen bg-white overflow-hidden relative selection:bg-primary selection:text-black">
-      {/* Background decoration: Soft coins & Glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px]" />
-        
+      {/* Background decoration: Scattered Coins inspired by Gumroad */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Top Left Coin */}
         <motion.div 
-          animate={{ y: [0, -20, 0], rotate: [0, 5, 0] }}
+          initial={{ opacity: 0, x: -100, rotate: -30 }}
+          animate={{ opacity: 1, x: 0, y: [0, -20, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[15%] left-[10%] opacity-20 blur-sm"
+          className="absolute top-[10%] left-[-2%] md:left-[5%]"
         >
-          <CoinLogo className="w-16 h-16" />
-        </motion.div>
-        
-        <motion.div 
-          animate={{ y: [0, 20, 0], rotate: [0, -5, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute bottom-[20%] right-[10%] opacity-15 blur-[1px]"
-        >
-          <CoinLogo className="w-24 h-24" />
+          <CoinLogo className="w-32 h-32 md:w-48 md:h-48" rotation="-25deg" />
         </motion.div>
 
-        {/* Extra small coins */}
+        {/* Bottom Left Coin */}
         <motion.div 
-          animate={{ x: [0, 10, 0], y: [0, 10, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[40%] right-[15%] opacity-10"
+          initial={{ opacity: 0, x: -100, rotate: 15 }}
+          animate={{ opacity: 1, x: 0, y: [0, 15, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute bottom-[15%] left-[-5%] md:left-[2%]"
         >
-          <CoinLogo className="w-8 h-8" />
+          <CoinLogo className="w-40 h-40 md:w-64 md:h-64" rotation="10deg" />
         </motion.div>
+
+        {/* Top Right Coin */}
+        <motion.div 
+          initial={{ opacity: 0, x: 100, rotate: 10 }}
+          animate={{ opacity: 1, x: 0, y: [0, -15, 0] }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+          className="absolute top-[5%] right-[-3%] md:right-[8%]"
+        >
+          <CoinLogo className="w-24 h-24 md:w-40 md:h-40" rotation="15deg" />
+        </motion.div>
+
+        {/* Bottom Right Coin */}
+        <motion.div 
+          initial={{ opacity: 0, x: 100, rotate: -20 }}
+          animate={{ opacity: 1, x: 0, y: [0, 25, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+          className="absolute bottom-[10%] right-[-5%] md:right-[5%]"
+        >
+          <CoinLogo className="w-36 h-36 md:w-56 md:h-56" rotation="-45deg" />
+        </motion.div>
+
+        {/* Soft Glows */}
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px]" />
       </div>
+
 
       {/* Hero Section */}
       <main className="relative pt-32 pb-32 px-6 flex flex-col items-center justify-center text-center max-w-6xl mx-auto min-h-[calc(100vh-64px)]">
