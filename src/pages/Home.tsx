@@ -5,6 +5,18 @@ import { useAuth } from '../AuthContext';
 import { CoinLogo } from '../components/CoinLogo';
 import { 
   ArrowRight, 
+  Users, 
+  Share2, 
+  Wallet, 
+  Zap, 
+  Heart, 
+  ShieldCheck, 
+  Link as LinkIcon,
+  MessageSquare,
+  Code,
+  Music,
+  CheckCircle2,
+  Star,
   ChevronDown
 } from 'lucide-react';
 
@@ -69,13 +81,387 @@ export function Home() {
       </section>
 
 
+      {/* 5. Support Creators Showcase */}
+      <section className="py-32 overflow-hidden bg-white">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <span className="text-primary font-black tracking-widest text-xs uppercase">SUPPORT</span>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
+                Give your audience an easy way to support you.
+              </h2>
+            </div>
+            <div className="space-y-6">
+              <p className="text-xl text-gray-500 font-bold leading-relaxed max-w-lg">
+                With DropSomething, your supporters can send small tips and leave messages of appreciation.
+              </p>
+              <p className="text-xl text-gray-400 font-bold leading-relaxed max-w-lg">
+                In just a few taps, they can drop something and help you keep creating.
+              </p>
+            </div>
+          </div>
 
-      {/* 9. FAQ Section */}
+          <div className="relative">
+            {/* Mock Support Widget */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-gray-100 p-8 max-w-sm mx-auto relative z-20"
+            >
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Heart className="text-primary" size={20} fill="currentColor" />
+                  </div>
+                  <h3 className="text-xl font-black text-gray-900 tracking-tight">Support Riderezzy</h3>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {[500, 1000, 2000].map(val => (
+                    <button key={val} className="w-full py-4 rounded-2xl bg-gray-50 border-2 border-transparent hover:border-accent hover:bg-white transition-all font-black text-gray-400 hover:text-black hover:shadow-md">
+                      Drop ₦{val}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative">
+                   <textarea 
+                    placeholder="Say something nice..." 
+                    className="w-full bg-gray-50 border-none rounded-2xl p-5 text-sm font-bold focus:ring-2 focus:ring-accent outline-none min-h-[120px] resize-none placeholder:text-gray-300"
+                   />
+                </div>
+
+                <button className="w-full py-5 bg-black text-white rounded-full font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+                  Drop Something
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Floating Supporter Cards */}
+            <motion.div 
+              animate={{ y: [0, -15, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -top-12 -left-4 md:-left-20 bg-white p-6 rounded-[2rem] shadow-2xl border border-gray-50 z-30 max-w-[220px]"
+            >
+              <div className="flex flex-col gap-2">
+                <div className="font-black text-sm text-gray-900">Ada <span className="text-gray-400 font-bold">dropped</span> ₦1000</div>
+                <p className="text-xs text-gray-500 font-bold italic leading-relaxed">"Your tutorials helped me so much."</p>
+                <div className="flex gap-1 mt-1">
+                  <span className="text-xs">✨</span>
+                  <span className="text-xs">🙌</span>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              animate={{ y: [0, 15, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute -bottom-10 -right-4 md:-right-20 bg-white p-6 rounded-[2rem] shadow-2xl border border-gray-50 z-30 max-w-[220px]"
+            >
+              <div className="flex flex-col gap-2">
+                <div className="font-black text-sm text-gray-900">Riderezzy <span className="text-gray-400 font-bold">dropped</span> ₦2000</div>
+                <p className="text-xs text-gray-500 font-bold italic leading-relaxed">"Big fan of your work."</p>
+                <div className="flex gap-1 mt-1">
+                  <span className="text-xs">🚀</span>
+                  <span className="text-xs">💎</span>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              animate={{ x: [0, 10, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+              className="absolute top-1/2 -right-10 md:-right-24 bg-white p-5 rounded-2xl shadow-xl border border-gray-50 z-10"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center font-black text-[10px]">T</div>
+                <div>
+                  <div className="font-black text-[10px] text-gray-900 leading-none">Tunde</div>
+                  <div className="text-[10px] text-gray-400 font-bold">Keep creating 🔥</div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5.5 Membership + Goal Section */}
+      <section className="py-32 bg-gray-50/50 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
+            {/* Left: Text Content */}
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <span className="text-secondary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">CREATOR SUPPORT</span>
+                <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
+                  Turn your biggest fans into supporters.
+                </h2>
+              </div>
+              <div className="space-y-6">
+                <p className="text-xl text-gray-500 font-bold leading-relaxed max-w-lg">
+                  Give your audience more ways to support your work. Start memberships for recurring support or set a goal your community can help you achieve.
+                </p>
+                <p className="text-xl text-gray-400 font-bold leading-relaxed max-w-lg">
+                  Supporters can contribute monthly or help you reach something meaningful like new equipment, projects, or creative goals.
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Visual Side-by-Side systems */}
+            <div className="space-y-12">
+              <div className="grid sm:grid-cols-2 gap-6 items-start">
+                {/* Membership Column */}
+                <div className="space-y-6">
+                  {[
+                    { title: "Supporter Tier", price: "₦1,000", benefits: ["Support my work monthly", "Early access to new content", "Exclusive supporter updates"] },
+                    { title: "Inner Circle", price: "₦3,000", benefits: ["Monthly supporter badge", "Behind-the-scenes updates", "Exclusive posts and messages"] },
+                    { title: "Super Supporter", price: "₦5,000", benefits: ["Priority supporter recognition", "Special shoutouts", "Access to exclusive content"] }
+                  ].map((tier, i) => (
+                    <motion.div 
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className="bg-white p-6 rounded-[2rem] shadow-lg border border-gray-100 space-y-4 hover:shadow-xl transition-all group"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-black text-gray-900 leading-none mb-1">{tier.title}</h4>
+                          <p className="text-primary font-bold text-sm tracking-tight">{tier.price} <span className="text-gray-400 font-normal">/ mo</span></p>
+                        </div>
+                        <button className="px-5 py-2.5 bg-gray-900 text-white rounded-full text-[10px] font-black group-hover:bg-primary transition-all active:scale-95">Join</button>
+                      </div>
+                      <ul className="space-y-2">
+                        {tier.benefits.map((b, j) => (
+                          <li key={j} className="text-[9px] font-bold text-gray-500 flex items-center gap-2">
+                            <div className="w-1 h-1 bg-accent rounded-full" />
+                            {b}
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Creator Goal Column */}
+                <div className="relative pt-12 sm:pt-16">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-gray-50 relative z-20 space-y-6"
+                  >
+                    <div className="space-y-4">
+                      <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center">
+                        <Star className="text-secondary" size={24} fill="currentColor" />
+                      </div>
+                      <h4 className="text-xl font-black text-gray-900 leading-tight">Buy a new camera for better videos</h4>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs font-black">
+                        <span className="text-gray-900">₦120,000 <span className="text-gray-400 font-bold">raised</span></span>
+                        <span className="text-gray-400">₦200,000 <span className="text-gray-400 font-bold">goal</span></span>
+                      </div>
+                      <div className="w-full h-4 bg-gray-50 rounded-full overflow-hidden p-1 shadow-inner">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          whileInView={{ width: '60%' }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 1.5, ease: "easeOut" }}
+                          className="h-full bg-accent rounded-full shadow-[0_0_12px_rgba(255,221,0,0.5)]"
+                        />
+                      </div>
+                    </div>
+
+                    <button className="w-full py-5 bg-black text-white rounded-full font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+                      Drop Something
+                    </button>
+                  </motion.div>
+
+                  {/* Floating Supporter Messages around goal */}
+                  <motion.div 
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -top-4 -right-4 bg-white p-4 rounded-3xl shadow-2xl border border-gray-50 z-30 max-w-[180px] rotate-6"
+                  >
+                    <div className="font-black text-[10px] text-gray-900 leading-none mb-1 flex items-center gap-1">
+                      Ada <span className="text-primary">dropped</span> ₦2k
+                    </div>
+                    <p className="text-[10px] text-gray-500 font-bold leading-tight">"Can't wait to see your new videos!"</p>
+                  </motion.div>
+
+                  <motion.div 
+                    animate={{ x: [-5, 5, -5] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute bottom-10 -left-12 bg-white p-5 rounded-3xl shadow-2xl border border-gray-50 z-30 max-w-[160px] -rotate-12"
+                  >
+                    <div className="font-black text-[10px] text-gray-900 leading-none mb-1 flex items-center gap-1">
+                      Tunde <span className="text-secondary">dropped</span> ₦1k
+                    </div>
+                    <p className="text-[10px] text-gray-500 font-bold leading-tight">"Keep creating 🔥"</p>
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5.6 How DropSomething Works */}
+      <section className="py-32 bg-white" id="how-it-works">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
+            <span className="text-primary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">HOW IT WORKS</span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
+              Start receiving support in minutes.
+            </h2>
+            <p className="text-xl text-gray-500 font-bold leading-relaxed">
+              DropSomething makes it easy for creators and communities to receive support from their audience. Create your page, share your link, and let supporters drop something.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-12 mb-20">
+            {[
+              { 
+                step: "01", 
+                title: "Create Your Page", 
+                desc: "Set up your personal DropSomething page with your name, bio, and profile picture.",
+                sub: "Your page becomes your personal support hub."
+              },
+              { 
+                step: "02", 
+                title: "Share Your Link", 
+                desc: "Add your DropSomething link to your social media bio, posts, videos, or messages.",
+                sub: "Anywhere your audience follows you."
+              },
+              { 
+                step: "03", 
+                title: "Receive Support", 
+                desc: "Your fans can drop small tips, leave messages, join memberships, or help you reach your goals.",
+                sub: "Support arrives instantly."
+              }
+            ].map((item, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="space-y-6 group"
+              >
+                <div className="text-6xl font-black text-gray-100 group-hover:text-accent transition-colors leading-none">{item.step}</div>
+                <div className="space-y-3">
+                  <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">{item.title}</h3>
+                  <p className="text-gray-500 font-bold leading-relaxed">{item.desc}</p>
+                  <p className="text-[10px] text-primary font-black uppercase tracking-wider">{item.sub}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="flex flex-col items-center gap-8 pt-10 border-t border-gray-50">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Supporters see this</p>
+            <div className="flex flex-wrap justify-center gap-4">
+              {[500, 1000, 2000].map(val => (
+                <button key={val} className="px-8 py-4 bg-white border-2 border-black rounded-2xl font-black text-gray-400 hover:bg-accent hover:text-black transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)] hover:shadow-[6px_6px_0px_0px_#000] hover:-translate-y-1 active:translate-y-0 active:shadow-none">
+                  Drop ₦{val}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* 7. Who It’s For */}
+      <section className="py-32 bg-gray-900 text-white rounded-[4rem] mx-4 md:mx-10 my-10 overflow-hidden relative" id="creators">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 blur-[100px] rounded-full" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-secondary/10 blur-[100px] rounded-full" />
+        
+        <div className="max-w-7xl mx-auto px-8 relative z-10">
+          <div className="max-w-3xl mx-auto text-center mb-20 space-y-4">
+            <span className="text-secondary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">CREATORS</span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight">Built for creators, communities, and builders.</h2>
+            <p className="text-xl text-gray-400 font-bold leading-relaxed">
+              DropSomething is designed for people who create value online and want a simple way for their audience to support them.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12">
+            <div className="grid gap-8">
+              <motion.div 
+                whileHover={{ x: 10 }}
+                className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 backdrop-blur-sm space-y-4"
+              >
+                <div className="w-12 h-12 bg-primary/20 text-primary rounded-2xl flex items-center justify-center">
+                  <Heart size={24} fill="currentColor" />
+                </div>
+                <h3 className="text-2xl font-black tracking-tight uppercase">Content Creators</h3>
+                <p className="text-gray-400 font-bold leading-relaxed">Video creators, streamers, and influencers can receive support directly from their audience.</p>
+              </motion.div>
+
+              <motion.div 
+                whileHover={{ x: 10 }}
+                className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 backdrop-blur-sm space-y-4"
+              >
+                <div className="w-12 h-12 bg-secondary/20 text-secondary rounded-2xl flex items-center justify-center">
+                  <Code size={24} />
+                </div>
+                <h3 className="text-2xl font-black tracking-tight uppercase">Developers & Builders</h3>
+                <p className="text-gray-400 font-bold leading-relaxed">Developers, open-source maintainers, and tech educators can receive appreciation for their work.</p>
+              </motion.div>
+            </div>
+
+            <div className="grid gap-8 md:pt-12">
+              <motion.div 
+                whileHover={{ x: 10 }}
+                className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 backdrop-blur-sm space-y-4"
+              >
+                <div className="w-12 h-12 bg-accent/20 text-accent rounded-2xl flex items-center justify-center">
+                  <Star size={24} fill="currentColor" />
+                </div>
+                <h3 className="text-2xl font-black tracking-tight uppercase">Writers & Designers</h3>
+                <p className="text-gray-400 font-bold leading-relaxed">Writers, designers, and educators can receive support from readers and followers.</p>
+              </motion.div>
+
+              <motion.div 
+                whileHover={{ x: 10 }}
+                className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 backdrop-blur-sm space-y-4"
+              >
+                <div className="w-12 h-12 bg-primary/20 text-primary rounded-2xl flex items-center justify-center">
+                  <Users size={24} fill="currentColor" />
+                </div>
+                <h3 className="text-2xl font-black tracking-tight uppercase">Communities & Projects</h3>
+                <p className="text-gray-400 font-bold leading-relaxed">Podcasts, clubs, and online communities can collect support for projects, events, or goals.</p>
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="mt-24 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              "Your supporters belong to you",
+              "Instant payments to your account",
+              "No complicated setup",
+              "Simple support links you can share anywhere"
+            ].map((f, i) => (
+              <div key={i} className="flex items-center gap-3 py-4 px-6 rounded-2xl bg-white/5 border border-white/5">
+                <CheckCircle2 size={18} className="text-accent" />
+                <span className="text-xs font-black uppercase tracking-widest text-gray-300">{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
       <section className="py-32 bg-white" id="faq">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-20 space-y-4">
             <span className="text-primary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">FAQ</span>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900">
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
               Frequently Asked Questions
             </h2>
             <p className="text-xl text-gray-500 font-bold leading-relaxed">
@@ -137,6 +523,7 @@ export function Home() {
         </div>
       </section>
 
+
       {/* 10. Final CTA Section */}
       <section className="py-40 bg-accent relative overflow-hidden text-black text-center px-6 mx-4 md:mx-10 my-10 rounded-[4rem]">
         <div className="relative z-10 space-y-10 max-w-4xl mx-auto">
@@ -168,9 +555,11 @@ export function Home() {
             <div className="space-y-4">
               <h4 className="font-bold text-gray-900 uppercase tracking-widest text-xs">Product</h4>
               <nav className="flex flex-col gap-3 text-gray-500 font-semibold">
-                <Link to="/explore" className="hover:text-black transition-colors">Explore</Link>
-                <a href="#faq" className="hover:text-black transition-colors">FAQ</a>
-                <Link to="/support" className="hover:text-black transition-colors">Support</Link>
+                <Link to="/about" className="hover:text-black transition-colors">About</Link>
+                <a href="#how-it-works" className="hover:text-black transition-all">How it Works</a>
+                <a href="#creators" className="hover:text-black transition-all">Creators</a>
+                <a href="#faq" className="hover:text-black transition-all">FAQ</a>
+                <Link to="/explore" className="hover:text-black transition-all">Explore</Link>
               </nav>
             </div>
             <div className="space-y-4">
