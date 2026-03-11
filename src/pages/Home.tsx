@@ -80,236 +80,6 @@ export function Home() {
         </div>
       </section>
 
-
-      {/* 5. Support Creators Showcase */}
-      <section className="py-32 overflow-hidden bg-white">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <span className="text-primary font-black tracking-widest text-xs uppercase">SUPPORT</span>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
-                Give your audience an easy way to support you.
-              </h2>
-            </div>
-            <div className="space-y-6">
-              <p className="text-xl text-gray-500 font-bold leading-relaxed max-w-lg">
-                With DropSomething, your supporters can send small tips and leave messages of appreciation.
-              </p>
-              <p className="text-xl text-gray-400 font-bold leading-relaxed max-w-lg">
-                In just a few taps, they can drop something and help you keep creating.
-              </p>
-            </div>
-          </div>
-
-          <div className="relative">
-            {/* Mock Support Widget */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-gray-100 p-8 max-w-sm mx-auto relative z-20"
-            >
-              <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <Heart className="text-primary" size={20} fill="currentColor" />
-                  </div>
-                  <h3 className="text-xl font-black text-gray-900 tracking-tight">Support Riderezzy</h3>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3">
-                  {[500, 1000, 2000].map(val => (
-                    <button key={val} className="w-full py-4 rounded-2xl bg-gray-50 border-2 border-transparent hover:border-accent hover:bg-white transition-all font-black text-gray-400 hover:text-black hover:shadow-md">
-                      Drop ₦{val}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="relative">
-                   <textarea 
-                    placeholder="Say something nice..." 
-                    className="w-full bg-gray-50 border-none rounded-2xl p-5 text-sm font-bold focus:ring-2 focus:ring-accent outline-none min-h-[120px] resize-none placeholder:text-gray-300"
-                   />
-                </div>
-
-                <button className="w-full py-5 bg-black text-white rounded-full font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-                  Drop Something
-                </button>
-              </div>
-            </motion.div>
-
-            {/* Floating Supporter Cards */}
-            <motion.div 
-              animate={{ y: [0, -15, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-12 -left-4 md:-left-20 bg-white p-6 rounded-[2rem] shadow-2xl border border-gray-50 z-30 max-w-[220px]"
-            >
-              <div className="flex flex-col gap-2">
-                <div className="font-black text-sm text-gray-900">Ada <span className="text-gray-400 font-bold">dropped</span> ₦1000</div>
-                <p className="text-xs text-gray-500 font-bold italic leading-relaxed">"Your tutorials helped me so much."</p>
-                <div className="flex gap-1 mt-1">
-                  <span className="text-xs">✨</span>
-                  <span className="text-xs">🙌</span>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div 
-              animate={{ y: [0, 15, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute -bottom-10 -right-4 md:-right-20 bg-white p-6 rounded-[2rem] shadow-2xl border border-gray-50 z-30 max-w-[220px]"
-            >
-              <div className="flex flex-col gap-2">
-                <div className="font-black text-sm text-gray-900">Riderezzy <span className="text-gray-400 font-bold">dropped</span> ₦2000</div>
-                <p className="text-xs text-gray-500 font-bold italic leading-relaxed">"Big fan of your work."</p>
-                <div className="flex gap-1 mt-1">
-                  <span className="text-xs">🚀</span>
-                  <span className="text-xs">💎</span>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div 
-              animate={{ x: [0, 10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-              className="absolute top-1/2 -right-10 md:-right-24 bg-white p-5 rounded-2xl shadow-xl border border-gray-50 z-10"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center font-black text-[10px]">T</div>
-                <div>
-                  <div className="font-black text-[10px] text-gray-900 leading-none">Tunde</div>
-                  <div className="text-[10px] text-gray-400 font-bold">Keep creating 🔥</div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5.5 Membership + Goal Section */}
-      <section className="py-32 bg-gray-50/50 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            {/* Left: Text Content */}
-            <div className="space-y-8">
-              <div className="space-y-4">
-                <span className="text-secondary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">CREATOR SUPPORT</span>
-                <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
-                  Turn your biggest fans into supporters.
-                </h2>
-              </div>
-              <div className="space-y-6">
-                <p className="text-xl text-gray-500 font-bold leading-relaxed max-w-lg">
-                  Give your audience more ways to support your work. Start memberships for recurring support or set a goal your community can help you achieve.
-                </p>
-                <p className="text-xl text-gray-400 font-bold leading-relaxed max-w-lg">
-                  Supporters can contribute monthly or help you reach something meaningful like new equipment, projects, or creative goals.
-                </p>
-              </div>
-            </div>
-
-            {/* Right: Visual Side-by-Side systems */}
-            <div className="space-y-12">
-              <div className="grid sm:grid-cols-2 gap-6 items-start">
-                {/* Membership Column */}
-                <div className="space-y-6">
-                  {[
-                    { title: "Supporter Tier", price: "₦1,000", benefits: ["Support my work monthly", "Early access to new content", "Exclusive supporter updates"] },
-                    { title: "Inner Circle", price: "₦3,000", benefits: ["Monthly supporter badge", "Behind-the-scenes updates", "Exclusive posts and messages"] },
-                    { title: "Super Supporter", price: "₦5,000", benefits: ["Priority supporter recognition", "Special shoutouts", "Access to exclusive content"] }
-                  ].map((tier, i) => (
-                    <motion.div 
-                      key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.1 }}
-                      className="bg-white p-6 rounded-[2rem] shadow-lg border border-gray-100 space-y-4 hover:shadow-xl transition-all group"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-black text-gray-900 leading-none mb-1">{tier.title}</h4>
-                          <p className="text-primary font-bold text-sm tracking-tight">{tier.price} <span className="text-gray-400 font-normal">/ mo</span></p>
-                        </div>
-                        <button className="px-5 py-2.5 bg-gray-900 text-white rounded-full text-[10px] font-black group-hover:bg-primary transition-all active:scale-95">Join</button>
-                      </div>
-                      <ul className="space-y-2">
-                        {tier.benefits.map((b, j) => (
-                          <li key={j} className="text-[9px] font-bold text-gray-500 flex items-center gap-2">
-                            <div className="w-1 h-1 bg-accent rounded-full" />
-                            {b}
-                          </li>
-                        ))}
-                      </ul>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Creator Goal Column */}
-                <div className="relative pt-12 sm:pt-16">
-                  <motion.div 
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-gray-50 relative z-20 space-y-6"
-                  >
-                    <div className="space-y-4">
-                      <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center">
-                        <Star className="text-secondary" size={24} fill="currentColor" />
-                      </div>
-                      <h4 className="text-xl font-black text-gray-900 leading-tight">Buy a new camera for better videos</h4>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-xs font-black">
-                        <span className="text-gray-900">₦120,000 <span className="text-gray-400 font-bold">raised</span></span>
-                        <span className="text-gray-400">₦200,000 <span className="text-gray-400 font-bold">goal</span></span>
-                      </div>
-                      <div className="w-full h-4 bg-gray-50 rounded-full overflow-hidden p-1 shadow-inner">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          whileInView={{ width: '60%' }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 1.5, ease: "easeOut" }}
-                          className="h-full bg-accent rounded-full shadow-[0_0_12px_rgba(255,221,0,0.5)]"
-                        />
-                      </div>
-                    </div>
-
-                    <button className="w-full py-5 bg-black text-white rounded-full font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-                      Drop Something
-                    </button>
-                  </motion.div>
-
-                  {/* Floating Supporter Messages around goal */}
-                  <motion.div 
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute -top-4 -right-4 bg-white p-4 rounded-3xl shadow-2xl border border-gray-50 z-30 max-w-[180px] rotate-6"
-                  >
-                    <div className="font-black text-[10px] text-gray-900 leading-none mb-1 flex items-center gap-1">
-                      Ada <span className="text-primary">dropped</span> ₦2k
-                    </div>
-                    <p className="text-[10px] text-gray-500 font-bold leading-tight">"Can't wait to see your new videos!"</p>
-                  </motion.div>
-
-                  <motion.div 
-                    animate={{ x: [-5, 5, -5] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute bottom-10 -left-12 bg-white p-5 rounded-3xl shadow-2xl border border-gray-50 z-30 max-w-[160px] -rotate-12"
-                  >
-                    <div className="font-black text-[10px] text-gray-900 leading-none mb-1 flex items-center gap-1">
-                      Tunde <span className="text-secondary">dropped</span> ₦1k
-                    </div>
-                    <p className="text-[10px] text-gray-500 font-bold leading-tight">"Keep creating 🔥"</p>
-                  </motion.div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* 5.6 How DropSomething Works */}
       <section className="py-32 bg-white" id="how-it-works">
         <div className="max-w-7xl mx-auto px-6">
@@ -374,7 +144,6 @@ export function Home() {
           </div>
         </div>
       </section>
-
 
       {/* 7. Who It’s For */}
       <section className="py-32 bg-gray-900 text-white rounded-[4rem] mx-4 md:mx-10 my-10 overflow-hidden relative" id="creators">
@@ -455,6 +224,115 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {/* 6. Example Creator Page - LATER */}
+      {/* <section className="py-32 overflow-hidden"> ... </section> */}
+
+      {/* Why DropSomething Section */}
+      <section className="py-32 bg-white" id="why-dropsomething">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-20 space-y-4">
+            <span className="text-primary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">WHY DROPSOMETHING</span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
+              Built for the modern creator.
+            </h2>
+            <p className="text-xl text-gray-500 font-bold leading-relaxed max-w-2xl mx-auto">
+              We've stripped away the complexity so you can focus on what you do best: creating value for your audience.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Grow your community",
+                desc: "Build a direct, meaningful connection with your supporters. No algorithms, just pure appreciation.",
+                icon: <Users className="text-primary" size={32} />
+              },
+              {
+                title: "Instant Support",
+                desc: "Receive tips, memberships, and goal contributions without the typical platform delays or hurdles.",
+                icon: <Zap className="text-secondary" size={32} fill="currentColor" />
+              },
+              {
+                title: "Total Control",
+                desc: "Your page, your brand, your audience. Customize your experience to reflect your unique creative identity.",
+                icon: <ShieldCheck className="text-accent" size={32} />
+              }
+            ].map((feature, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="p-10 rounded-[2.5rem] bg-gray-50 border border-gray-100 hover:shadow-2xl transition-all group"
+              >
+                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                  {feature.icon}
+                </div>
+                <h3 className="text-2xl font-black text-gray-900 mb-4">{feature.title}</h3>
+                <p className="text-gray-500 font-bold leading-relaxed">{feature.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof Section */}
+      <section className="py-32 bg-gray-50" id="social-proof">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-20 space-y-4">
+            <span className="text-secondary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">SOCIAL PROOF</span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900">
+              Trusted by creators everywhere.
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                quote: "DropSomething changed how I interact with my fans. It's the most seamless support tool I've ever used.",
+                author: "Tunde",
+                role: "Content Creator",
+                image: "https://i.pravatar.cc/150?u=tunde"
+              },
+              {
+                quote: "The easiest way to receive appreciation for my open source work. My supporters love the simplicity.",
+                author: "Ada",
+                role: "Software Developer",
+                image: "https://i.pravatar.cc/150?u=ada"
+              },
+              {
+                quote: "I reached my photography goal in just two weeks! The community vibe here is unmatched.",
+                author: "Riderezzy",
+                role: "Photographer",
+                image: "https://i.pravatar.cc/150?u=riderezzy"
+              }
+            ].map((testimonial, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-white p-10 rounded-[3rem] shadow-xl border border-gray-50 flex flex-col justify-between"
+              >
+                <p className="text-xl text-gray-600 font-bold italic leading-relaxed mb-8">
+                  "{testimonial.quote}"
+                </p>
+                <div className="flex items-center gap-4">
+                  <img src={testimonial.image} className="w-14 h-14 rounded-2xl object-cover shadow-lg" alt={testimonial.author} />
+                  <div>
+                    <h4 className="font-black text-gray-900">{testimonial.author}</h4>
+                    <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">{testimonial.role}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
 
       {/* FAQ Section */}
       <section className="py-32 bg-white" id="faq">
@@ -558,6 +436,8 @@ export function Home() {
                 <Link to="/about" className="hover:text-black transition-colors">About</Link>
                 <a href="#how-it-works" className="hover:text-black transition-all">How it Works</a>
                 <a href="#creators" className="hover:text-black transition-all">Creators</a>
+                <a href="#why-dropsomething" className="hover:text-black transition-all">Why Us</a>
+                <a href="#social-proof" className="hover:text-black transition-all">Wall of Love</a>
                 <a href="#faq" className="hover:text-black transition-all">FAQ</a>
                 <Link to="/explore" className="hover:text-black transition-all">Explore</Link>
               </nav>
