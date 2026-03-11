@@ -116,31 +116,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       )}>
         {children}
       </main>
-
-      {/* Global Floating Drop Button */}
-      {!isHomePage && (
-        <motion.div 
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="fixed bottom-8 right-8 z-40 group"
-        >
-          <div className="absolute bottom-full right-0 mb-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0 pointer-events-none group-hover:pointer-events-auto">
-            <div className="bg-white border-2 border-black p-2 rounded-2xl shadow-xl space-y-2">
-              {[500, 1000, 2000].map(val => (
-                <button key={val} className="w-full text-left bg-gray-50 hover:bg-accent px-4 py-2 rounded-xl font-bold transition-all text-sm">
-                  ₦{val}
-                </button>
-              ))}
-              <button className="w-full text-left bg-gray-50 hover:bg-accent px-4 py-2 rounded-xl font-bold transition-all text-[10px] uppercase">
-                Custom
-              </button>
-            </div>
-          </div>
-          <button className="w-16 h-16 bg-accent border-4 border-black rounded-full shadow-[4px_4px_0px_0px_#000] flex items-center justify-center hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#000] transition-all active:translate-x-0 active:translate-y-0 active:shadow-none">
-            <CoinLogo className="w-10 h-10" />
-          </button>
-        </motion.div>
-      )}
     </div>
   );
 }
