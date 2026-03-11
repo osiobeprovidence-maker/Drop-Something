@@ -16,7 +16,8 @@ import {
   Code,
   Music,
   CheckCircle2,
-  Star
+  Star,
+  ChevronDown
 } from 'lucide-react';
 
 export function Home() {
@@ -455,117 +456,69 @@ export function Home() {
         </div>
       </section>
 
-      {/* 6. Example Creator Page */}
-      <section className="py-32 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
-              <span className="text-primary font-bold text-xs uppercase tracking-wider">Example Page</span>
-            </div>
-            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900">Your page looks <span className="italic text-primary font-serif">beautiful</span></h2>
-            <p className="text-xl text-gray-500 font-medium leading-relaxed">
-              We've designed a clean, mobile-first experience that makes it incredibly easy for fans to support you without any friction. 
+
+      {/* 9. FAQ Section */}
+      <section className="py-32 bg-white" id="faq">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-20 space-y-4">
+            <span className="text-primary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">FAQ</span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-xl text-gray-500 font-bold leading-relaxed">
+              Everything you need to know about using DropSomething.
             </p>
-            <div className="space-y-4">
-              {["Custom URLs", "Beautiful layouts", "Supporter feed", "Real-time notifications"].map((f, i) => (
-                <div key={i} className="flex items-center gap-3 font-bold text-gray-800">
-                  <CheckCircle2 size={24} className="text-secondary" />
-                  {f}
-                </div>
-              ))}
-            </div>
           </div>
 
-          <div className="relative">
-            {/* Mockup */}
-            <div className="bg-white rounded-[3rem] shadow-2xl border-8 border-gray-900 p-8 max-w-sm mx-auto overflow-hidden relative">
-              <div className="space-y-8">
-                <div className="text-center space-y-4">
-                  <div className="w-24 h-24 rounded-[2rem] bg-gray-100 mx-auto border-4 border-white shadow-xl flex items-center justify-center overflow-hidden">
-                    <img src="https://i.pravatar.cc/150?u=riderezzy" className="w-full h-full object-cover" alt="" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black">Riderezzy</h3>
-                    <p className="text-primary font-bold">Tech Creator</p>
-                  </div>
-                  <p className="text-sm text-gray-500 font-bold">Support my work ❤️</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {[500, 1000, 2000].map(val => (
-                    <div key={val} className="py-4 rounded-2xl bg-gray-50 border-2 border-transparent text-center font-bold text-gray-400">
-                      ₦{val}
+          <div className="space-y-4">
+            {[
+              { 
+                q: "What is DropSomething?", 
+                a: "DropSomething is a platform that allows creators and communities to receive support directly from their audience through small tips, memberships, or goal contributions." 
+              },
+              { 
+                q: "How do supporters send money?", 
+                a: "Supporters can choose an amount such as ₦500, ₦1000, or ₦2000, leave a message, and complete the payment in just a few taps." 
+              },
+              { 
+                q: "Who can use DropSomething?", 
+                a: "Anyone who creates value online can use DropSomething — creators, developers, writers, designers, podcasters, and online communities." 
+              },
+              { 
+                q: "Can I set goals for my supporters?", 
+                a: "Yes. You can create goals such as buying equipment, funding a project, or launching something new, and your supporters can help you reach that goal." 
+              },
+              { 
+                q: "Are memberships available?", 
+                a: "Yes. Creators can offer monthly memberships so their biggest fans can support them consistently." 
+              },
+              { 
+                q: "How do I share my page?", 
+                a: "Once you create your page, you get a personal link that you can share on your social media, bio, or anywhere your audience follows you." 
+              }
+            ].map((faq, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05 }}
+                className="bg-gray-50 rounded-[2rem] border border-gray-100 overflow-hidden"
+              >
+                <details className="group">
+                  <summary className="flex items-center justify-between p-8 cursor-pointer list-none">
+                    <h3 className="text-xl font-black text-gray-900 pr-6">{faq.q}</h3>
+                    <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center transition-transform group-open:rotate-180">
+                      <ChevronDown size={20} className="text-primary" />
                     </div>
-                  ))}
-                  <div className="py-4 rounded-2xl bg-gray-50 border-2 border-transparent text-center font-bold text-gray-400 text-xs flex items-center justify-center">
-                    Custom
+                  </summary>
+                  <div className="px-8 pb-8">
+                    <p className="text-lg text-gray-500 font-bold leading-relaxed border-t border-gray-100 pt-6">
+                      {faq.a}
+                    </p>
                   </div>
-                </div>
-                <div className="pt-6 border-t font-bold">
-                  <p className="text-xs text-gray-400 uppercase tracking-widest mb-4">Recent supporters</p>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-gray-50 rounded-xl text-[10px]">Ada dropped ₦1000</div>
-                    <div className="p-3 bg-gray-50 rounded-xl text-[10px]">Tunde dropped ₦500</div>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-6 bg-gray-900 rounded-full" />
-            </div>
-            {/* Floating elements */}
-            <motion.div 
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-20 -right-4 bg-white p-4 rounded-2xl shadow-xl border border-gray-100 rotate-12 hidden md:block"
-            >
-              <p className="text-xs font-bold text-gray-800">₦25,000 received! 🚀</p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* 8. Why This Works */}
-      <section className="py-32">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-black text-gray-900 mb-16 text-center tracking-tight">Why This Works</h2>
-          <div className="grid md:grid-cols-3 gap-12">
-            {[
-              { title: "Social Proof", desc: "People love supporting creators others appreciate." },
-              { title: "Emotional Reward", desc: "Supporters feel good helping creators grow." },
-              { title: "Community Feeling", desc: "Support builds a stronger connection between creators and their audience." }
-            ].map((trigger, i) => (
-              <div key={i} className="space-y-4 p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 shadow-sm transition-all hover:bg-white hover:shadow-xl">
-                <div className="text-5xl font-black text-gray-200 mb-2">0{i+1}</div>
-                <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">{trigger.title}</h3>
-                <p className="text-lg text-gray-500 font-medium leading-relaxed">{trigger.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 9. Featured Creators */}
-      <section className="py-32 bg-gray-50/50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
-            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900">Featured Creators</h2>
-            <Link to="/explore" className="text-primary font-bold flex items-center gap-2 hover:underline decoration-2 text-lg">
-              View all creators <ArrowRight size={20} />
-            </Link>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { name: "Tunde", location: "Lagos, NG", amount: "₦45,000", image: "https://i.pravatar.cc/150?u=tunde" },
-              { name: "Ada", location: "Enugu, NG", amount: "₦30,000", image: "https://i.pravatar.cc/150?u=ada" },
-              { name: "Riderezzy", location: "Abuja, NG", amount: "₦20,000", image: "https://i.pravatar.cc/150?u=riderezzy2" }
-            ].map((creator, i) => (
-              <div key={i} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl transition-all hover:-translate-y-2 flex items-center gap-6">
-                <img src={creator.image} className="w-20 h-20 rounded-2xl object-cover shadow-lg" alt="" />
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">{creator.name}</h3>
-                  <p className="text-sm font-bold text-gray-400 mb-2 underline decoration-accent decoration-2 underline-offset-4">{creator.location}</p>
-                  <p className="text-lg font-black text-secondary">{creator.amount} supported</p>
-                </div>
-              </div>
+                </details>
+              </motion.div>
             ))}
           </div>
         </div>
