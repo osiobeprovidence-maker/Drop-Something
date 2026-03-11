@@ -127,3 +127,13 @@ export const getUserById = query({
         };
     },
 });
+// List creators for explorer
+export const listUsers = query({
+    args: { limit: v.optional(v.number()) },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("users")
+            .order("desc")
+            .take(args.limit ?? 50);
+    },
+});
