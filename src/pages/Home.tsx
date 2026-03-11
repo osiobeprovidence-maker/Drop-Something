@@ -444,7 +444,7 @@ export function Home() {
               "Your supporters belong to you",
               "Instant payments to your account",
               "No complicated setup",
-              "Simple support links everywhere"
+              "Simple support links you can share anywhere"
             ].map((f, i) => (
               <div key={i} className="flex items-center gap-3 py-4 px-6 rounded-2xl bg-white/5 border border-white/5">
                 <CheckCircle2 size={18} className="text-accent" />
