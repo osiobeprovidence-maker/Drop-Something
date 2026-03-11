@@ -374,72 +374,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* 6. Example Creator Page */}
-      <section className="py-32 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
-              <span className="text-primary font-bold text-xs uppercase tracking-wider">Example Page</span>
-            </div>
-            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900">Your page looks <span className="italic text-primary font-serif">beautiful</span></h2>
-            <p className="text-xl text-gray-500 font-medium leading-relaxed">
-              We've designed a clean, mobile-first experience that makes it incredibly easy for fans to support you without any friction. 
-            </p>
-            <div className="space-y-4">
-              {["Custom URLs", "Beautiful layouts", "Supporter feed", "Real-time notifications"].map((f, i) => (
-                <div key={i} className="flex items-center gap-3 font-bold text-gray-800">
-                  <CheckCircle2 size={24} className="text-secondary" />
-                  {f}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="relative">
-            {/* Mockup */}
-            <div className="bg-white rounded-[3rem] shadow-2xl border-8 border-gray-900 p-8 max-w-sm mx-auto overflow-hidden relative">
-              <div className="space-y-8">
-                <div className="text-center space-y-4">
-                  <div className="w-24 h-24 rounded-[2rem] bg-gray-100 mx-auto border-4 border-white shadow-xl flex items-center justify-center overflow-hidden">
-                    <img src="https://i.pravatar.cc/150?u=riderezzy" className="w-full h-full object-cover" alt="" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black">Riderezzy</h3>
-                    <p className="text-primary font-bold">Tech Creator</p>
-                  </div>
-                  <p className="text-sm text-gray-500 font-bold">Support my work ❤️</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {[500, 1000, 2000].map(val => (
-                    <div key={val} className="py-4 rounded-2xl bg-gray-50 border-2 border-transparent text-center font-bold text-gray-400">
-                      ₦{val}
-                    </div>
-                  ))}
-                  <div className="py-4 rounded-2xl bg-gray-50 border-2 border-transparent text-center font-bold text-gray-400 text-xs flex items-center justify-center">
-                    Custom
-                  </div>
-                </div>
-                <div className="pt-6 border-t font-bold">
-                  <p className="text-xs text-gray-400 uppercase tracking-widest mb-4">Recent supporters</p>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-gray-50 rounded-xl text-[10px]">Ada dropped ₦1000</div>
-                    <div className="p-3 bg-gray-50 rounded-xl text-[10px]">Tunde dropped ₦500</div>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-6 bg-gray-900 rounded-full" />
-            </div>
-            {/* Floating elements */}
-            <motion.div 
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-20 -right-4 bg-white p-4 rounded-2xl shadow-xl border border-gray-100 rotate-12 hidden md:block"
-            >
-              <p className="text-xs font-bold text-gray-800">₦25,000 received! 🚀</p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
 
       {/* 7. Who It’s For */}
       <section className="py-32 bg-gray-900 text-white rounded-[4rem] mx-4 md:mx-10 my-10 overflow-hidden relative" id="creators">
@@ -517,6 +451,73 @@ export function Home() {
                 <span className="text-xs font-black uppercase tracking-widest text-gray-300">{f}</span>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6. Example Creator Page */}
+      <section className="py-32 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+          <div className="space-y-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
+              <span className="text-primary font-bold text-xs uppercase tracking-wider">Example Page</span>
+            </div>
+            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900">Your page looks <span className="italic text-primary font-serif">beautiful</span></h2>
+            <p className="text-xl text-gray-500 font-medium leading-relaxed">
+              We've designed a clean, mobile-first experience that makes it incredibly easy for fans to support you without any friction. 
+            </p>
+            <div className="space-y-4">
+              {["Custom URLs", "Beautiful layouts", "Supporter feed", "Real-time notifications"].map((f, i) => (
+                <div key={i} className="flex items-center gap-3 font-bold text-gray-800">
+                  <CheckCircle2 size={24} className="text-secondary" />
+                  {f}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative">
+            {/* Mockup */}
+            <div className="bg-white rounded-[3rem] shadow-2xl border-8 border-gray-900 p-8 max-w-sm mx-auto overflow-hidden relative">
+              <div className="space-y-8">
+                <div className="text-center space-y-4">
+                  <div className="w-24 h-24 rounded-[2rem] bg-gray-100 mx-auto border-4 border-white shadow-xl flex items-center justify-center overflow-hidden">
+                    <img src="https://i.pravatar.cc/150?u=riderezzy" className="w-full h-full object-cover" alt="" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black">Riderezzy</h3>
+                    <p className="text-primary font-bold">Tech Creator</p>
+                  </div>
+                  <p className="text-sm text-gray-500 font-bold">Support my work ❤️</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {[500, 1000, 2000].map(val => (
+                    <div key={val} className="py-4 rounded-2xl bg-gray-50 border-2 border-transparent text-center font-bold text-gray-400">
+                      ₦{val}
+                    </div>
+                  ))}
+                  <div className="py-4 rounded-2xl bg-gray-50 border-2 border-transparent text-center font-bold text-gray-400 text-xs flex items-center justify-center">
+                    Custom
+                  </div>
+                </div>
+                <div className="pt-6 border-t font-bold">
+                  <p className="text-xs text-gray-400 uppercase tracking-widest mb-4">Recent supporters</p>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-gray-50 rounded-xl text-[10px]">Ada dropped ₦1000</div>
+                    <div className="p-3 bg-gray-50 rounded-xl text-[10px]">Tunde dropped ₦500</div>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-6 bg-gray-900 rounded-full" />
+            </div>
+            {/* Floating elements */}
+            <motion.div 
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute top-20 -right-4 bg-white p-4 rounded-2xl shadow-xl border border-gray-100 rotate-12 hidden md:block"
+            >
+              <p className="text-xs font-bold text-gray-800">₦25,000 received! 🚀</p>
+            </motion.div>
           </div>
         </div>
       </section>
