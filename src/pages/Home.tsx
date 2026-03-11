@@ -185,6 +185,130 @@ export function Home() {
         </div>
       </section>
 
+      {/* 5.5 Membership + Goal Section */}
+      <section className="py-32 bg-gray-50/50 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
+            {/* Left: Text Content */}
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <span className="text-secondary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">CREATOR SUPPORT</span>
+                <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
+                  Turn your biggest fans into supporters.
+                </h2>
+              </div>
+              <div className="space-y-6">
+                <p className="text-xl text-gray-500 font-bold leading-relaxed max-w-lg">
+                  Give your audience more ways to support your work. Start memberships for recurring support or set a goal your community can help you achieve.
+                </p>
+                <p className="text-xl text-gray-400 font-bold leading-relaxed max-w-lg">
+                  Supporters can contribute monthly or help you reach something meaningful like new equipment, projects, or creative goals.
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Visual Side-by-Side systems */}
+            <div className="space-y-12">
+              <div className="grid sm:grid-cols-2 gap-6 items-start">
+                {/* Membership Column */}
+                <div className="space-y-6">
+                  {[
+                    { title: "Supporter Tier", price: "₦1,000", benefits: ["Support my work monthly", "Early access to new content", "Exclusive supporter updates"] },
+                    { title: "Inner Circle", price: "₦3,000", benefits: ["Monthly supporter badge", "Behind-the-scenes updates", "Exclusive posts and messages"] },
+                    { title: "Super Supporter", price: "₦5,000", benefits: ["Priority supporter recognition", "Special shoutouts", "Access to exclusive content"] }
+                  ].map((tier, i) => (
+                    <motion.div 
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className="bg-white p-6 rounded-[2rem] shadow-lg border border-gray-100 space-y-4 hover:shadow-xl transition-all group"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-black text-gray-900 leading-none mb-1">{tier.title}</h4>
+                          <p className="text-primary font-bold text-sm tracking-tight">{tier.price} <span className="text-gray-400 font-normal">/ mo</span></p>
+                        </div>
+                        <button className="px-5 py-2.5 bg-gray-900 text-white rounded-full text-[10px] font-black group-hover:bg-primary transition-all active:scale-95">Join</button>
+                      </div>
+                      <ul className="space-y-2">
+                        {tier.benefits.map((b, j) => (
+                          <li key={j} className="text-[9px] font-bold text-gray-500 flex items-center gap-2">
+                            <div className="w-1 h-1 bg-accent rounded-full" />
+                            {b}
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Creator Goal Column */}
+                <div className="relative pt-12 sm:pt-16">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-gray-50 relative z-20 space-y-6"
+                  >
+                    <div className="space-y-4">
+                      <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center">
+                        <Star className="text-secondary" size={24} fill="currentColor" />
+                      </div>
+                      <h4 className="text-xl font-black text-gray-900 leading-tight">Buy a new camera for better videos</h4>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs font-black">
+                        <span className="text-gray-900">₦120,000 <span className="text-gray-400 font-bold">raised</span></span>
+                        <span className="text-gray-400">₦200,000 <span className="text-gray-400 font-bold">goal</span></span>
+                      </div>
+                      <div className="w-full h-4 bg-gray-50 rounded-full overflow-hidden p-1 shadow-inner">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          whileInView={{ width: '60%' }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 1.5, ease: "easeOut" }}
+                          className="h-full bg-accent rounded-full shadow-[0_0_12px_rgba(255,221,0,0.5)]"
+                        />
+                      </div>
+                    </div>
+
+                    <button className="w-full py-5 bg-black text-white rounded-full font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+                      Drop Something
+                    </button>
+                  </motion.div>
+
+                  {/* Floating Supporter Messages around goal */}
+                  <motion.div 
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -top-4 -right-4 bg-white p-4 rounded-3xl shadow-2xl border border-gray-50 z-30 max-w-[180px] rotate-6"
+                  >
+                    <div className="font-black text-[10px] text-gray-900 leading-none mb-1 flex items-center gap-1">
+                      Ada <span className="text-primary">dropped</span> ₦2k
+                    </div>
+                    <p className="text-[10px] text-gray-500 font-bold leading-tight">"Can't wait to see your new videos!"</p>
+                  </motion.div>
+
+                  <motion.div 
+                    animate={{ x: [-5, 5, -5] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute bottom-10 -left-12 bg-white p-5 rounded-3xl shadow-2xl border border-gray-50 z-30 max-w-[160px] -rotate-12"
+                  >
+                    <div className="font-black text-[10px] text-gray-900 leading-none mb-1 flex items-center gap-1">
+                      Tunde <span className="text-secondary">dropped</span> ₦1k
+                    </div>
+                    <p className="text-[10px] text-gray-500 font-bold leading-tight">"Keep creating 🔥"</p>
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 6. Example Creator Page */}
       <section className="py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
