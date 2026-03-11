@@ -33,40 +33,34 @@ export function Home() {
     <div className="min-h-screen bg-white selection:bg-primary selection:text-black font-sans">
       
       {/* 2. Hero Section */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
-        {/* Background Coins Scatter (Gumroad style) */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div animate={{ y: [0, -20, 0], rotate: [-25, -20, -25] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} className="absolute top-[10%] left-[5%]">
-            <CoinLogo className="w-32 h-32 md:w-48 md:h-48" rotation="-25deg" />
-          </motion.div>
-          <motion.div animate={{ y: [0, 25, 0], rotate: [-45, -40, -45] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }} className="absolute bottom-[10%] right-[5%]">
-            <CoinLogo className="w-40 h-40 md:w-56 md:h-56" rotation="-45deg" />
-          </motion.div>
-          <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 5, repeat: Infinity }} className="absolute top-[20%] right-[10%] opacity-20 blur-[2px]">
-            <CoinLogo className="w-24 h-24" rotation="15deg" />
-          </motion.div>
-        </div>
-
-        <div className="max-w-4xl mx-auto text-center relative z-10 space-y-8">
-          <motion.h1 
+      <section className="relative pt-32 pb-32 px-6">
+        <div className="max-w-6xl mx-auto text-center relative z-10 space-y-12">
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-6xl md:text-8xl lg:text-9xl font-extrabold tracking-tighter text-gray-900 leading-[0.85]"
+            className="space-y-4"
           >
-            Support the <br />
-            hustle. <span className="italic bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#FFB7C5]">Drop</span> <br />
-            Something.
-          </motion.h1>
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter text-gray-900 leading-[0.9]">
+              Support the hustle.
+            </h1>
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter text-primary leading-[0.9]">
+              Drop Something.
+            </h1>
+          </motion.div>
 
-          <motion.p 
+          <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl md:text-2xl font-medium text-gray-500 max-w-2xl mx-auto leading-tight"
+            className="space-y-2"
           >
-            A simple way to support creators and communities you love. <br />
-            Send small tips, leave a message, and help creators keep creating.
-          </motion.p>
+            <p className="text-xl md:text-3xl font-bold text-gray-500 max-w-4xl mx-auto leading-tight">
+              A simple way to support creators and communities you love.
+            </p>
+            <p className="text-xl md:text-3xl font-bold text-gray-400 max-w-4xl mx-auto leading-tight">
+              Send small tips, leave a message and help creators keep creating.
+            </p>
+          </motion.div>
 
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
@@ -328,10 +322,6 @@ export function Home() {
 
       {/* 10. Final CTA Section */}
       <section className="py-40 bg-accent relative overflow-hidden text-black text-center px-6 mx-4 md:mx-10 my-10 rounded-[4rem]">
-        <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute -top-20 -right-20 opacity-10">
-          <CoinLogo className="w-64 h-64" />
-        </motion.div>
-        
         <div className="relative z-10 space-y-10 max-w-4xl mx-auto">
           <h2 className="text-5xl md:text-8xl font-black tracking-tighter leading-none">Start receiving support from your audience.</h2>
           <p className="text-xl md:text-3xl font-bold text-black/60 max-w-2xl mx-auto">
@@ -352,8 +342,7 @@ export function Home() {
           <div className="grid md:grid-cols-4 gap-12 mb-16">
             <div className="col-span-2 space-y-6">
               <Link to="/" className="flex items-center gap-2 group">
-                <CoinLogo className="w-10 h-10" />
-                <span className="text-2xl font-bold tracking-tight text-gray-900">DropSomething</span>
+                <span className="text-2xl font-black tracking-tighter text-gray-900">DropSomething</span>
               </Link>
               <p className="text-gray-500 font-medium max-w-sm">
                 Supporting the hustle. A simple way for fans and communities to show love to the creators they appreciate.

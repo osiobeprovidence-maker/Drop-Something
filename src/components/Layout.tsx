@@ -22,8 +22,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2 group">
-              <CoinLogo className="w-9 h-9" />
-              <span className="text-xl font-bold tracking-tight text-gray-900">DropSomething</span>
+              <span className="text-xl font-black tracking-tighter text-gray-1000">DropSomething</span>
             </Link>
           </div>
 
