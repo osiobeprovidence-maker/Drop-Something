@@ -309,6 +309,71 @@ export function Home() {
         </div>
       </section>
 
+      {/* 5.6 How DropSomething Works */}
+      <section className="py-32 bg-white" id="how-it-works">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
+            <span className="text-primary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">HOW IT WORKS</span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
+              Start receiving support in minutes.
+            </h2>
+            <p className="text-xl text-gray-500 font-bold leading-relaxed">
+              DropSomething makes it easy for creators and communities to receive support from their audience. Create your page, share your link, and let supporters drop something.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-12 mb-20">
+            {[
+              { 
+                step: "01", 
+                title: "Create Your Page", 
+                desc: "Set up your personal DropSomething page with your name, bio, and profile picture.",
+                sub: "Your page becomes your personal support hub."
+              },
+              { 
+                step: "02", 
+                title: "Share Your Link", 
+                desc: "Add your DropSomething link to your social media bio, posts, videos, or messages.",
+                sub: "Anywhere your audience follows you."
+              },
+              { 
+                step: "03", 
+                title: "Receive Support", 
+                desc: "Your fans can drop small tips, leave messages, join memberships, or help you reach your goals.",
+                sub: "Support arrives instantly."
+              }
+            ].map((item, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="space-y-6 group"
+              >
+                <div className="text-6xl font-black text-gray-100 group-hover:text-accent transition-colors leading-none">{item.step}</div>
+                <div className="space-y-3">
+                  <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">{item.title}</h3>
+                  <p className="text-gray-500 font-bold leading-relaxed">{item.desc}</p>
+                  <p className="text-[10px] text-primary font-black uppercase tracking-wider">{item.sub}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="flex flex-col items-center gap-8 pt-10 border-t border-gray-50">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Supporters see this</p>
+            <div className="flex flex-wrap justify-center gap-4">
+              {[500, 1000, 2000].map(val => (
+                <button key={val} className="px-8 py-4 bg-white border-2 border-black rounded-2xl font-black text-gray-400 hover:bg-accent hover:text-black transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,0.05)] hover:shadow-[6px_6px_0px_0px_#000] hover:-translate-y-1 active:translate-y-0 active:shadow-none">
+                  Drop ₦{val}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 6. Example Creator Page */}
       <section className="py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
@@ -376,28 +441,80 @@ export function Home() {
         </div>
       </section>
 
-      {/* 7. Community Support */}
-      <section className="py-32 bg-secondary/5 rounded-[4rem]">
-        <div className="max-w-7xl mx-auto px-6 text-center space-y-20">
-          <div className="max-w-3xl mx-auto space-y-6">
-            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900">Support communities too</h2>
-            <p className="text-xl text-gray-600 font-medium leading-relaxed">
-              DropSomething isn't only for individuals. Communities, student groups, podcasts, and online collectives can also receive support from their audience.
+      {/* 7. Who It’s For */}
+      <section className="py-32 bg-gray-900 text-white rounded-[4rem] mx-4 md:mx-10 my-10 overflow-hidden relative" id="creators">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 blur-[100px] rounded-full" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-secondary/10 blur-[100px] rounded-full" />
+        
+        <div className="max-w-7xl mx-auto px-8 relative z-10">
+          <div className="max-w-3xl mx-auto text-center mb-20 space-y-4">
+            <span className="text-secondary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">CREATORS</span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight">Built for creators, communities, and builders.</h2>
+            <p className="text-xl text-gray-400 font-bold leading-relaxed">
+              DropSomething is designed for people who create value online and want a simple way for their audience to support them.
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: <MessageSquare />, title: "Podcast teams" },
-              { icon: <Users />, title: "Campus clubs" },
-              { icon: <Code />, title: "Open-source" },
-              { icon: <Music />, title: "Collectives" }
-            ].map((item, i) => (
-              <div key={i} className="p-8 bg-white rounded-[2rem] shadow-lg border border-gray-100 transition-all hover:scale-105 flex flex-col items-center gap-4">
-                <div className="w-16 h-16 bg-secondary/10 text-secondary rounded-2xl flex items-center justify-center text-3xl">
-                  {item.icon}
+          <div className="grid md:grid-cols-2 gap-12">
+            <div className="grid gap-8">
+              <motion.div 
+                whileHover={{ x: 10 }}
+                className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 backdrop-blur-sm space-y-4"
+              >
+                <div className="w-12 h-12 bg-primary/20 text-primary rounded-2xl flex items-center justify-center">
+                  <Heart size={24} fill="currentColor" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">{item.title}</h3>
+                <h3 className="text-2xl font-black tracking-tight uppercase">Content Creators</h3>
+                <p className="text-gray-400 font-bold leading-relaxed">Video creators, streamers, and influencers can receive support directly from their audience.</p>
+              </motion.div>
+
+              <motion.div 
+                whileHover={{ x: 10 }}
+                className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 backdrop-blur-sm space-y-4"
+              >
+                <div className="w-12 h-12 bg-secondary/20 text-secondary rounded-2xl flex items-center justify-center">
+                  <Code size={24} />
+                </div>
+                <h3 className="text-2xl font-black tracking-tight uppercase">Developers & Builders</h3>
+                <p className="text-gray-400 font-bold leading-relaxed">Developers, open-source maintainers, and tech educators can receive appreciation for their work.</p>
+              </motion.div>
+            </div>
+
+            <div className="grid gap-8 md:pt-12">
+              <motion.div 
+                whileHover={{ x: 10 }}
+                className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 backdrop-blur-sm space-y-4"
+              >
+                <div className="w-12 h-12 bg-accent/20 text-accent rounded-2xl flex items-center justify-center">
+                  <Star size={24} fill="currentColor" />
+                </div>
+                <h3 className="text-2xl font-black tracking-tight uppercase">Writers & Designers</h3>
+                <p className="text-gray-400 font-bold leading-relaxed">Writers, designers, and educators can receive support from readers and followers.</p>
+              </motion.div>
+
+              <motion.div 
+                whileHover={{ x: 10 }}
+                className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 backdrop-blur-sm space-y-4"
+              >
+                <div className="w-12 h-12 bg-primary/20 text-primary rounded-2xl flex items-center justify-center">
+                  <Users size={24} fill="currentColor" />
+                </div>
+                <h3 className="text-2xl font-black tracking-tight uppercase">Communities & Projects</h3>
+                <p className="text-gray-400 font-bold leading-relaxed">Podcasts, clubs, and online communities can collect support for projects, events, or goals.</p>
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="mt-24 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              "Your supporters belong to you",
+              "Instant payments to your account",
+              "No complicated setup",
+              "Simple support links everywhere"
+            ].map((f, i) => (
+              <div key={i} className="flex items-center gap-3 py-4 px-6 rounded-2xl bg-white/5 border border-white/5">
+                <CheckCircle2 size={18} className="text-accent" />
+                <span className="text-xs font-black uppercase tracking-widest text-gray-300">{f}</span>
               </div>
             ))}
           </div>
