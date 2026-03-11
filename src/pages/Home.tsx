@@ -17,7 +17,13 @@ import {
   Music,
   CheckCircle2,
   Star,
-  ChevronDown
+  ChevronDown,
+  Play,
+  Github,
+  Palette,
+  Video,
+  Layers,
+  Terminal
 } from 'lucide-react';
 
 export function Home() {
@@ -225,8 +231,162 @@ export function Home() {
         </div>
       </section>
 
-      {/* 6. Example Creator Page - LATER */}
-      {/* <section className="py-32 overflow-hidden"> ... </section> */}
+
+      {/* 6. Creator Pages in Action */}
+      <section className="py-32 bg-white overflow-hidden" id="explore-examples">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-20 space-y-4">
+            <span className="text-primary font-black tracking-widest text-xs uppercase underline decoration-accent decoration-4 underline-offset-4">SHOWCASE</span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
+              Creator Pages in Action
+            </h2>
+            <p className="text-xl text-gray-500 font-bold leading-relaxed max-w-2xl mx-auto">
+              See how different creators use DropSomething to connect with their audience.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-12">
+            {[
+              {
+                name: "Ada the Creator",
+                role: "Content Creator",
+                bio: "Sharing tutorials and stories",
+                theme: "from-orange-500 to-red-500",
+                lightTheme: "bg-orange-50",
+                accent: "text-orange-600",
+                image: "https://i.pravatar.cc/150?u=ada",
+                elements: [
+                  { icon: <Video size={14} />, label: "Latest Tutorial", pos: "top-10 -right-6" },
+                  { icon: <Play size={14} fill="currentColor" />, label: "New Story", pos: "bottom-20 -left-6" }
+                ],
+                notif: "Tunde dropped ₦2000",
+                delay: 0
+              },
+              {
+                name: "Tunde the Developer",
+                role: "Developer",
+                bio: "Building tools and open projects",
+                theme: "from-blue-500 to-cyan-500",
+                lightTheme: "bg-blue-50",
+                accent: "text-blue-600",
+                image: "https://i.pravatar.cc/150?u=tunde_dev",
+                elements: [
+                  { icon: <Terminal size={14} />, label: "Code Snippet", pos: "top-20 -left-8" },
+                  { icon: <Github size={14} />, label: "v1.2.0 released", pos: "bottom-24 -right-10" }
+                ],
+                notif: "Sola dropped ₦5000",
+                delay: 0.1
+              },
+              {
+                name: "Zainab the Artist",
+                role: "Artist / Designer",
+                bio: "Illustrations and digital art",
+                theme: "from-purple-500 to-pink-500",
+                lightTheme: "bg-purple-50",
+                accent: "text-purple-600",
+                image: "https://i.pravatar.cc/150?u=zainab",
+                elements: [
+                  { icon: <Palette size={14} />, label: "New Sketch", pos: "top-12 -right-8" },
+                  { icon: <Layers size={14} />, label: "Commission Open", pos: "bottom-32 -left-10" }
+                ],
+                notif: "Funmi dropped ₦1500",
+                delay: 0.2
+              }
+            ].map((creator, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: creator.delay, duration: 0.6 }}
+                className="relative group"
+              >
+                {/* Creator Card Mockup */}
+                <div className="bg-white rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden transition-all duration-500 group-hover:-translate-y-4 group-hover:shadow-[0_48px_80px_-16px_rgba(0,0,0,0.12)] p-8">
+                  <div className={`h-2 absolute top-0 left-0 right-0 bg-gradient-to-r ${creator.theme}`} />
+                  
+                  <div className="flex flex-col items-center text-center space-y-6 pt-4">
+                    <div className="relative">
+                      <div className={`w-28 h-28 rounded-[2.5rem] ${creator.lightTheme} p-1.5 shadow-inner`}>
+                        <img src={creator.image} className="w-full h-full object-cover rounded-[2rem] shadow-sm" alt="" />
+                      </div>
+                      <motion.div 
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center"
+                      >
+                        <Heart size={14} className="text-red-500" fill="currentColor" />
+                      </motion.div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-2xl font-black text-gray-900 leading-none">{creator.name}</h3>
+                      <p className={`text-sm font-black uppercase tracking-widest ${creator.accent}`}>{creator.role}</p>
+                      <p className="text-gray-500 font-bold text-sm leading-relaxed px-4">{creator.bio}</p>
+                    </div>
+
+                    <div className="w-full pt-4 space-y-4">
+                      <div className="grid grid-cols-3 gap-3">
+                        {[500, 1000, 2000].map(val => (
+                          <div key={val} className="py-3 rounded-2xl bg-gray-50 border-2 border-transparent text-xs font-black text-gray-400">₦{val}</div>
+                        ))}
+                      </div>
+                      <button className="w-full py-4 bg-black text-white rounded-full font-black text-base shadow-lg transition-transform active:scale-95">
+                        Drop Something
+                      </button>
+                    </div>
+
+                    <div className="w-full pt-4 border-t border-gray-50 space-y-3">
+                      <div className="flex justify-between items-center text-[10px] uppercase font-black tracking-widest text-gray-300">
+                        <span>Recent Drops</span>
+                        <span>View All</span>
+                      </div>
+                      <div className="bg-gray-50 rounded-2xl p-3 flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-white shadow-sm flex items-center justify-center text-[10px] font-black">L</div>
+                        <p className="text-[10px] font-bold text-gray-400">Lucky <span className="text-gray-900 font-black">dropped</span> ₦1000</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Floating Elements */}
+                  {creator.elements.map((el, j) => (
+                    <motion.div
+                      key={j}
+                      animate={{ y: [0, -10, 0], rotate: [0, j % 2 === 0 ? 5 : -5, 0] }}
+                      transition={{ duration: 4 + j, repeat: Infinity, ease: "easeInOut" }}
+                      className={`absolute ${el.pos} hidden xl:flex items-center gap-2 bg-white/80 backdrop-blur-md px-4 py-3 rounded-2xl shadow-xl border border-white/20 z-10 shrink-0 whitespace-nowrap`}
+                    >
+                      <span className={creator.accent}>{el.icon}</span>
+                      <span className="text-[10px] font-black text-gray-700">{el.label}</span>
+                    </motion.div>
+                  ))}
+
+                  {/* Floating Notifications */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: [0, 1, 1, 0], x: [20, 0, 0, -20] }}
+                    viewport={{ once: false }}
+                    transition={{ duration: 4, repeat: Infinity, repeatDelay: 2, delay: i * 2 }}
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black text-white px-6 py-3 rounded-full text-xs font-black shadow-2xl z-30 flex items-center gap-2 whitespace-nowrap pointer-events-none"
+                  >
+                    <span className="text-primary">✨</span> {creator.notif}
+                  </motion.div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-20 flex flex-col items-center space-y-10">
+            <p className="text-xl text-gray-500 font-bold leading-relaxed max-w-2xl mx-auto text-center italic">
+              “Every creator gets a beautiful page to receive support from their audience.”
+            </p>
+            <Link to="/setup-profile" className="bg-accent px-12 py-6 rounded-full text-2xl font-black text-black shadow-2xl hover:shadow-[0_20px_40px_-10px_rgba(255,221,0,0.5)] hover:-translate-y-1 transition-all flex items-center gap-3">
+              Create Your Page
+              <ArrowRight size={28} />
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Why DropSomething Section */}
       <section className="py-32 bg-white" id="why-dropsomething">
