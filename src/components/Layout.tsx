@@ -30,8 +30,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="hidden lg:flex items-center gap-8">
             <nav className="flex items-center gap-8 font-bold text-sm text-gray-500">
               <Link to="/explore" className="hover:text-black transition-all">Explore</Link>
-              <a href="/#how-it-works" className="hover:text-black transition-all">How it Works</a>
-              <a href="/#creators" className="hover:text-black transition-all">Creators</a>
               <a href="/#faq" className="hover:text-black transition-all">FAQ</a>
             </nav>
 
@@ -88,8 +86,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="lg:hidden fixed inset-0 z-[60] bg-white pt-24">
           <div className="p-10 flex flex-col gap-8">
             <Link to="/explore" onClick={() => setMobileOpen(false)} className="text-5xl font-black uppercase tracking-tighter hover:text-primary transition-colors">Explore</Link>
-            <a href="/#how-it-works" onClick={() => setMobileOpen(false)} className="text-5xl font-black uppercase tracking-tighter hover:text-primary transition-colors">How it Works</a>
-            <a href="/#creators" onClick={() => setMobileOpen(false)} className="text-5xl font-black uppercase tracking-tighter hover:text-primary transition-colors">Creators</a>
             <a href="/#faq" onClick={() => setMobileOpen(false)} className="text-5xl font-black uppercase tracking-tighter hover:text-primary transition-colors">FAQ</a>
             
             {user ? (
