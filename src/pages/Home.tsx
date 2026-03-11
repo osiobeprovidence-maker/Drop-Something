@@ -147,31 +147,107 @@ export function Home() {
         </div>
       </section>
 
-      {/* 5. Why Creators Love It */}
-      <section className="py-32 bg-gray-900 text-white rounded-[4rem] mx-4 md:mx-10 my-10 overflow-hidden relative" id="creators">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 blur-[100px] rounded-full" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/10 blur-[100px] rounded-full" />
-        
-        <div className="max-w-7xl mx-auto px-8 relative z-10">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight">Built for creators</h2>
+      {/* 5. Support Creators Showcase */}
+      <section className="py-32 overflow-hidden bg-white">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <span className="text-primary font-black tracking-widest text-xs uppercase">SUPPORT</span>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-[1.1]">
+                Give your audience an easy way to support you.
+              </h2>
+            </div>
+            <div className="space-y-6">
+              <p className="text-xl text-gray-500 font-bold leading-relaxed max-w-lg">
+                With DropSomething, your supporters can send small tips and leave messages of appreciation.
+              </p>
+              <p className="text-xl text-gray-400 font-bold leading-relaxed max-w-lg">
+                In just a few taps, they can drop something and help you keep creating.
+              </p>
+            </div>
           </div>
-          
-          <div className="grid md:grid-cols-4 gap-8">
-            {[
-              { icon: <Zap />, title: "Simple Setup", desc: "Create your support page in minutes." },
-              { icon: <Heart />, title: "Direct Support", desc: "Receive support directly from your audience." },
-              { icon: <ShieldCheck />, title: "Secure Payments", desc: "Fast and reliable payment processing." },
-              { icon: <LinkIcon />, title: "Share Anywhere", desc: "Your support link works everywhere online." }
-            ].map((card, i) => (
-              <div key={i} className="p-8 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-sm transition-all hover:bg-white/10 hover:-translate-y-2 group">
-                <div className="w-14 h-14 bg-accent/20 text-accent rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  {card.icon}
+
+          <div className="relative">
+            {/* Mock Support Widget */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-gray-100 p-8 max-w-sm mx-auto relative z-20"
+            >
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Heart className="text-primary" size={20} fill="currentColor" />
+                  </div>
+                  <h3 className="text-xl font-black text-gray-900 tracking-tight">Support Riderezzy</h3>
                 </div>
-                <h3 className="text-xl font-bold mb-2">{card.title}</h3>
-                <p className="text-gray-400 font-medium leading-relaxed">{card.desc}</p>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {[500, 1000, 2000].map(val => (
+                    <button key={val} className="w-full py-4 rounded-2xl bg-gray-50 border-2 border-transparent hover:border-accent hover:bg-white transition-all font-black text-gray-400 hover:text-black hover:shadow-md">
+                      Drop ₦{val}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative">
+                   <textarea 
+                    placeholder="Say something nice..." 
+                    className="w-full bg-gray-50 border-none rounded-2xl p-5 text-sm font-bold focus:ring-2 focus:ring-accent outline-none min-h-[120px] resize-none placeholder:text-gray-300"
+                   />
+                </div>
+
+                <button className="w-full py-5 bg-black text-white rounded-full font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+                  Drop Something
+                </button>
               </div>
-            ))}
+            </motion.div>
+
+            {/* Floating Supporter Cards */}
+            <motion.div 
+              animate={{ y: [0, -15, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -top-12 -left-4 md:-left-20 bg-white p-6 rounded-[2rem] shadow-2xl border border-gray-50 z-30 max-w-[220px]"
+            >
+              <div className="flex flex-col gap-2">
+                <div className="font-black text-sm text-gray-900">Ada <span className="text-gray-400 font-bold">dropped</span> ₦1000</div>
+                <p className="text-xs text-gray-500 font-bold italic leading-relaxed">"Your tutorials helped me so much."</p>
+                <div className="flex gap-1 mt-1">
+                  <span className="text-xs">✨</span>
+                  <span className="text-xs">🙌</span>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              animate={{ y: [0, 15, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute -bottom-10 -right-4 md:-right-20 bg-white p-6 rounded-[2rem] shadow-2xl border border-gray-50 z-30 max-w-[220px]"
+            >
+              <div className="flex flex-col gap-2">
+                <div className="font-black text-sm text-gray-900">Riderezzy <span className="text-gray-400 font-bold">dropped</span> ₦2000</div>
+                <p className="text-xs text-gray-500 font-bold italic leading-relaxed">"Big fan of your work."</p>
+                <div className="flex gap-1 mt-1">
+                  <span className="text-xs">🚀</span>
+                  <span className="text-xs">💎</span>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              animate={{ x: [0, 10, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+              className="absolute top-1/2 -right-10 md:-right-24 bg-white p-5 rounded-2xl shadow-xl border border-gray-50 z-10"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center font-black text-[10px]">T</div>
+                <div>
+                  <div className="font-black text-[10px] text-gray-900 leading-none">Tunde</div>
+                  <div className="text-[10px] text-gray-400 font-bold">Keep creating 🔥</div>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
