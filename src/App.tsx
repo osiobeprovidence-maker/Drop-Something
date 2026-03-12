@@ -11,6 +11,7 @@ import { EditProfile } from './pages/EditProfile';
 import { KYC } from './pages/KYC';
 import { Explore } from './pages/Explore';
 import { Login } from './pages/Login';
+import { Onboarding } from './pages/Onboarding';
 import { Toaster } from 'sonner';
 
 function PrivateRoute({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) {
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/setup" element={<PrivateRoute><SetupProfile /></PrivateRoute>} />
             <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
             <Route path="/kyc" element={<PrivateRoute><KYC /></PrivateRoute>} />

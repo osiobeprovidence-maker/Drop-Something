@@ -295,6 +295,11 @@ export function CreatorPage() {
               <p className="text-xl md:text-2xl font-bold text-white/90 tracking-tight drop-shadow-md">
                 @{creator.username}
               </p>
+              {creator.tagline && (
+                <p className="text-lg md:text-xl font-black text-primary bg-white/10 backdrop-blur-md px-4 py-1 rounded-full w-fit mx-auto md:mx-0 shadow-lg border border-white/20">
+                   {creator.tagline}
+                </p>
+              )}
             </div>
             <div className="flex items-center justify-center md:justify-start gap-4">
               <button onClick={() => {

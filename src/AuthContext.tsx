@@ -17,10 +17,10 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  signInWithApple: () => Promise<void>;
-  signInWithEmail: (email: string, pass: string) => Promise<void>;
-  signUpWithEmail: (email: string, pass: string) => Promise<void>;
+  signInWithGoogle: () => Promise<any>;
+  signInWithApple: () => Promise<any>;
+  signInWithEmail: (email: string, pass: string) => Promise<any>;
+  signUpWithEmail: (email: string, pass: string) => Promise<any>;
   logout: () => Promise<void>;
 }
 
@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      return await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error('Google Sign-In Error:', error);
       throw error;
@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithApple = async () => {
     try {
       const appleProvider = new OAuthProvider('apple.com');
-      await signInWithPopup(auth, appleProvider);
+      return await signInWithPopup(auth, appleProvider);
     } catch (error) {
       console.error('Apple Sign-In Error:', error);
       throw error;
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithEmail = async (email: string, pass: string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, pass);
+      return await signInWithEmailAndPassword(auth, email, pass);
     } catch (error) {
       console.error('Email Sign-In Error:', error);
       throw error;
@@ -122,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUpWithEmail = async (email: string, pass: string) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, pass);
+      return await createUserWithEmailAndPassword(auth, email, pass);
     } catch (error) {
       console.error('Email Sign-Up Error:', error);
       throw error;

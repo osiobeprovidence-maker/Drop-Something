@@ -12,16 +12,37 @@ export const getUserByUid = query({
     },
 });
 
-// Get user by username (for creator pages)
+// Get user by username
 export const getUserByUsername = query({
     args: { username: v.string() },
     handler: async (ctx, args) => {
         return await ctx.db
             .query("users")
-            .withIndex("by_username", (q) =>
-                q.eq("username", args.username.toLowerCase())
-            )
+            .withIndex("by_username", (q) => q.eq("username", args.username.toLowerCase()))
             .unique();
+    },
+});
+
+// Get user by email
+export const getUserByEmail = query({
+    args: { email: v.string() },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("users")
+            .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
+            .unique();
+    },
+});
+
+// Check if an email already exists
+export const checkEmail = query({
+    args: { email: v.string() },
+    handler: async (ctx, args) => {
+        const existing = await ctx.db
+            .query("users")
+            .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
+            .unique();
+        return { exists: existing !== null };
     },
 });
 
@@ -43,10 +64,29 @@ export const checkUsername = query({
 export const createUser = mutation({
     args: {
         uid: v.string(),
+        email: v.string(),
         username: v.string(),
         displayName: v.string(),
+        tagline: v.optional(v.string()),
         bio: v.string(),
         photoURL: v.string(),
+        coverURL: v.optional(v.string()),
+        membershipTiers: v.optional(v.array(v.object({
+            title: v.string(),
+            price: v.number(),
+            benefits: v.array(v.string()),
+        }))),
+        products: v.optional(v.array(v.object({
+            title: v.string(),
+            price: v.number(),
+            description: v.string(),
+            imageUrl: v.string(),
+        }))),
+        socialLinks: v.optional(v.object({
+            twitter: v.optional(v.string()),
+            instagram: v.optional(v.string()),
+            website: v.optional(v.string()),
+        })),
     },
     handler: async (ctx, args) => {
         // Ensure username is not already taken
@@ -62,12 +102,17 @@ export const createUser = mutation({
 
         return await ctx.db.insert("users", {
             uid: args.uid,
+            email: args.email.toLowerCase(),
             username: args.username.toLowerCase(),
             displayName: args.displayName,
+            tagline: args.tagline,
             bio: args.bio,
             photoURL: args.photoURL,
+            coverURL: args.coverURL,
+            membershipTiers: args.membershipTiers,
+            products: args.products,
+            socialLinks: args.socialLinks || {},
             isVerified: false,
-            socialLinks: {},
             role: "user",
             createdAt: Date.now(),
         });
@@ -78,7 +123,9 @@ export const createUser = mutation({
 export const updateUser = mutation({
     args: {
         uid: v.string(),
+        email: v.optional(v.string()),
         displayName: v.optional(v.string()),
+        tagline: v.optional(v.string()),
         bio: v.optional(v.string()),
         photoURL: v.optional(v.string()),
         isVerified: v.optional(v.boolean()),

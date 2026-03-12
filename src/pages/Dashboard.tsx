@@ -21,12 +21,18 @@ import {
   LayoutDashboard,
   Settings,
   CreditCard,
-  UserPen
+  UserPen,
+  Layers,
+  ShoppingBag,
+  BookOpen,
+  Plus
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { formatCurrency, cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import { PayoutSettings } from '../components/PayoutSettings';
 import { VoicePlayer } from '../components/VoicePlayer';
+import { MediaUpload } from '../components/MediaUpload';
 
 export function Dashboard() {
   const { user, profile } = useAuth();
@@ -39,6 +45,40 @@ export function Dashboard() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawError, setWithdrawError] = useState('');
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
+  
+  // Section Edit State
+  const [sectionToEdit, setSectionToEdit] = useState<'profile' | 'membership' | 'shop' | 'bio' | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editData, setEditData] = useState<any>({});
+
+  const updateUser = useMutation(api.users.updateUser);
+
+  // Sync data when opening modal
+  useEffect(() => {
+    if (sectionToEdit && profile) {
+      if (sectionToEdit === 'profile') {
+        setEditData({
+          displayName: profile.displayName || '',
+          tagline: profile.tagline || '',
+          photoURL: profile.photoURL || '',
+          coverURL: profile.coverURL || '',
+        });
+      } else if (sectionToEdit === 'membership') {
+        setEditData({
+          membershipTiers: profile.membershipTiers || [],
+        });
+      } else if (sectionToEdit === 'shop') {
+        setEditData({
+          products: profile.products || [],
+        });
+      } else if (sectionToEdit === 'bio') {
+        setEditData({
+          bio: profile.bio || '',
+          socialLinks: profile.socialLinks || { twitter: '', instagram: '', website: '' },
+        });
+      }
+    }
+  }, [sectionToEdit, profile]);
 
   // Convex queries
   const tips = useQuery(
@@ -138,6 +178,35 @@ export function Dashboard() {
     }
   };
 
+  const handleSectionSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      await updateUser({
+        uid: user.uid,
+        ...editData,
+      });
+      setSectionToEdit(null);
+      toast.success('Section updated successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update section.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  const completionItems = [
+    { label: 'Profile Photo', done: !!profile?.photoURL, weight: 15, key: 'photo' },
+    { label: 'Cover Photo', done: !!profile?.coverURL, weight: 10, key: 'cover' },
+    { label: 'Tagline & Name', done: !!profile?.displayName && !!profile?.tagline, weight: 25, key: 'name' },
+    { label: 'Creator Bio', done: !!profile?.bio, weight: 20, key: 'bio' },
+    { label: 'Membership Tiers', done: (profile?.membershipTiers?.length ?? 0) > 0, weight: 15, key: 'tiers' },
+    { label: 'Products', done: (profile?.products?.length ?? 0) > 0, weight: 15, key: 'products' },
+  ];
+  const completionPercentage = completionItems.reduce((acc, item) => acc + (item.done ? item.weight : 0), 0);
+  const missingItems = completionItems.filter(item => !item.done);
+
   if (loading) return <div className="flex items-center justify-center min-h-[60vh] font-black text-primary animate-pulse">Loading...</div>;
 
   return (
@@ -147,6 +216,267 @@ export function Dashboard() {
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/5 blur-[120px] rounded-full -ml-32 -mb-32 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 py-12 space-y-16 relative z-10">
+        
+        {sectionToEdit && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xl">
+             <motion.div 
+               initial={{ scale: 0.9, opacity: 0, y: 20 }}
+               animate={{ scale: 1, opacity: 1, y: 0 }}
+               className="bg-white rounded-[3.5rem] p-12 max-w-2xl w-full shadow-[0_0_100px_rgba(0,0,0,0.2)] border border-gray-100 max-h-[90vh] overflow-y-auto"
+             >
+                <div className="flex items-center justify-between mb-10">
+                  <div className="space-y-1">
+                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Edit {sectionToEdit.charAt(0).toUpperCase() + sectionToEdit.slice(1)}</h2>
+                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Update your hub settings</p>
+                  </div>
+                  <button onClick={() => setSectionToEdit(null)} className="p-3 bg-gray-50 text-gray-400 hover:text-gray-900 rounded-full transition-all">
+                    <X size={24} />
+                  </button>
+                </div>
+                
+                <form onSubmit={handleSectionSave} className="space-y-10">
+                  {sectionToEdit === 'profile' && (
+                    <div className="space-y-8">
+                       <div className="space-y-4">
+                         <label className="label-mini ml-1">Cover Photo</label>
+                         <MediaUpload 
+                           aspect="cover" 
+                           type="image" 
+                           defaultUrl={editData.coverURL}
+                           onUploadComplete={(url) => setEditData({ ...editData, coverURL: url })}
+                         />
+                       </div>
+                       <div className="flex justify-center -mt-16 relative z-10">
+                         <MediaUpload 
+                           aspect="square" 
+                           type="image" 
+                           defaultUrl={editData.photoURL}
+                           className="w-32 h-32 border-8 border-white shadow-2xl"
+                           onUploadComplete={(url) => setEditData({ ...editData, photoURL: url })}
+                         />
+                       </div>
+                       <div className="space-y-6">
+                         <div className="space-y-2">
+                           <label className="label-mini ml-1">Display Name</label>
+                           <input 
+                             value={editData.displayName} 
+                             onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
+                             className="premium-input font-black"
+                             required
+                           />
+                         </div>
+                         <div className="space-y-2">
+                           <label className="label-mini ml-1">Tagline</label>
+                           <input 
+                             value={editData.tagline} 
+                             onChange={(e) => setEditData({ ...editData, tagline: e.target.value })}
+                             className="premium-input"
+                             placeholder="Digital Artist & Dreamer"
+                           />
+                         </div>
+                       </div>
+                    </div>
+                  )}
+
+                  {sectionToEdit === 'membership' && (
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Manage Tiers</p>
+                         <button 
+                          type="button"
+                          onClick={() => setEditData({ ...editData, membershipTiers: [...(editData.membershipTiers || []), { title: 'New Tier', price: 1000, benefits: [] }] })}
+                          className="text-primary font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all"
+                         >
+                           + Add Tier
+                         </button>
+                      </div>
+                      <div className="space-y-4">
+                        {(editData.membershipTiers || []).map((tier: any, idx: number) => (
+                          <div key={idx} className="p-6 bg-gray-50 rounded-3xl border border-gray-100 space-y-4 relative group">
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                const newTiers = [...editData.membershipTiers];
+                                newTiers.splice(idx, 1);
+                                setEditData({ ...editData, membershipTiers: newTiers });
+                              }}
+                              className="absolute top-4 right-4 text-gray-300 hover:text-red-500"
+                            >
+                              <X size={16} />
+                            </button>
+                            <div className="grid grid-cols-2 gap-4">
+                              <input 
+                                value={tier.title}
+                                onChange={(e) => {
+                                  const newTiers = [...editData.membershipTiers];
+                                  newTiers[idx].title = e.target.value;
+                                  setEditData({ ...editData, membershipTiers: newTiers });
+                                }}
+                                className="premium-input bg-white text-sm"
+                                placeholder="Title"
+                              />
+                              <input 
+                                type="number"
+                                value={tier.price}
+                                onChange={(e) => {
+                                  const newTiers = [...editData.membershipTiers];
+                                  newTiers[idx].price = Number(e.target.value);
+                                  setEditData({ ...editData, membershipTiers: newTiers });
+                                }}
+                                className="premium-input bg-white text-sm"
+                                placeholder="Price"
+                              />
+                            </div>
+                            <input 
+                              value={tier.benefits.join(', ')}
+                              onChange={(e) => {
+                                const newTiers = [...editData.membershipTiers];
+                                newTiers[idx].benefits = e.target.value.split(',').map((b: string) => b.trim());
+                                setEditData({ ...editData, membershipTiers: newTiers });
+                              }}
+                              className="premium-input bg-white text-sm"
+                              placeholder="Benefits (comma separated)"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {sectionToEdit === 'shop' && (
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Product List</p>
+                         <button 
+                          type="button"
+                          onClick={() => setEditData({ ...editData, products: [...(editData.products || []), { title: 'New Product', price: 1000, description: '', imageUrl: '' }] })}
+                          className="text-primary font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all"
+                         >
+                           + Add Product
+                         </button>
+                      </div>
+                      <div className="space-y-6">
+                        {(editData.products || []).map((product: any, idx: number) => (
+                          <div key={idx} className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-6 relative group">
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                const newProducts = [...editData.products];
+                                newProducts.splice(idx, 1);
+                                setEditData({ ...editData, products: newProducts });
+                              }}
+                              className="absolute top-6 right-6 text-gray-300 hover:text-red-500"
+                            >
+                              <X size={18} />
+                            </button>
+                            <div className="flex flex-col md:flex-row gap-8">
+                               <MediaUpload 
+                                aspect="square"
+                                type="image"
+                                defaultUrl={product.imageUrl}
+                                className="w-32"
+                                onUploadComplete={(url) => {
+                                  const newProducts = [...editData.products];
+                                  newProducts[idx].imageUrl = url;
+                                  setEditData({ ...editData, products: newProducts });
+                                }}
+                               />
+                               <div className="flex-1 space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <input 
+                                      value={product.title}
+                                      onChange={(e) => {
+                                        const newProducts = [...editData.products];
+                                        newProducts[idx].title = e.target.value;
+                                        setEditData({ ...editData, products: newProducts });
+                                      }}
+                                      className="premium-input bg-white text-sm"
+                                      placeholder="Title"
+                                    />
+                                    <input 
+                                      type="number"
+                                      value={product.price}
+                                      onChange={(e) => {
+                                        const newProducts = [...editData.products];
+                                        newProducts[idx].price = Number(e.target.value);
+                                        setEditData({ ...editData, products: newProducts });
+                                      }}
+                                      className="premium-input bg-white text-sm"
+                                      placeholder="Price"
+                                    />
+                                  </div>
+                                  <textarea 
+                                    value={product.description}
+                                    onChange={(e) => {
+                                      const newProducts = [...editData.products];
+                                      newProducts[idx].description = e.target.value;
+                                      setEditData({ ...editData, products: newProducts });
+                                    }}
+                                    className="premium-input bg-white text-xs min-h-[80px]"
+                                    placeholder="Description"
+                                  />
+                               </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {sectionToEdit === 'bio' && (
+                    <div className="space-y-8">
+                       <div className="space-y-2">
+                         <label className="label-mini ml-1">Your Story</label>
+                         <textarea 
+                           value={editData.bio} 
+                           onChange={(e) => setEditData({ ...editData, bio: e.target.value })}
+                           className="premium-input min-h-[160px]"
+                           placeholder="Tell your fans who you are..."
+                         />
+                       </div>
+                       <div className="space-y-4">
+                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Social Hub</p>
+                         <div className="grid grid-cols-1 gap-4">
+                            <input 
+                              value={editData.socialLinks?.twitter} 
+                              onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, twitter: e.target.value } })}
+                              className="premium-input text-sm"
+                              placeholder="Twitter URL"
+                            />
+                            <input 
+                              value={editData.socialLinks?.instagram} 
+                              onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, instagram: e.target.value } })}
+                              className="premium-input text-sm"
+                              placeholder="Instagram URL"
+                            />
+                            <input 
+                              value={editData.socialLinks?.website} 
+                              onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, website: e.target.value } })}
+                              className="premium-input text-sm"
+                              placeholder="Personal Website"
+                            />
+                         </div>
+                       </div>
+                    </div>
+                  )}
+
+                  <div className="pt-6">
+                    <button 
+                      type="submit"
+                      disabled={isSaving}
+                      className="w-full py-6 bg-black text-white rounded-full font-black text-xl hover:bg-primary transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50"
+                    >
+                      {isSaving ? <Loader2 className="animate-spin" /> : <>Save {sectionToEdit} Updates</>}
+                    </button>
+                    
+                    <Link to="/edit-profile" className="block text-center mt-6 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">
+                      Open advanced editor
+                    </Link>
+                  </div>
+                </form>
+             </motion.div>
+          </div>
+        )}
         {/* Withdrawal Modal */}
         {isWithdrawing && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md">
@@ -246,44 +576,98 @@ export function Dashboard() {
         <div className="flex flex-col lg:flex-row gap-16">
           {/* Sidebar Navigation */}
           <aside className="lg:w-80 space-y-10">
+            {/* Page Completion Indicator */}
+            <div className="bg-white rounded-[3rem] border border-gray-100 p-8 shadow-2xl space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
+              <div className="space-y-2">
+                <div className="flex justify-between items-end">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Page Progress</p>
+                  <p className="text-xl font-black text-primary">{completionPercentage}%</p>
+                </div>
+                <div className="h-2 bg-gray-50 rounded-full overflow-hidden">
+                   <motion.div 
+                     initial={{ width: 0 }}
+                     animate={{ width: `${completionPercentage}%` }}
+                     className="h-full bg-primary"
+                   />
+                </div>
+              </div>
+              
+              {missingItems.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Next Steps</p>
+                  <div className="space-y-2">
+                    {missingItems.slice(0, 3).map(item => (
+                      <button 
+                        key={item.key}
+                        onClick={() => {
+                          if (item.key === 'photo' || item.key === 'cover' || item.key === 'name') setSectionToEdit('profile');
+                          else if (item.key === 'bio') setSectionToEdit('bio');
+                          else if (item.key === 'tiers') setSectionToEdit('membership');
+                          else if (item.key === 'products') setSectionToEdit('shop');
+                        }}
+                        className="w-full flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-primary/5 hover:text-primary text-[10px] font-black uppercase tracking-widest transition-all"
+                      >
+                        <Plus size={12} /> Add {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="bg-white rounded-[3rem] border border-gray-100 p-8 shadow-2xl space-y-3 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={cn(
+                  "w-full flex items-center gap-4 px-6 py-5 rounded-[1.5rem] text-sm font-black transition-all group",
+                  activeTab === 'overview' 
+                    ? "bg-black text-white shadow-2xl scale-[1.02]" 
+                    : "text-gray-400 hover:text-gray-900 hover:bg-gray-50"
+                )}
+              >
+                <LayoutDashboard size={20} className={cn("transition-transform group-hover:scale-110", activeTab === 'overview' ? "text-primary" : "")} />
+                Overview
+              </button>
+
+              <div className="pt-6 pb-2 space-y-4">
+                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 ml-6">Quick Edit</p>
+                 {[
+                   { id: 'profile', label: 'Profile', icon: UserPen },
+                   { id: 'membership', label: 'Members', icon: Layers },
+                   { id: 'shop', label: 'Shop', icon: ShoppingBag },
+                   { id: 'bio', label: 'Bio', icon: BookOpen },
+                 ].map((section) => (
+                   <button
+                     key={section.id}
+                     onClick={() => setSectionToEdit(section.id as any)}
+                     className="w-full flex items-center gap-4 px-6 py-4 rounded-[1.2rem] text-xs font-black text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-all group"
+                   >
+                     <section.icon size={18} className="group-hover:scale-110 transition-transform text-gray-300 group-hover:text-primary" />
+                     {section.label}
+                     <ArrowUpRight size={12} className="ml-auto opacity-20" />
+                   </button>
+                 ))}
+              </div>
+
               {[
-                { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-                { 
-                  id: 'manage', 
-                  label: profile ? 'Edit Page' : 'Create Page', 
-                  icon: UserPen, 
-                  link: profile ? '/edit-profile' : '/setup' 
-                },
                 { id: 'tips', label: 'Tip History', icon: MessageSquare },
-                { id: 'payouts', label: 'Payment Settings', icon: CreditCard },
+                { id: 'payouts', label: 'Settings', icon: CreditCard },
               ].map((item) => (
-                item.link ? (
-                  <Link
-                    key={item.id}
-                    to={item.link}
-                    className="w-full flex items-center gap-4 px-6 py-5 rounded-[1.5rem] text-sm font-black text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-all group"
-                  >
-                    <item.icon size={20} className="group-hover:scale-110 transition-transform" />
-                    {item.label}
-                    <ArrowUpRight size={14} className="ml-auto opacity-40 group-hover:opacity-100 transition-all" />
-                  </Link>
-                ) : (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id as any)}
-                    className={cn(
-                      "w-full flex items-center gap-4 px-6 py-5 rounded-[1.5rem] text-sm font-black transition-all group",
-                      activeTab === item.id 
-                        ? "bg-black text-white shadow-2xl scale-[1.02]" 
-                        : "text-gray-400 hover:text-gray-900 hover:bg-gray-50"
-                    )}
-                  >
-                    <item.icon size={20} className={cn("transition-transform group-hover:scale-110", activeTab === item.id ? "text-primary" : "")} />
-                    {item.label}
-                  </button>
-                )
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id as any)}
+                  className={cn(
+                    "w-full flex items-center gap-4 px-6 py-5 rounded-[1.5rem] text-sm font-black transition-all group",
+                    activeTab === item.id 
+                      ? "bg-black text-white shadow-2xl scale-[1.02]" 
+                      : "text-gray-400 hover:text-gray-900 hover:bg-gray-50"
+                  )}
+                >
+                  <item.icon size={20} className={cn("transition-transform group-hover:scale-110", activeTab === item.id ? "text-primary" : "")} />
+                  {item.label}
+                </button>
               ))}
             </div>
 

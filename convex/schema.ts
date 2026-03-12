@@ -4,8 +4,10 @@ import { v } from "convex/values";
 export default defineSchema({
   users: defineTable({
     uid: v.string(), // Firebase Auth UID
+    email: v.string(),
     username: v.string(),
     displayName: v.string(),
+    tagline: v.optional(v.string()),
     bio: v.string(),
     photoURL: v.string(),
     isVerified: v.boolean(),
@@ -45,7 +47,8 @@ export default defineSchema({
     }))),
   })
     .index("by_uid", ["uid"])
-    .index("by_username", ["username"]),
+    .index("by_username", ["username"])
+    .index("by_email", ["email"]),
 
   kyc: defineTable({
     uid: v.string(), // Firebase Auth UID

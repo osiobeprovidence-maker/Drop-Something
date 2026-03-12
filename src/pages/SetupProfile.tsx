@@ -13,6 +13,7 @@ export function SetupProfile() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [tagline, setTagline] = useState('');
   const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
   const [bio, setBio] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,8 +51,10 @@ export function SetupProfile() {
     try {
       await createUser({
         uid: user.uid,
+        email: user.email!, // Firebase user should have email
         username,
         displayName,
+        tagline,
         bio,
         photoURL,
       });
@@ -131,6 +134,17 @@ export function SetupProfile() {
               placeholder="Your Name"
               className="premium-input text-xl"
               required
+            />
+          </div>
+
+          <div className="space-y-4">
+            <label className="label-mini ml-1">Tagline</label>
+            <input
+              type="text"
+              value={tagline}
+              onChange={(e) => setTagline(e.target.value)}
+              placeholder="e.g. Digital Artist & Content Creator"
+              className="premium-input text-xl"
             />
           </div>
 

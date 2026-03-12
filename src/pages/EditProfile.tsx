@@ -13,6 +13,7 @@ export function EditProfile() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState('');
+  const [tagline, setTagline] = useState('');
   const [bio, setBio] = useState('');
   const [photoURL, setPhotoURL] = useState('');
   const [coverURL, setCoverURL] = useState('');
@@ -39,6 +40,7 @@ export function EditProfile() {
     if (!user) navigate('/');
     if (profile) {
       setDisplayName(profile.displayName || '');
+      setTagline(profile.tagline || '');
       setBio(profile.bio || '');
       setPhotoURL(profile.photoURL || '');
       setCoverURL(profile.coverURL || '');
@@ -84,6 +86,7 @@ export function EditProfile() {
       await updateUser({
         uid: user.uid,
         displayName,
+        tagline,
         bio,
         photoURL,
         coverURL: coverURL || undefined,
@@ -177,6 +180,10 @@ export function EditProfile() {
               <div className="space-y-2">
                 <label className="label-mini ml-1">Display Name</label>
                 <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Display Name" className="premium-input text-lg font-black" />
+              </div>
+              <div className="space-y-2">
+                <label className="label-mini ml-1">Tagline</label>
+                <input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="e.g. Digital Artist" className="premium-input font-bold" />
               </div>
               <div className="space-y-2">
                 <label className="label-mini ml-1">Bio / Story</label>
