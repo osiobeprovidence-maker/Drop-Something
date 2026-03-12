@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, googleProvider } from './firebase';
-import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth';
+import { 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  signOut, 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  OAuthProvider,
+  type User 
+} from 'firebase/auth';
 import { useQuery } from 'convex/react';
 import { api } from '../convex/_generated/api';
 import { UserProfile } from './types';
@@ -10,6 +18,9 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
+  signInWithEmail: (email: string, pass: string) => Promise<void>;
+  signUpWithEmail: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -86,11 +97,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error('Google Sign-In Error:', error);
-      // Surface a user-friendly message in production so the user knows why sign-in failed
-      try {
-        const msg = (error as any)?.message || String(error);
-        alert('Sign-in failed: ' + msg);
-      } catch {}
+      throw error;
+    }
+  };
+
+  const signInWithApple = async () => {
+    try {
+      const appleProvider = new OAuthProvider('apple.com');
+      await signInWithPopup(auth, appleProvider);
+    } catch (error) {
+      console.error('Apple Sign-In Error:', error);
+      throw error;
+    }
+  };
+
+  const signInWithEmail = async (email: string, pass: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (error) {
+      console.error('Email Sign-In Error:', error);
+      throw error;
+    }
+  };
+
+  const signUpWithEmail = async (email: string, pass: string) => {
+    try {
+      await createUserWithEmailAndPassword(auth, email, pass);
+    } catch (error) {
+      console.error('Email Sign-Up Error:', error);
+      throw error;
     }
   };
 
@@ -103,7 +138,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      loading, 
+      signInWithGoogle, 
+      signInWithApple,
+      signInWithEmail,
+      signUpWithEmail,
+      logout 
+    }}>
       <AuthProviderInner
         user={user}
         setProfile={setProfile}

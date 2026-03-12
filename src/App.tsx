@@ -10,6 +10,8 @@ import { SetupProfile } from './pages/SetupProfile';
 import { EditProfile } from './pages/EditProfile';
 import { KYC } from './pages/KYC';
 import { Explore } from './pages/Explore';
+import { Login } from './pages/Login';
+import { Toaster } from 'sonner';
 
 function PrivateRoute({ children, adminOnly = false }: { children: React.ReactNode, adminOnly?: boolean }) {
   const { user, profile, loading } = useAuth();
@@ -33,9 +35,11 @@ export default function App() {
     <Router>
       <AuthProvider>
         <Layout>
+          <Toaster position="top-center" richColors />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/setup" element={<PrivateRoute><SetupProfile /></PrivateRoute>} />
             <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
             <Route path="/kyc" element={<PrivateRoute><KYC /></PrivateRoute>} />
