@@ -16,7 +16,8 @@ import {
   Copy,
   Shield,
   Share2,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
