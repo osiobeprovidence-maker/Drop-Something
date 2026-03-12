@@ -210,7 +210,7 @@ export function Explore() {
             DropSomething is built for the community. Whether you're a developer, artist, or storyteller, there's a place for you here.
           </p>
           <div className="pt-8">
-            <Link to="/setup" className="inline-flex items-center gap-4 bg-accent text-black px-16 py-6 rounded-full text-2xl font-black hover:scale-110 active:scale-95 transition-all shadow-[0_0_50px_rgba(255,221,0,0.3)]">
+            <Link to="/onboarding" className="inline-flex items-center gap-4 bg-accent text-black px-16 py-6 rounded-full text-2xl font-black hover:scale-110 active:scale-95 transition-all shadow-[0_0_50px_rgba(255,221,0,0.3)]">
               Become a Creator
               <Zap size={28} fill="currentColor" />
             </Link>

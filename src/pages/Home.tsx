@@ -21,14 +21,18 @@ import {
 } from 'lucide-react';
 
 export function Home() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   React.useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      if (profile) {
+        navigate('/dashboard');
+      } else {
+        navigate('/onboarding');
+      }
     }
-  }, [user, navigate]);
+  }, [user, profile, navigate]);
 
   return (
     <div className="min-h-screen bg-white selection:bg-primary selection:text-black font-sans">
@@ -532,7 +536,7 @@ export function Home() {
             Create your DropSomething page today and let your supporters drop something.
           </p>
           <div className="pt-4 text-center flex justify-center">
-            <Link to="/setup-profile" className="inline-flex items-center gap-3 bg-black text-white px-16 py-7 rounded-full text-2xl font-extrabold hover:scale-105 transition-all shadow-2xl">
+            <Link to="/onboarding" className="inline-flex items-center gap-3 bg-black text-white px-16 py-7 rounded-full text-2xl font-extrabold hover:scale-105 transition-all shadow-2xl">
               Create Your Page
               <ArrowRight size={32} />
             </Link>

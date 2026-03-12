@@ -31,11 +31,23 @@ type Step = 'email' | 'profile' | 'membership' | 'shop' | 'bio' | 'publish' | 's
 
 export function Onboarding() {
   const navigate = useNavigate();
-  const { signUpWithEmail, signInWithGoogle } = useAuth();
+  const { signUpWithEmail, signInWithGoogle, user, profile } = useAuth();
   const createUser = useMutation(api.users.createUser);
   const [currentStep, setCurrentStep] = useState<Step>('email');
   const [loading, setLoading] = useState(false);
   const [mobileTab, setMobileTab] = useState<'edit' | 'preview'>('edit');
+
+  // Skip email step if user is already logged in but has no profile
+  React.useEffect(() => {
+    if (user && currentStep === 'email') {
+      if (profile) {
+        navigate('/dashboard');
+      } else {
+        if (user.email) setEmail(user.email);
+        setCurrentStep('profile');
+      }
+    }
+  }, [user, profile, currentStep, navigate]);
 
   // Form State
   const [email, setEmail] = useState('');
@@ -76,10 +88,13 @@ export function Onboarding() {
 
   const handleGoogleSignIn = async () => {
     try {
+      setLoading(true);
       await signInWithGoogle();
-      navigate('/dashboard'); // If they use Google, they already have an account, direct to dashboard
+      // After Google Sign-In, the useEffect above will trigger and move to 'profile'
     } catch (err) {
       toast.error('Google Sign-In failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,15 +107,20 @@ export function Onboarding() {
 
     setLoading(true);
     try {
-      // 1. Create Firebase Auth account
-      const authResult = await signUpWithEmail(email, password);
+      let uid = user?.uid;
+      
+      // 1. Create Firebase Auth account if not already logged in
+      if (!uid) {
+        const authResult = await signUpWithEmail(email, password);
+        uid = (authResult as any).user.uid;
+      }
       
       // 2. Create Convex User record
       // We need to generate a unique username if they didn't provide one or use display name
       const baseUsername = profileData.username || profileData.displayName.toLowerCase().replace(/\s+/g, '');
       
       await createUser({
-        uid: (authResult as any).user.uid,
+        uid: uid,
         email: email.toLowerCase(),
         username: baseUsername,
         displayName: profileData.displayName,

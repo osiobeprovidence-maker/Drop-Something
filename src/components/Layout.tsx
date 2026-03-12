@@ -74,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-8">
                 <Link to="/login" className="font-bold text-sm text-gray-500 hover:text-black transition-colors">Sign In</Link>
                 <Link
-                  to="/setup"
+                  to="/onboarding"
                   className="px-8 py-3.5 bg-accent text-black font-extrabold text-sm rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all"
                 >
                   Create Page
@@ -125,7 +125,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {!profile && (
               <div className="pt-8">
                 <Link
-                  to="/setup"
+                  to="/onboarding"
                   onClick={() => setMobileOpen(false)}
                   className="w-full block text-center px-10 py-6 bg-accent text-black font-black text-2xl rounded-full shadow-xl"
                 >

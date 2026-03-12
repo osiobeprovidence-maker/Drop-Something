@@ -21,9 +21,9 @@ function PrivateRoute({ children, adminOnly = false }: { children: React.ReactNo
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]">Loading...</div>;
   if (!user) return <Navigate to="/" />;
   
-  // If user is logged in but has no profile, and they are not on the setup page, redirect to setup
-  if (!profile && location.pathname !== '/setup') {
-    return <Navigate to="/setup" />;
+  // If user is logged in but has no profile, and they are not on the onboarding page, redirect to onboarding
+  if (!profile && location.pathname !== '/onboarding' && location.pathname !== '/setup') {
+    return <Navigate to="/onboarding" />;
   }
 
   if (adminOnly && profile?.role !== 'admin') return <Navigate to="/" />;
