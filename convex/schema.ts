@@ -25,6 +25,24 @@ export default defineSchema({
     })),
     role: v.union(v.literal("user"), v.literal("admin")),
     createdAt: v.number(),
+    
+    // New Creator Hub fields
+    coverURL: v.optional(v.string()),
+    mediaIntros: v.optional(v.object({
+      voiceUrl: v.optional(v.string()),
+      videoUrl: v.optional(v.string()),
+    })),
+    membershipTiers: v.optional(v.array(v.object({
+      title: v.string(),
+      price: v.number(),
+      benefits: v.array(v.string()),
+    }))),
+    products: v.optional(v.array(v.object({
+      title: v.string(),
+      price: v.number(),
+      description: v.string(),
+      imageUrl: v.string(),
+    }))),
   })
     .index("by_uid", ["uid"])
     .index("by_username", ["username"]),

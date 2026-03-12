@@ -258,13 +258,13 @@ export function CreatorPage() {
         )}
       </AnimatePresence>
 
-      {/* 1. COVER SECTION */}
-      <div className="relative h-64 md:h-96 w-full overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
-          style={{ backgroundImage: `url(${creator.photoURL || 'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2000'})`, filter: 'brightness(0.7)' }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+      <div className="relative h-[400px] md:h-[500px] overflow-hidden">
+        {creator.coverURL ? (
+          <img src={creator.coverURL} alt="Cover" className="w-full h-full object-cover transition-transform duration-1000 hover:scale-105" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-gray-900 via-gray-800 to-black" />
+        )}
+        <div className="absolute inset-0 bg-black/40" />
       </div>
 
       {/* 2. PROFILE HEADER */}
@@ -308,11 +308,11 @@ export function CreatorPage() {
                   <p className="text-[10px] uppercase font-black tracking-widest opacity-60">Supporters</p>
                 </div>
                 <div className="text-center border-r border-white/10 pr-8">
-                  <p className="text-2xl font-black">2.4k</p>
+                  <p className="text-2xl font-black">{(creator.membershipTiers?.length || 0) * 12 + 5}</p>
                   <p className="text-[10px] uppercase font-black tracking-widest opacity-60">Members</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-black">12</p>
+                  <p className="text-2xl font-black">{creator.products?.length || 0}</p>
                   <p className="text-[10px] uppercase font-black tracking-widest opacity-60">Products</p>
                 </div>
               </div>
@@ -411,7 +411,16 @@ export function CreatorPage() {
                         Video Message
                       </h3>
                       <div className="aspect-video bg-white/5 rounded-[2rem] border border-white/10 flex items-center justify-center group cursor-pointer relative overflow-hidden">
-                        <PlayCircle size={64} className="text-white opacity-40 group-hover:opacity-100 transition-all group-hover:scale-110 z-10" />
+                        {creator.mediaIntros?.videoUrl ? (
+                          <video 
+                            src={creator.mediaIntros.videoUrl} 
+                            className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                            poster={creator.coverURL || creator.photoURL}
+                            controls
+                          />
+                        ) : (
+                          <PlayCircle size={64} className="text-white opacity-40 group-hover:opacity-100 transition-all group-hover:scale-110 z-10" />
+                        )}
                         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 opacity-40 group-hover:opacity-60 transition-opacity" />
                         <span className="absolute bottom-6 left-6 text-xs font-black uppercase tracking-widest opacity-60">Preview Message</span>
                       </div>
@@ -422,17 +431,23 @@ export function CreatorPage() {
                         <Mic size={20} className="text-secondary" />
                         Voice Intro
                       </h3>
-                      <div className="flex items-center gap-6 p-6 bg-gray-50 rounded-[2rem] border border-gray-100">
-                        <button className="w-14 h-14 bg-secondary text-white rounded-2xl flex items-center justify-center hover:scale-105 transition-transform shadow-lg">
-                          <Play fill="currentColor" size={24} />
-                        </button>
-                        <div className="flex-1 space-y-2">
-                          <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-secondary w-1/3" />
-                          </div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Personal Voice Message • 0:45</p>
+                      {creator.mediaIntros?.voiceUrl ? (
+                        <div className="p-4 bg-gray-50 rounded-[2rem]">
+                          <VoicePlayer url={creator.mediaIntros.voiceUrl} />
                         </div>
-                      </div>
+                      ) : (
+                        <div className="flex items-center gap-6 p-6 bg-gray-50 rounded-[2rem] border border-gray-100">
+                          <button className="w-14 h-14 bg-secondary text-white rounded-2xl flex items-center justify-center hover:scale-105 transition-transform shadow-lg">
+                            <Play fill="currentColor" size={24} />
+                          </button>
+                          <div className="flex-1 space-y-2">
+                            <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-secondary w-1/3" />
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Personal Voice Message • 0:45</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -566,15 +581,15 @@ export function CreatorPage() {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-24">
                 {/* Tiers Grid */}
                 <div className="grid md:grid-cols-3 gap-10">
-                  {[
-                    { title: "Supporter", price: 2500, color: "bg-secondary", benefits: ["Exclusive Voice Updates", "Support Message Priority", "Verified Fan Badge"] },
-                    { title: "Inner Circle", price: 10000, color: "bg-primary", benefits: ["Behind-the-scenes Feed", "Monthly Video AMA", "Direct Chat Access", "Limited Merch Discount"] },
-                    { title: "Executive", price: 50000, color: "bg-gray-900", benefits: ["Project Sponsorship Tag", "1:1 Consultation Call", "Early Product Access", "Profile Link Shoutout"] },
-                  ].map((tier, i) => (
+                  {(creator.membershipTiers && creator.membershipTiers.length > 0 ? creator.membershipTiers : [
+                    { title: "Supporter", price: 2500, benefits: ["Exclusive Voice Updates", "Support Message Priority", "Verified Fan Badge"] },
+                    { title: "Inner Circle", price: 10000, benefits: ["Behind-the-scenes Feed", "Monthly Video AMA", "Direct Chat Access", "Limited Merch Discount"] },
+                    { title: "Executive", price: 50000, benefits: ["Project Sponsorship Tag", "1:1 Consultation Call", "Early Product Access", "Profile Link Shoutout"] },
+                  ]).map((tier, i) => (
                     <div key={i} className="premium-card-soft space-y-10 relative overflow-hidden flex flex-col hover:-translate-y-4">
                       {i === 1 && <div className="absolute top-6 right-6 px-3 py-1 bg-white text-primary text-[10px] font-black rounded-full uppercase tracking-widest shadow-lg">Top Value</div>}
                       <div className="space-y-4">
-                        <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-xl", tier.color)}>
+                        <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-xl", i % 3 === 0 ? "bg-secondary" : i % 3 === 1 ? "bg-primary" : "bg-gray-900")}>
                            <MembersIcon size={28} />
                         </div>
                         <h3 className="text-4xl font-black text-gray-900 tracking-tighter leading-none">{tier.title}</h3>
@@ -591,7 +606,7 @@ export function CreatorPage() {
                           ))}
                         </ul>
                       </div>
-                      <button className={cn("w-full py-5 rounded-full font-black text-lg transition-all shadow-xl hover:scale-105 active:scale-95", i === 1 ? "bg-primary text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100")}>
+                      <button className={cn("w-full py-5 rounded-full font-black text-lg transition-all shadow-xl hover:scale-105 active:scale-95", i % 3 === 1 ? "bg-primary text-white" : "bg-gray-50 text-gray-600 hover:bg-gray-100")}>
                         Join Tier
                       </button>
                     </div>
@@ -611,7 +626,7 @@ export function CreatorPage() {
                            <h4 className="text-2xl font-black tracking-tighter">Locked Update</h4>
                            <p className="font-bold opacity-60">This voice update is for Members only. Join the hustle to listen.</p>
                         </div>
-                        <div className="w-full h-40 bg-gray-200 rounded-[2rem] overflow-hidden">
+                         <div className="w-full h-40 bg-gray-200 rounded-[2rem] overflow-hidden">
                            <img src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=800" className="w-full h-full object-cover" />
                         </div>
                         <div className="flex items-center gap-4 text-gray-400">
@@ -648,56 +663,58 @@ export function CreatorPage() {
             {activeTab === 'shop' && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-24">
                 {/* Featured Product */}
-                <div className="premium-card-soft bg-gray-900 flex flex-col lg:flex-row items-center gap-16 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 blur-[120px] rounded-full -mr-48 -mt-48" />
-                  <div className="flex-1 aspect-square md:aspect-video rounded-[3rem] overflow-hidden relative shadow-2xl">
-                    <img src="https://images.unsplash.com/photo-1554568218-0f1715e72254?q=80&w=1000" className="w-full h-full object-cover" />
-                    <div className="absolute top-6 left-6 px-4 py-2 bg-primary text-white text-xs font-black rounded-xl uppercase tracking-widest leading-none shadow-lg">New Arrival</div>
-                  </div>
-                  <div className="flex-1 space-y-10 relative z-10 text-white">
-                    <div className="space-y-4">
-                      <h3 className="text-5xl font-black tracking-tighter leading-none">DropSomething <br/>Hustle Oversized Hoodie</h3>
-                      <p className="text-2xl font-black text-primary">₦18,500</p>
-                      <p className="text-lg text-gray-400 font-bold max-w-sm italic">High-quality heavyweight cotton, featuring a minimal design. Made for creators, by creators.</p>
+                {creator.products?.[0] ? (
+                  <div className="premium-card-soft bg-gray-900 flex flex-col lg:flex-row items-center gap-16 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 blur-[120px] rounded-full -mr-48 -mt-48" />
+                    <div className="flex-1 aspect-square md:aspect-video rounded-[3rem] overflow-hidden relative shadow-2xl">
+                      <img src={creator.products[0].imageUrl} alt={creator.products[0].title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      <div className="absolute top-6 left-6 px-4 py-2 bg-primary text-white text-xs font-black rounded-xl uppercase tracking-widest leading-none shadow-lg">Featured Drop</div>
                     </div>
-                    <div className="space-y-6">
-                      <div className="flex gap-4">
-                        {['S', 'M', 'L', 'XL'].map(s => <button key={s} className="w-12 h-12 rounded-xl border border-white/10 flex items-center justify-center font-black hover:bg-white hover:text-black transition-all"> {s} </button>)}
+                    <div className="flex-1 space-y-10 relative z-10 text-white">
+                      <div className="space-y-4">
+                        <h3 className="text-5xl font-black tracking-tighter leading-none">{creator.products[0].title}</h3>
+                        <p className="text-2xl font-black text-primary">₦{creator.products[0].price.toLocaleString()}</p>
+                        <p className="text-lg text-gray-400 font-bold max-w-sm italic">{creator.products[0].description}</p>
                       </div>
-                      <button className="w-full md:w-auto px-12 py-5 bg-white text-black rounded-full font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-4">
-                        <ShoppingBag size={24} />
-                        Add to Cart
-                      </button>
+                      <div className="space-y-6">
+                        <button className="w-full md:w-auto px-12 py-5 bg-white text-black rounded-full font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-4">
+                          <ShoppingBag size={24} />
+                          Buy Now
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="premium-card-soft bg-white border border-gray-100 p-20 text-center space-y-6">
+                    <ShopIcon size={64} className="mx-auto text-gray-200" />
+                    <h3 className="text-3xl font-black text-gray-900 tracking-tighter">No products yet</h3>
+                    <p className="text-xl text-gray-400 font-bold italic">Check back soon for exclusive merchandise.</p>
+                  </div>
+                )}
 
                 {/* Products Grid */}
-                <div className="space-y-12">
-                   <h3 className="text-4xl font-black text-gray-900 tracking-tighter flex items-center gap-4">
-                     <LayoutGrid size={32} className="text-secondary" />
-                     The Collection
-                   </h3>
-                   <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
-                    {[
-                      { img: "https://images.unsplash.com/photo-1583743814966-8936f5b7be7a?q=80&w=400", title: "Midnight Tee", price: "₦9,500" },
-                      { img: "https://images.unsplash.com/photo-1516762689617-e1cffcef479d?q=80&w=400", title: "Signature Cap", price: "₦6,500" },
-                      { img: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=400", title: "Sticker Pack", price: "₦3,000" },
-                      { img: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=400", title: "Creators Totebag", price: "₦5,000" },
-                    ].map((item, i) => (
-                      <div key={i} className="group cursor-pointer space-y-4">
-                         <div className="aspect-[3/4] rounded-[2.5rem] bg-gray-50 overflow-hidden relative border border-gray-100 shadow-lg group-hover:shadow-2xl transition-all group-hover:-translate-y-2">
-                           <img src={item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                         </div>
-                         <div className="px-2">
+                {creator.products && creator.products.length > 1 && (
+                  <div className="space-y-12">
+                    <h3 className="text-4xl font-black text-gray-900 tracking-tighter flex items-center gap-4">
+                      <LayoutGrid size={32} className="text-secondary" />
+                      The Collection
+                    </h3>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
+                      {creator.products.slice(1).map((item, i) => (
+                        <div key={i} className="group cursor-pointer space-y-4">
+                          <div className="aspect-[3/4] rounded-[2.5rem] bg-gray-50 overflow-hidden relative border border-gray-100 shadow-lg group-hover:shadow-2xl transition-all group-hover:-translate-y-2">
+                            <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                          </div>
+                          <div className="px-2">
                             <h4 className="font-black text-gray-900 group-hover:text-primary transition-colors">{item.title}</h4>
-                            <p className="text-gray-400 font-bold">{item.price}</p>
-                         </div>
-                      </div>
-                    ))}
-                   </div>
-                </div>
+                            <p className="text-gray-400 font-bold">₦{item.price.toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="text-center">
                   <button onClick={() => window.scrollTo({ top: 400, behavior: 'smooth' })} className="px-16 py-6 bg-black text-white rounded-full font-black text-xl hover:scale-110 active:scale-95 transition-all shadow-2xl flex items-center justify-center gap-4 mx-auto">
@@ -711,6 +728,50 @@ export function CreatorPage() {
             {activeTab === 'bio' && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-24">
                 
+                {/* Social Links */}
+                                <div className="space-y-12">
+                   <div className="flex items-center gap-5">
+                      <div className="w-16 h-16 bg-secondary/10 text-secondary rounded-[1.5rem] flex items-center justify-center">
+                        <Globe size={32} />
+                      </div>
+                      <h3 className="text-5xl font-black text-gray-900 tracking-tighter">Connect</h3>
+                   </div>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {creator.socialLinks?.twitter && (
+                        <a href={`https://twitter.com/${creator.socialLinks.twitter}`} target="_blank" rel="noreferrer" className="premium-card-soft bg-white border border-gray-100 flex items-center justify-between hover:scale-105 transition-transform group">
+                          <div className="flex items-center gap-4">
+                             <div className="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center">
+                               <Twitter size={20} fill="currentColor" />
+                             </div>
+                             <span className="font-black text-gray-900">Twitter</span>
+                          </div>
+                          <ArrowRight size={20} className="text-gray-300 group-hover:text-primary transition-colors" />
+                        </a>
+                      )}
+                      {creator.socialLinks?.instagram && (
+                        <a href={`https://instagram.com/${creator.socialLinks.instagram}`} target="_blank" rel="noreferrer" className="premium-card-soft bg-white border border-gray-100 flex items-center justify-between hover:scale-105 transition-transform group">
+                          <div className="flex items-center gap-4">
+                             <div className="w-12 h-12 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white rounded-xl flex items-center justify-center">
+                               <Instagram size={20} />
+                             </div>
+                             <span className="font-black text-gray-900">Instagram</span>
+                          </div>
+                          <ArrowRight size={20} className="text-gray-300 group-hover:text-primary transition-colors" />
+                        </a>
+                      )}
+                      {creator.socialLinks?.website && (
+                        <a href={creator.socialLinks.website} target="_blank" rel="noreferrer" className="premium-card-soft bg-white border border-gray-100 flex items-center justify-between hover:scale-105 transition-transform group">
+                          <div className="flex items-center gap-4">
+                             <div className="w-12 h-12 bg-secondary text-white rounded-xl flex items-center justify-center">
+                               <Globe size={20} />
+                             </div>
+                             <span className="font-black text-gray-900">Website</span>
+                          </div>
+                          <ArrowRight size={20} className="text-gray-300 group-hover:text-primary transition-colors" />
+                        </a>
+                      )}
+                   </div>
+                </div>
                 {/* Creator Story */}
                 <div className="space-y-10">
                    <div className="flex items-center gap-5">
