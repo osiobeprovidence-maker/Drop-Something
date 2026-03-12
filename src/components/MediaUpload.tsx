@@ -27,6 +27,7 @@ export function MediaUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const getPublicUrl = useMutation(api.files.getPublicUrl);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -62,24 +63,10 @@ export function MediaUpload({
 
       const { storageId } = await result.json();
 
-      // 3. The storageId is returned, but we need the public URL
-      // We'll use the browser's ability to call the query from the server
-      // Note: In a real app, you might want to call a server action or use a temporary local URL
-      // But Convex storage IDs can be converted to URLs via a query.
-      // For simplicity, we'll use a direct fetch or a query to get the URL.
+      // 3. Use the mutation to get the official public URL
+      const storageUrl = await getPublicUrl({ storageId });
       
-      // I've added getUrl to files.ts, let's call it manually via fetch if needed or just wait for it.
-      // Standard Convex practice: getUrl returns a public URL.
-      const getUrl = `https://${window.location.hostname.includes('localhost') ? 'aromatic-ox-169.convex.site' : window.location.hostname}/api/storage/${storageId}`;
-      
-      // Wait, the easiest way to get the URL in client is to use a Convex function "getUrl"
-      // or use the site URL directly if known.
-      // Let's use a mutation/query to get the URL.
-      
-      // Actually, since I'm in a component, I can't easily wait for a query result in a handler.
-      // I'll add a mutation that handles the storageId -> URL conversion if needed.
-      // Or just use the storage site URL format.
-      const storageUrl = `https://${import.meta.env.VITE_CONVEX_URL.split('//')[1].replace('.cloud', '.site')}/api/storage/${storageId}`;
+      if (!storageUrl) throw new Error('Failed to get public URL');
       
       setPreview(storageUrl);
       onUploadComplete(storageUrl);
@@ -116,7 +103,7 @@ export function MediaUpload({
         {preview ? (
           <>
             {preview.includes('video') || type === 'video' ? (
-              <video src={preview} className="w-full h-full object-cover" />
+              <video src={preview} autoPlay muted loop className="w-full h-full object-cover" />
             ) : (
               <img src={preview} alt="Preview" className="w-full h-full object-cover" />
             )}
