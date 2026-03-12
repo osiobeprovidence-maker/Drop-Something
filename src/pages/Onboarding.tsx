@@ -69,7 +69,9 @@ export function Onboarding() {
   const [password, setPassword] = useState('');
 
   // Convex Email Existence Check
-  const checkEmailQuery = useQuery(api.users.checkEmail, { email });
+  const checkEmailQuery = useQuery(api.users.checkEmail, 
+    (email && email.includes('@') && email.includes('.')) ? { email } : "skip"
+  );
 
   const handleEmailContinue = async (e: React.FormEvent) => {
     e.preventDefault();

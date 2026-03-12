@@ -30,7 +30,7 @@ export const getUserByEmail = query({
         return await ctx.db
             .query("users")
             .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
-            .unique();
+            .first();
     },
 });
 
@@ -41,7 +41,7 @@ export const checkEmail = query({
         const existing = await ctx.db
             .query("users")
             .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
-            .unique();
+            .first();
         return { exists: existing !== null };
     },
 });
@@ -98,6 +98,15 @@ export const createUser = mutation({
             .unique();
         if (existing !== null) {
             throw new Error("Username already taken");
+        }
+
+        // Ensure email is not already registered
+        const existingEmail = await ctx.db
+            .query("users")
+            .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
+            .first();
+        if (existingEmail !== null) {
+            throw new Error("Email already registered");
         }
 
         return await ctx.db.insert("users", {
