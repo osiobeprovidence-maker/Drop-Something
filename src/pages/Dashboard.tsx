@@ -17,7 +17,11 @@ import {
   Shield,
   Share2,
   Loader2,
-  X
+  X,
+  LayoutDashboard,
+  Settings,
+  CreditCard,
+  UserPen
 } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
@@ -229,25 +233,72 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-full w-fit border border-gray-100 shadow-inner">
-        {(['overview', 'tips', 'payouts'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              "px-8 py-3 rounded-full text-sm font-black transition-all capitalize",
-              activeTab === tab
-                ? "bg-white text-gray-900 shadow-md scale-[1.02]"
-                : "text-gray-400 hover:text-gray-600"
-            )}
-          >
-            {tab === 'tips' ? 'Tip History' : tab === 'payouts' ? 'Payout Settings' : tab}
-          </button>
-        ))}
-      </div>
+      {/* Dashboard Navigation */}
+      <div className="flex flex-col lg:flex-row gap-12">
+        {/* Sidebar Navigation */}
+        <aside className="lg:w-72 space-y-8">
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 p-6 shadow-xl space-y-2">
+            {[
+              { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+              { 
+                id: 'manage', 
+                label: profile ? 'Edit Page' : 'Create Page', 
+                icon: UserPen, 
+                link: profile ? '/edit-profile' : '/setup' 
+              },
+              { id: 'tips', label: 'Tip History', icon: MessageSquare },
+              { id: 'payouts', label: 'Payment Settings', icon: CreditCard },
+            ].map((item) => (
+              item.link ? (
+                <Link
+                  key={item.id}
+                  to={item.link}
+                  className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-black text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-all group"
+                >
+                  <item.icon size={20} className="group-hover:scale-110 transition-transform" />
+                  {item.label}
+                  <ArrowUpRight size={14} className="ml-auto opacity-40" />
+                </Link>
+              ) : (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id as any)}
+                  className={cn(
+                    "w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-black transition-all group",
+                    activeTab === item.id 
+                      ? "bg-black text-white shadow-lg" 
+                      : "text-gray-400 hover:text-gray-900 hover:bg-gray-50"
+                  )}
+                >
+                  <item.icon size={20} className={cn("transition-transform group-hover:scale-110", activeTab === item.id ? "text-primary" : "")} />
+                  {item.label}
+                </button>
+              )
+            ))}
+          </div>
 
-      {activeTab === 'overview' ? (
+          {!profile?.isVerified && (
+            <div className="bg-accent/5 rounded-[2.5rem] border border-accent/10 p-8 space-y-5">
+              <div className="w-12 h-12 bg-accent text-white rounded-xl flex items-center justify-center shadow-lg">
+                <Shield size={24} />
+              </div>
+              <div className="space-y-2">
+                <p className="font-black text-gray-900 leading-tight">Verify Your Account</p>
+                <p className="text-sm text-gray-500 font-bold">Complete KYC to withdraw funds.</p>
+              </div>
+              <Link
+                to="/kyc"
+                className="block w-full py-3 bg-black text-white text-center rounded-full text-xs font-black hover:scale-105 transition-all shadow-xl"
+              >
+                Start Verification
+              </Link>
+            </div>
+          )}
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="flex-1 min-w-0">
+          {activeTab === 'overview' ? (
         <div className="space-y-12">
           {!profile?.isVerified && (
             <motion.div 
@@ -478,11 +529,21 @@ export function Dashboard() {
             )}
           </div>
         </div>
-      ) : (
-        <div className="premium-card-soft">
-          <PayoutSettings />
-        </div>
-      )}
+      ) : activeTab === 'payouts' ? (
+          <div className="premium-card-soft">
+            <PayoutSettings />
+          </div>
+        ) : ( // New 'manage-page' tab
+          <div className="premium-card-soft">
+            <h2 className="text-3xl font-black text-gray-900 tracking-tight mb-6">Manage Your Page</h2>
+            <p className="text-gray-600">
+              Here you can customize your public tipping page, update your profile, and manage other settings.
+            </p>
+            {/* Add more content for managing the page here */}
+          </div>
+        )}
+      </main>
     </div>
-  );
+  </div>
+);
 }
