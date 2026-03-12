@@ -1,5 +1,5 @@
 import { query, mutation } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 
 // Get user by Firebase UID
 export const getUserByUid = query({
@@ -38,11 +38,16 @@ export const getUserByEmail = query({
 export const checkEmail = query({
     args: { email: v.string() },
     handler: async (ctx, args) => {
-        const existing = await ctx.db
-            .query("users")
-            .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
-            .first();
-        return { exists: existing !== null };
+        try {
+            const existing = await ctx.db
+                .query("users")
+                .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
+                .first();
+            return { exists: existing !== null };
+        } catch (err: any) {
+            console.error("checkEmail error:", err);
+            throw new ConvexError(`checkEmail failed: ${err.message || String(err)}`);
+        }
     },
 });
 
