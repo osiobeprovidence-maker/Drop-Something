@@ -6,12 +6,15 @@ import { api } from '../../convex/_generated/api';
 import { motion } from 'motion/react';
 import { User, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { MediaUpload } from '../components/MediaUpload';
+import { toast } from 'sonner';
 
 export function EditProfile() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  const [photoURL, setPhotoURL] = useState('');
   const [coverURL, setCoverURL] = useState('');
   const [twitter, setTwitter] = useState('');
   const [instagram, setInstagram] = useState('');
@@ -37,6 +40,7 @@ export function EditProfile() {
     if (profile) {
       setDisplayName(profile.displayName || '');
       setBio(profile.bio || '');
+      setPhotoURL(profile.photoURL || '');
       setCoverURL(profile.coverURL || '');
       setTwitter(profile.socialLinks?.twitter || '');
       setInstagram(profile.socialLinks?.instagram || '');
@@ -81,6 +85,7 @@ export function EditProfile() {
         uid: user.uid,
         displayName,
         bio,
+        photoURL,
         coverURL: coverURL || undefined,
         socialLinks: { twitter: twitter || undefined, instagram: instagram || undefined, website: website || undefined },
         supportMessage: supportMessage || undefined,
@@ -93,7 +98,7 @@ export function EditProfile() {
       navigate(`/${profile?.username || 'setup'}`);
     } catch (err) {
       console.error(err);
-      alert('Failed to save profile.');
+      toast.error('Failed to save profile.');
     } finally {
       setIsSaving(false);
     }
@@ -123,7 +128,7 @@ export function EditProfile() {
       setGoalTitle(''); setGoalTarget(''); setGoalCurrent('');
     } catch (err) {
       console.error(err);
-      alert('Failed to remove goal.');
+      toast.error('Failed to remove goal.');
     } finally {
       setIsSaving(false);
     }
@@ -147,21 +152,37 @@ export function EditProfile() {
           </div>
         </div>
 
+        {/* 1. Profile & Cover */}
         <div className="premium-card-soft space-y-10">
           <h3 className="text-sm font-black uppercase text-gray-400 tracking-[0.2em]">Visual Identity</h3>
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-2 col-span-2">
-              <label className="label-mini ml-1">Cover Photo URL</label>
-              <input value={coverURL} onChange={(e) => setCoverURL(e.target.value)} placeholder="https://..." className="premium-input" />
+          
+          <MediaUpload 
+            label="Cover Photo"
+            aspect="cover"
+            type="image"
+            defaultUrl={coverURL}
+            onUploadComplete={(url) => setCoverURL(url)}
+          />
+
+          <div className="flex flex-col md:flex-row gap-10 items-center">
+            <MediaUpload 
+              label="Profile Photo"
+              aspect="square"
+              type="image"
+              defaultUrl={photoURL}
+              onUploadComplete={(url) => setPhotoURL(url)}
+              className="w-48"
+            />
+            <div className="flex-1 space-y-6 w-full">
+              <div className="space-y-2">
+                <label className="label-mini ml-1">Display Name</label>
+                <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Display Name" className="premium-input text-lg font-black" />
+              </div>
+              <div className="space-y-2">
+                <label className="label-mini ml-1">Bio / Story</label>
+                <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={4} placeholder="Your story..." className="premium-input resize-none" />
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <label className="label-mini ml-1">Display Name</label>
-            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Display Name" className="premium-input text-lg font-black" />
-          </div>
-          <div className="space-y-2">
-            <label className="label-mini ml-1">Bio / Story</label>
-            <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={4} placeholder="Your story..." className="premium-input resize-none" />
           </div>
         </div>
 
@@ -169,14 +190,20 @@ export function EditProfile() {
         <div className="premium-card-soft space-y-10">
           <h3 className="text-sm font-black uppercase text-gray-400 tracking-[0.2em]">Media Previews</h3>
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <label className="label-mini ml-1">Intro Voice Memo URL</label>
-              <input value={voiceUrl} onChange={(e) => setVoiceUrl(e.target.value)} placeholder="URL to audio file" className="premium-input" />
-            </div>
-            <div className="space-y-2">
-              <label className="label-mini ml-1">Intro Video URL</label>
-              <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="URL to video file" className="premium-input" />
-            </div>
+            <MediaUpload 
+              label="Intro Voice Memo"
+              aspect="video"
+              type="any"
+              defaultUrl={voiceUrl}
+              onUploadComplete={(url) => setVoiceUrl(url)}
+            />
+            <MediaUpload 
+              label="Intro Video"
+              aspect="video"
+              type="video"
+              defaultUrl={videoUrl}
+              onUploadComplete={(url) => setVideoUrl(url)}
+            />
           </div>
         </div>
 
@@ -212,14 +239,23 @@ export function EditProfile() {
             <h3 className="text-sm font-black uppercase text-gray-400 tracking-[0.2em]">featured Products</h3>
             <button type="button" onClick={addProduct} className="text-secondary font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-transform">+ Add Product</button>
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-12">
             {products.map((product, idx) => (
-              <div key={idx} className="p-6 bg-gray-50 rounded-3xl border border-gray-100 space-y-4 relative">
-                 <button type="button" onClick={() => removeProduct(idx)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors">✕</button>
-                 <input value={product.title} onChange={(e) => updateProduct(idx, 'title', e.target.value)} placeholder="Product Name" className="premium-input border-white bg-white font-black" />
-                 <input type="number" value={product.price} onChange={(e) => updateProduct(idx, 'price', Number(e.target.value))} placeholder="Price" className="premium-input border-white bg-white" />
-                 <input value={product.imageUrl} onChange={(e) => updateProduct(idx, 'imageUrl', e.target.value)} placeholder="Image URL" className="premium-input border-white bg-white text-xs" />
-                 <textarea value={product.description} onChange={(e) => updateProduct(idx, 'description', e.target.value)} placeholder="Description" rows={2} className="premium-input border-white bg-white text-sm resize-none" />
+              <div key={idx} className="p-8 bg-gray-50 rounded-[3rem] border border-gray-100 space-y-6 relative group">
+                 <button type="button" onClick={() => removeProduct(idx)} className="absolute top-6 right-6 text-gray-300 hover:text-red-500 transition-colors z-10">✕</button>
+                 
+                 <MediaUpload 
+                   aspect="square"
+                   type="image"
+                   defaultUrl={product.imageUrl}
+                   onUploadComplete={(url) => updateProduct(idx, 'imageUrl', url)}
+                 />
+
+                 <div className="space-y-4">
+                   <input value={product.title} onChange={(e) => updateProduct(idx, 'title', e.target.value)} placeholder="Product Name" className="premium-input border-white bg-white font-black" />
+                   <input type="number" value={product.price} onChange={(e) => updateProduct(idx, 'price', Number(e.target.value))} placeholder="Price" className="premium-input border-white bg-white" />
+                   <textarea value={product.description} onChange={(e) => updateProduct(idx, 'description', e.target.value)} placeholder="Description" rows={3} className="premium-input border-white bg-white text-sm resize-none" />
+                 </div>
               </div>
             ))}
           </div>

@@ -4,14 +4,16 @@ import { useAuth } from '../AuthContext';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { motion } from 'motion/react';
-import { User, AtSign, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { AtSign, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { MediaUpload } from '../components/MediaUpload';
 
 export function SetupProfile() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
   const [bio, setBio] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -51,7 +53,7 @@ export function SetupProfile() {
         username,
         displayName,
         bio,
-        photoURL: user.photoURL || '',
+        photoURL,
       });
       navigate('/dashboard');
     } catch (err) {
@@ -70,9 +72,13 @@ export function SetupProfile() {
         className="premium-card-soft space-y-12"
       >
         <div className="text-center space-y-4">
-          <div className="w-20 h-20 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center mx-auto shadow-inner">
-            <User size={40} />
-          </div>
+          <MediaUpload
+            aspect="square"
+            type="image"
+            defaultUrl={photoURL}
+            onUploadComplete={(url) => setPhotoURL(url)}
+            className="w-32 mx-auto"
+          />
           <div className="space-y-2">
             <h1 className="text-4xl font-black text-gray-900 tracking-tighter">Setup your profile</h1>
             <p className="text-xl text-gray-500 font-bold">Choose a unique username to get started.</p>
