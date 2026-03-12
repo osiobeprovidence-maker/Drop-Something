@@ -12,7 +12,6 @@ export function EditProfile() {
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
-  const [photoURL, setPhotoURL] = useState('');
   const [coverURL, setCoverURL] = useState('');
   const [twitter, setTwitter] = useState('');
   const [instagram, setInstagram] = useState('');
@@ -38,7 +37,6 @@ export function EditProfile() {
     if (profile) {
       setDisplayName(profile.displayName || '');
       setBio(profile.bio || '');
-      setPhotoURL(profile.photoURL || '');
       setCoverURL(profile.coverURL || '');
       setTwitter(profile.socialLinks?.twitter || '');
       setInstagram(profile.socialLinks?.instagram || '');
@@ -83,7 +81,6 @@ export function EditProfile() {
         uid: user.uid,
         displayName,
         bio,
-        photoURL,
         coverURL: coverURL || undefined,
         socialLinks: { twitter: twitter || undefined, instagram: instagram || undefined, website: website || undefined },
         supportMessage: supportMessage || undefined,
@@ -150,15 +147,10 @@ export function EditProfile() {
           </div>
         </div>
 
-        {/* 1. Profile & Cover */}
         <div className="premium-card-soft space-y-10">
           <h3 className="text-sm font-black uppercase text-gray-400 tracking-[0.2em]">Visual Identity</h3>
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <label className="label-mini ml-1">Profile Photo URL</label>
-              <input value={photoURL} onChange={(e) => setPhotoURL(e.target.value)} placeholder="https://..." className="premium-input" />
-            </div>
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-2">
               <label className="label-mini ml-1">Cover Photo URL</label>
               <input value={coverURL} onChange={(e) => setCoverURL(e.target.value)} placeholder="https://..." className="premium-input" />
             </div>
