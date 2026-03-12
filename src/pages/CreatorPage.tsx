@@ -6,7 +6,6 @@ import { UserProfile, Tip } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Coffee, 
-  Heart, 
   Share2, 
   MessageSquare, 
   ShieldCheck, 
@@ -244,7 +243,7 @@ export function CreatorPage() {
               className="bg-white rounded-[3rem] p-10 max-w-md w-full text-center space-y-8 shadow-2xl border border-gray-100"
             >
               <div className="w-24 h-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto">
-                <Heart size={48} fill="currentColor" />
+                <CheckCircle2 size={48} />
               </div>
               <div className="space-y-3">
                 <h2 className="text-4xl font-black text-gray-900 tracking-tighter">Thank You!</h2>
@@ -375,7 +374,7 @@ export function CreatorPage() {
                       <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-3xl rounded-full -mr-32 -mt-32" />
                       <div className="flex items-center gap-6">
                         <div className="w-16 h-16 bg-primary/10 text-primary rounded-[1.5rem] flex items-center justify-center shadow-inner">
-                          <Heart size={32} fill="currentColor" />
+                          <Coffee size={32} />
                         </div>
                         <h2 className="text-3xl font-black text-gray-900 tracking-tighter leading-none">Drop something for {creator.displayName}</h2>
                       </div>
@@ -401,7 +400,7 @@ export function CreatorPage() {
                         </div>
                         <VoiceRecorder onRecordingComplete={(blob) => setAudioBlob(blob)} isUploading={isPaying} />
                         <button onClick={processPaymentWithVoice} disabled={isPaying} className="w-full py-6 bg-black text-white rounded-full font-black text-xl hover:scale-[1.02] active:scale-95 transition-all shadow-2xl flex items-center justify-center gap-4">
-                          {isPaying ? <Loader2 className="animate-spin" size={24} /> : <Heart size={24} fill="currentColor" />}
+                          {isPaying ? <Loader2 className="animate-spin" size={24} /> : <Zap size={24} fill="currentColor" />}
                           Support with {formatCurrency(customAmount ? parseInt(customAmount) : amount)}
                         </button>
                       </div>
@@ -658,7 +657,7 @@ export function CreatorPage() {
 
                 <div className="text-center">
                   <button onClick={() => window.scrollTo({ top: 400, behavior: 'smooth' })} className="px-16 py-6 bg-black text-white rounded-full font-black text-xl hover:scale-110 active:scale-95 transition-all shadow-2xl flex items-center justify-center gap-4 mx-auto">
-                    <Heart size={24} fill="currentColor" />
+                    <Zap size={24} fill="currentColor" />
                     Drop a support tip instead
                   </button>
                 </div>
@@ -794,7 +793,7 @@ export function CreatorPage() {
                          <div className="grid md:grid-cols-2 gap-8">
                             {[
                               { icon: Zap, title: "Pure Independence", desc: "No sponsors deciding what I should or shouldn't create." },
-                              { icon: Heart, title: "Better Quality", desc: "Tips go directly into better equipment and research." },
+                              { icon: Zap, title: "Better Quality", desc: "Tips go directly into better equipment and research." },
                               { icon: Star, title: "Support Community", desc: "Everything I build is shared back with you all." },
                               { icon: Award, title: "Direct Connection", desc: "No middleman, just me and my most loyal community." },
                             ].map((b, i) => (
@@ -859,7 +858,7 @@ export function CreatorPage() {
 
                 <div className="text-center pt-10">
                   <button onClick={() => window.scrollTo({ top: 400, behavior: 'smooth' })} className="px-16 py-8 bg-primary text-white rounded-full font-black text-2xl hover:scale-110 active:scale-95 transition-all shadow-[0_20px_50px_-10px_rgba(255,139,167,0.4)] flex items-center justify-center gap-6 mx-auto">
-                    <Heart size={40} fill="currentColor" />
+                    <Zap size={40} fill="currentColor" />
                     Support my hustle
                   </button>
                 </div>

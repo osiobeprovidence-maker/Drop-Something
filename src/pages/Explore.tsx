@@ -12,7 +12,7 @@ import {
   Globe, 
   Twitter, 
   Instagram,
-  Heart,
+  Music,
   Star,
   Zap,
   Filter,
@@ -25,7 +25,7 @@ const CATEGORIES = [
   { id: 'content', label: 'Content', icon: <Zap size={16} /> },
   { id: 'tech', label: 'Tech', icon: <Globe size={16} /> },
   { id: 'art', label: 'Art', icon: <Star size={16} /> },
-  { id: 'music', label: 'Music', icon: <Heart size={16} /> },
+  { id: 'music', label: 'Music', icon: <Music size={16} /> },
 ];
 
 export function Explore() {

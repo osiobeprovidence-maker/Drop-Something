@@ -9,7 +9,6 @@ import {
   Loader2, 
   AlertCircle, 
   CheckCircle2,
-  Heart,
   ChevronLeft
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -96,9 +95,6 @@ export function Login() {
 
         <div className="premium-card-soft space-y-10">
           <div className="text-center space-y-4">
-            <div className="w-20 h-20 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center mx-auto shadow-inner">
-              <Heart size={40} fill="currentColor" />
-            </div>
             <div className="space-y-2">
               <h1 className="text-4xl font-black text-gray-900 tracking-tighter">
                 {isSignUp ? 'Join the community' : 'Welcome back'}

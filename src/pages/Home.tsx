@@ -9,7 +9,6 @@ import {
   Share2, 
   Wallet, 
   Zap, 
-  Heart, 
   ShieldCheck, 
   Link as LinkIcon,
   MessageSquare,
@@ -115,9 +114,6 @@ export function Home() {
             >
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <Heart className="text-primary" size={20} fill="currentColor" />
-                  </div>
                   <h3 className="text-xl font-black text-gray-900 tracking-tight">Support Riderezzy</h3>
                 </div>
 
@@ -401,7 +397,7 @@ export function Home() {
                 className="p-8 rounded-[2.5rem] bg-white/5 border border-white/10 backdrop-blur-sm space-y-4"
               >
                 <div className="w-12 h-12 bg-primary/20 text-primary rounded-2xl flex items-center justify-center">
-                  <Heart size={24} fill="currentColor" />
+                  <Zap size={24} fill="currentColor" />
                 </div>
                 <h3 className="text-2xl font-black tracking-tight uppercase">Content Creators</h3>
                 <p className="text-gray-400 font-bold leading-relaxed">Video creators, streamers, and influencers can receive support directly from their audience.</p>

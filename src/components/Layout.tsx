@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { User, LayoutDashboard, ShieldCheck, LogOut, Menu, X, Search, Heart } from 'lucide-react';
+import { User, LayoutDashboard, ShieldCheck, LogOut, Menu, X, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -22,9 +22,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
-                <Heart size={20} className="text-white" fill="currentColor" />
-              </div>
               <span className="text-2xl font-black tracking-tighter text-gray-900">DropSomething</span>
             </Link>
           </div>
@@ -149,9 +146,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="grid md:grid-cols-4 gap-16 mb-16">
             <div className="col-span-2 space-y-8">
               <Link to="/" className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-md">
-                   <Heart size={16} className="text-white" fill="currentColor" />
-                </div>
                 <span className="text-xl font-black tracking-tighter text-gray-900">DropSomething</span>
               </Link>
               <p className="text-gray-500 font-bold max-w-sm leading-relaxed">
