@@ -45,6 +45,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link to="/dashboard" className="text-sm font-bold text-gray-900 hover:text-primary transition-colors">
                   Dashboard
                 </Link>
+                <Link to="/edit-profile" className="text-sm font-bold text-gray-900 hover:text-primary transition-colors">
+                  Edit Profile
+                </Link>
+                {profile?.role === 'admin' && (
+                  <Link to="/admin" className="text-sm font-bold text-gray-900 hover:text-primary transition-colors">
+                    Admin
+                  </Link>
+                )}
                 <Link to={`/${profile?.username || 'setup'}`} className="flex items-center gap-2 group">
                   <div className="w-10 h-10 rounded-2xl bg-gray-100 border border-gray-200 overflow-hidden group-hover:shadow-md transition-all">
                     {user.photoURL ? (
@@ -66,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-8">
                 <Link to="/login" className="font-bold text-sm text-gray-500 hover:text-black transition-colors">Sign In</Link>
                 <Link
-                  to="/setup-profile"
+                  to="/setup"
                   className="px-8 py-3.5 bg-accent text-black font-extrabold text-sm rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all"
                 >
                   Create Page
@@ -96,20 +104,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <a href="/#faq" onClick={() => setMobileOpen(false)} className="text-5xl font-black uppercase tracking-tighter hover:text-primary transition-colors">FAQ</a>
             
             {user ? (
-              <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-5xl font-black uppercase tracking-tighter hover:text-primary transition-colors">Dashboard</Link>
+              <>
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="text-5xl font-black uppercase tracking-tighter hover:text-primary transition-colors">Dashboard</Link>
+                <Link to="/edit-profile" onClick={() => setMobileOpen(false)} className="text-5xl font-black uppercase tracking-tighter hover:text-primary transition-colors">Settings</Link>
+                {profile?.role === 'admin' && (
+                  <Link to="/admin" onClick={() => setMobileOpen(false)} className="text-5xl font-black uppercase tracking-tighter hover:text-primary transition-colors">Admin</Link>
+                )}
+                <Link to={`/${profile?.username || 'setup'}`} onClick={() => setMobileOpen(false)} className="text-5xl font-black uppercase tracking-tighter hover:text-primary transition-colors">My Page</Link>
+                <button 
+                  onClick={() => { logout(); setMobileOpen(false); }} 
+                  className="text-5xl font-black uppercase tracking-tighter text-red-500 hover:text-red-600 transition-colors flex items-center gap-4"
+                >
+                  Logout <LogOut size={40} />
+                </button>
+              </>
             ) : (
               <Link to="/login" onClick={() => setMobileOpen(false)} className="text-5xl font-black uppercase tracking-tighter hover:text-primary transition-colors">Sign In</Link>
             )}
 
-            <div className="pt-8">
-              <Link
-                to="/setup-profile"
-                onClick={() => setMobileOpen(false)}
-                className="w-full block text-center px-10 py-6 bg-accent text-black font-black text-2xl rounded-full shadow-xl"
-              >
-                Create Page
-              </Link>
-            </div>
+            {!profile && (
+              <div className="pt-8">
+                <Link
+                  to="/setup"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full block text-center px-10 py-6 bg-accent text-black font-black text-2xl rounded-full shadow-xl"
+                >
+                  Create Page
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
