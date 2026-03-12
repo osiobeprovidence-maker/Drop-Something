@@ -9,6 +9,7 @@
  */
 
 import type * as bankDetails from "../bankDetails.js";
+import type * as files from "../files.js";
 import type * as kyc from "../kyc.js";
 import type * as tips from "../tips.js";
 import type * as users from "../users.js";
@@ -22,6 +23,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   bankDetails: typeof bankDetails;
+  files: typeof files;
   kyc: typeof kyc;
   tips: typeof tips;
   users: typeof users;

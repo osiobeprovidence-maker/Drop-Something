@@ -1,12 +1,24 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { UserProfile, Tip } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Coffee, Heart, Share2, MessageSquare, ShieldCheck, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { 
+  Coffee, 
+  Heart, 
+  Share2, 
+  MessageSquare, 
+  ShieldCheck, 
+  Loader2, 
+  AlertCircle, 
+  CheckCircle2,
+  Mic
+} from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
 import confetti from 'canvas-confetti';
+import { VoiceRecorder } from '../components/VoiceRecorder';
+import { VoicePlayer } from '../components/VoicePlayer';
 
 declare const PaystackPop: any;
 
@@ -31,6 +43,8 @@ export function CreatorPage() {
   const [message, setMessage] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const [paystackAvailable, setPaystackAvailable] = useState<boolean>(() => {
     try {
       return typeof (window as any).PaystackPop !== 'undefined';
@@ -108,10 +122,70 @@ export function CreatorPage() {
             message,
             isAnonymous,
             paymentReference: response.reference,
+            voiceUrl: response.voiceUrl,
             status: 'success',
           });
           setShowSuccess(true);
           triggerConfetti();
+          setAudioBlob(null);
+          setName('');
+          setMessage('');
+          setCustomAmount('');
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setIsPaying(false);
+        }
+      },
+      onClose: () => {
+        setIsPaying(false);
+      }
+    });
+
+    handler.openIframe();
+  };
+
+  const processPaymentWithVoice = async () => {
+    if (!creator) return;
+    setIsPaying(true);
+
+    let voiceUrl = undefined;
+    if (audioBlob) {
+      try {
+        const postUrl = await generateUploadUrl();
+        const result = await fetch(postUrl, {
+          method: "POST",
+          headers: { "Content-Type": audioBlob.type },
+          body: audioBlob,
+        });
+        const { storageId } = await result.json();
+        voiceUrl = storageId;
+      } catch (err) {
+        console.error("Voice upload failed:", err);
+      }
+    }
+
+    const finalAmount = customAmount ? parseInt(customAmount) : amount;
+    const handler = (window as any).PaystackPop.setup({
+      key: (import.meta as any).env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder',
+      email: 'supporter@dropsomething.ng',
+      amount: finalAmount * 100,
+      currency: 'NGN',
+      callback: async (response: any) => {
+        try {
+          await createTip({
+            creatorId: creator.uid,
+            supporterName: isAnonymous ? 'Anonymous' : (name || 'Someone'),
+            amount: finalAmount,
+            message,
+            isAnonymous,
+            paymentReference: response.reference,
+            voiceUrl: voiceUrl,
+            status: 'success',
+          });
+          setShowSuccess(true);
+          triggerConfetti();
+          setAudioBlob(null);
           setName('');
           setMessage('');
           setCustomAmount('');
@@ -130,41 +204,35 @@ export function CreatorPage() {
   };
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="animate-spin text-primary" /></div>;
-  if (!creator) return (
-    <div className="text-center py-20 space-y-4">
-      <AlertCircle size={48} className="mx-auto text-ink/20" />
-      <h1 className="text-2xl font-black text-ink">Creator not found</h1>
-      <Link to="/" className="text-primary font-black hover:underline decoration-4 underline-offset-8">Go back home</Link>
-    </div>
-  );
+  if (!creator) return <Navigate to="/" replace />;
 
   return (
-    <div className="max-w-5xl mx-auto grid md:grid-cols-12 gap-8 pb-20">
+    <div className="max-w-6xl mx-auto grid md:grid-cols-12 gap-12 pb-20 pt-8">
       <AnimatePresence>
         {showSuccess && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md"
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[2.5rem] p-8 max-w-md w-full text-center space-y-6 shadow-[12px_12px_0_0_#111111] border-4 border-ink"
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-[3rem] p-10 max-w-md w-full text-center space-y-8 shadow-2xl border border-gray-100"
             >
-              <div className="w-20 h-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mx-auto border-2 border-ink">
-                <Heart size={40} fill="currentColor" />
+              <div className="w-24 h-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto">
+                <Heart size={48} fill="currentColor" />
               </div>
-              <div className="space-y-2">
-                <h2 className="text-3xl font-black text-ink">Thank You!</h2>
-                <p className="text-ink/60 font-bold">
-                  Your support means the world to <span className="font-black text-ink">{creator.displayName}</span>.
+              <div className="space-y-3">
+                <h2 className="text-4xl font-black text-gray-900 tracking-tighter">Thank You!</h2>
+                <p className="text-gray-500 font-bold leading-relaxed">
+                  Your support means the world to <span className="text-gray-900">{creator.displayName}</span>.
                   You've just made their hustle a little easier!
                 </p>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <button
                   onClick={() => {
                     const link = window.location.href;
@@ -178,14 +246,14 @@ export function CreatorPage() {
                       navigator.clipboard.writeText(link);
                     }
                   }}
-                  className="w-full py-4 bg-primary text-white rounded-2xl font-black hover:scale-[1.02] transition-all shadow-[0_4px_0_0_#111111] active:shadow-none active:translate-y-1 flex items-center justify-center gap-2"
+                  className="w-full py-5 bg-black text-white rounded-full font-black text-lg hover:scale-[1.02] transition-all shadow-xl flex items-center justify-center gap-3"
                 >
-                  <Share2 size={20} />
+                  <Share2 size={24} />
                   Share the love
                 </button>
                 <button
                   onClick={() => setShowSuccess(false)}
-                  className="w-full py-4 bg-cream text-ink rounded-2xl font-black hover:bg-cream/80 transition-colors border-2 border-ink"
+                  className="w-full py-5 bg-gray-50 text-gray-600 rounded-full font-black text-lg hover:bg-gray-100 transition-all"
                 >
                   Close
                 </button>
@@ -196,86 +264,114 @@ export function CreatorPage() {
       </AnimatePresence>
 
       {/* Left Column: Profile Info */}
-      <div className="md:col-span-5 space-y-8">
-        <div className="bg-white p-8 rounded-[2.5rem] border-4 border-ink shadow-[8px_8px_0_0_#111111] text-center space-y-6">
-          <div className="relative inline-block">
-            <div className="w-32 h-32 rounded-[2rem] bg-cream overflow-hidden border-4 border-ink shadow-[4px_4px_0_0_#111111] mx-auto">
-              {creator.photoURL ? (
-                <img src={creator.photoURL} alt={creator.displayName} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-ink/20">
-                  <Heart size={48} />
+      <div className="md:col-span-5 space-y-12">
+        <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl overflow-hidden group">
+          {/* Cover Placeholder / Background */}
+          <div className="h-40 bg-gray-100 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-secondary/30 group-hover:scale-110 transition-transform duration-1000" />
+            <div className="absolute inset-0 opacity-[0.03] grayscale animate-pulse" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
+          </div>
+
+          <div className="p-10 pt-0 -mt-20 relative text-center space-y-8">
+            <div className="relative inline-block">
+              <div className="w-40 h-40 rounded-[3rem] bg-white p-2 shadow-2xl mx-auto overflow-hidden">
+                {creator.photoURL ? (
+                  <img src={creator.photoURL} alt={creator.displayName} className="w-full h-full object-cover rounded-[2.5rem]" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-primary/20 bg-primary/5">
+                    <Heart size={64} fill="currentColor" />
+                  </div>
+                )}
+              </div>
+              {creator.isVerified && (
+                <div className="absolute bottom-2 right-2 bg-secondary text-white p-2.5 rounded-2xl shadow-xl border-4 border-white" title="Verified Creator">
+                  <ShieldCheck size={24} />
                 </div>
               )}
             </div>
-            {creator.isVerified && (
-              <div className="absolute -bottom-2 -right-2 bg-secondary text-white p-1.5 rounded-full border-4 border-ink shadow-sm" title="Verified Creator">
-                <ShieldCheck size={20} />
-              </div>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <h1 className="text-3xl font-black tracking-tight text-ink">{creator.displayName}</h1>
-            <p className="text-primary font-black uppercase tracking-widest text-sm">@{creator.username}</p>
-          </div>
-
-          <p className="text-ink/70 font-bold leading-relaxed whitespace-pre-wrap">
-            {creator.bio || "Supporting the hustle!"}
-          </p>
-
-          {/* Goal progress */}
-          {creator.goal && (
-            <div className="mt-4 px-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm font-black text-ink">{creator.goal.title}</div>
-                <div className="text-sm font-black text-ink">₦{creator.goal.current.toLocaleString()} / ₦{creator.goal.target.toLocaleString()}</div>
-              </div>
-              <div className="w-full bg-cream rounded-full h-4 overflow-hidden border-2 border-ink/10">
-                <div
-                  className="h-4 bg-primary"
-                  style={{ width: `${Math.min(100, Math.round((creator.goal.current / creator.goal.target) * 100))}%` }}
-                />
+            <div className="space-y-3">
+              <h1 className="text-4xl font-black tracking-tighter text-gray-900 leading-none">{creator.displayName}</h1>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-primary font-black uppercase tracking-widest text-xs">@{creator.username}</span>
+                <div className="w-1.5 h-1.5 bg-gray-100 rounded-full" />
+                <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Creator</span>
               </div>
             </div>
-          )}
 
-          <div className="pt-4 border-t-4 border-ink/5 flex items-center justify-center gap-6">
-            <div className="text-center">
-              <p className="text-2xl font-black text-ink">{successfulTips.length}+</p>
-              <p className="text-xs text-ink/40 uppercase font-black tracking-widest">Supporters</p>
+            <p className="text-xl text-gray-500 font-bold leading-relaxed whitespace-pre-wrap italic px-4">
+              "{creator.bio || "Supporting the hustle!"}"
+            </p>
+
+            {/* Goal progress */}
+            {creator.goal && (
+              <div className="mt-8 p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100">
+                <div className="flex flex-col gap-4">
+                  <div className="space-y-1">
+                    <div className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">{creator.goal.title}</div>
+                    <div className="text-2xl font-black text-gray-900">₦{creator.goal.current.toLocaleString()} <span className="text-gray-400 text-sm font-bold">of ₦{creator.goal.target.toLocaleString()}</span></div>
+                  </div>
+                  <div className="w-full bg-white rounded-full h-5 overflow-hidden p-1 shadow-inner border border-gray-100">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(100, Math.round((creator.goal.current / creator.goal.target) * 100))}%` }}
+                      transition={{ duration: 1.5, ease: "easeOut" }}
+                      className="h-full bg-accent rounded-full shadow-[0_0_15px_rgba(255,221,0,0.5)]"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-8 border-t border-gray-50 flex items-center justify-center gap-12">
+              <div className="text-center group">
+                <p className="text-3xl font-black text-gray-900 group-hover:text-primary transition-colors">{successfulTips.length}</p>
+                <p className="label-mini !mb-0">Supporters</p>
+              </div>
+              <div className="h-10 w-px bg-gray-100" />
+              <div className="text-center">
+                <p className="text-3xl font-black text-gray-900">YES</p>
+                <p className="label-mini !mb-0">Verified</p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Recent Supporters */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-black text-ink/40 uppercase tracking-widest px-4">Recent Support</h3>
-          <div className="space-y-3">
+        <div className="space-y-6">
+          <h3 className="label-mini px-6">Recent Support</h3>
+          <div className="space-y-4">
             <AnimatePresence mode="popLayout">
               {successfulTips.slice(0, 10).map((tip) => (
                 <motion.div
                   key={tip._id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="bg-white p-4 rounded-2xl border-4 border-ink shadow-[4px_4px_0_0_#111111] flex gap-4"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white p-6 rounded-3xl border border-gray-50 shadow-lg flex gap-5 hover:shadow-xl transition-all"
                 >
-                  <div className="w-10 h-10 bg-primary/10 text-primary border-2 border-ink rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Coffee size={20} />
+                  <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center flex-shrink-0 text-gray-400 font-black text-xl border border-gray-100">
+                    {tip._id ? tip._id[0].toUpperCase() : (tip.supporterName ? tip.supporterName[0].toUpperCase() : 'S')}
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-black text-ink">
-                      {tip.supporterName} <span className="text-ink/40 font-bold">dropped {formatCurrency(tip.amount)}</span>
+                  <div className="space-y-1 flex-1">
+                    <p className="text-gray-900 font-black">
+                      {tip.supporterName} <span className="text-primary ml-1">{formatCurrency(tip.amount)}</span>
                     </p>
                     {tip.message && (
-                      <p className="text-sm text-ink/70 font-bold italic">"{tip.message}"</p>
+                      <p className="text-sm text-gray-500 font-bold leading-relaxed italic">"{tip.message}"</p>
+                    )}
+                    {tip.voiceUrl && (
+                      <div className="pt-2">
+                        <VoicePlayer url={tip.voiceUrl} className="scale-75 origin-left" />
+                      </div>
                     )}
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
             {successfulTips.length === 0 && (
-              <p className="text-center py-8 text-ink/40 text-sm font-black italic">Be the first to support!</p>
+              <div className="text-center py-12 premium-card-soft bg-gray-50/50 border-dashed border-2 border-gray-200">
+                <p className="text-gray-400 font-bold italic">Be the first to show some love! 💖</p>
+              </div>
             )}
           </div>
         </div>
@@ -283,80 +379,107 @@ export function CreatorPage() {
 
       {/* Right Column: Tip Form */}
       <div className="md:col-span-7">
-        <div className="bg-white p-8 rounded-[2.5rem] border-4 border-ink shadow-[12px_12px_0_0_#6B3CF6] sticky top-24 space-y-8">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center border-2 border-ink shadow-[2px_2px_0_0_#111111]">
-              <Coffee size={24} />
+        <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-2xl sticky top-28 space-y-10">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 bg-primary/10 text-primary rounded-[1.5rem] flex items-center justify-center shadow-inner">
+              <Heart size={32} fill="currentColor" />
             </div>
-            <h2 className="text-2xl font-black text-ink leading-tight">Drop something for {creator.displayName}</h2>
+            <div>
+              <h2 className="text-3xl font-black text-gray-900 tracking-tighter">Support the hustle</h2>
+              <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Recipient: {creator.displayName}</p>
+            </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-8">
+            <div className="grid grid-cols-3 gap-4">
               {[500, 1000, 5000].map((val) => (
                 <button
                   key={val}
                   onClick={() => { setAmount(val); setCustomAmount(''); }}
                   className={cn(
-                    "py-4 rounded-2xl font-black text-lg transition-all border-4",
+                    "py-5 rounded-3xl font-black text-xl transition-all border-2",
                     amount === val && !customAmount
-                      ? "bg-primary/10 border-primary text-primary shadow-[2px_2px_0_0_#FF4D8D]"
-                      : "bg-cream border-ink text-ink/40 hover:border-primary hover:text-primary"
+                      ? "bg-primary text-white border-primary shadow-xl shadow-primary/20 scale-[1.05]"
+                      : "bg-gray-50 border-transparent text-gray-400 hover:border-gray-200 hover:bg-white"
                   )}
                 >
-                  {formatCurrency(val)}
+                  ₦{val.toLocaleString()}
                 </button>
               ))}
             </div>
 
             <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/40 font-black">₦</div>
+              <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 font-black text-xl">₦</div>
               <input
                 type="number"
                 value={customAmount}
                 onChange={(e) => { setCustomAmount(e.target.value); setAmount(0); }}
                 placeholder="Enter custom amount"
-                className="w-full pl-10 pr-4 py-4 bg-cream border-4 border-ink rounded-2xl focus:outline-none focus:border-primary transition-all font-black text-lg"
+                className="premium-input !pl-12 text-2xl font-black"
               />
             </div>
 
-            <div className="space-y-4">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Name or Twitter @ (optional)"
-                className="w-full px-4 py-4 bg-cream border-2 border-ink rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold"
-              />
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Leave a message of support..."
-                rows={3}
-                className="w-full px-4 py-4 bg-cream border-2 border-ink rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-bold resize-none"
-              />
-              <label className="flex items-center gap-3 cursor-pointer group">
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="label-mini ml-1">Your Name</label>
                 <input
-                  type="checkbox"
-                  checked={isAnonymous}
-                  onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="w-6 h-6 rounded border-4 border-ink text-primary focus:ring-primary"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Someone special"
+                  className="premium-input"
                 />
-                <span className="text-sm font-black text-ink/60 group-hover:text-ink transition-colors">Support anonymously</span>
-              </label>
+              </div>
+
+              <div className="space-y-2">
+                <label className="label-mini ml-1">Message (Optional)</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Say something nice to support their work..."
+                  rows={4}
+                  className="premium-input resize-none"
+                />
+              </div>
+              
+              <div className="pt-2">
+                {/* <label className="label-mini ml-1 mb-3">Add a Voice Message</label> */}
+                <VoiceRecorder 
+                  onRecordingComplete={(blob) => setAudioBlob(blob)} 
+                  isUploading={isPaying}
+                />
+              </div>
+
+              <div className="pt-4">
+                <label className="flex items-center gap-4 cursor-pointer group">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={isAnonymous}
+                      onChange={(e) => setIsAnonymous(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <div className="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-primary transition-all duration-300" />
+                    <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 peer-checked:translate-x-6 shadow-sm" />
+                  </div>
+                  <span className="text-sm font-black text-gray-500 group-hover:text-gray-900 transition-colors uppercase tracking-widest">Support anonymously</span>
+                </label>
+              </div>
             </div>
 
-            <button
-              onClick={handlePay}
-              disabled={isPaying}
-              className="w-full py-5 bg-primary text-white rounded-2xl font-black text-xl hover:scale-[1.02] transition-all active:scale-95 shadow-[0_8px_0_0_#111111] flex items-center justify-center gap-3"
-            >
-              {isPaying ? <Loader2 className="animate-spin" /> : <Heart size={24} fill="currentColor" />}
-              Drop {formatCurrency(customAmount ? parseInt(customAmount) : amount)}
-            </button>
+            <div className="pt-6">
+              <button
+                onClick={processPaymentWithVoice}
+                disabled={isPaying}
+                className="w-full py-6 bg-black text-white rounded-full font-black text-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-2xl flex items-center justify-center gap-4 disabled:opacity-50"
+              >
+                {isPaying ? <Loader2 className="animate-spin" size={32} /> : <Heart size={32} fill="currentColor" />}
+                Drop {formatCurrency(customAmount ? parseInt(customAmount) : amount)}
+              </button>
+            </div>
 
-            <div className="flex items-center justify-center gap-2 text-ink/40 text-xs font-black uppercase tracking-widest">
-              <ShieldCheck size={14} />
+            <div className="flex items-center justify-center gap-3 text-gray-300 text-xs font-black uppercase tracking-[0.2em] pt-4">
+              <ShieldCheck size={16} />
               <span>Secured by Paystack</span>
             </div>
           </div>

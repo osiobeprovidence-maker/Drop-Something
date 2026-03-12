@@ -12,11 +12,47 @@
   --color-ink: #1A1A1A;
 }
 
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+}
+
 body {
   font-family: var(--font-sans);
   background-color: white;
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: white;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #eee;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ddd;
 }
 
 .premium-card {
@@ -82,4 +118,45 @@ body {
 .brutal-btn:active {
   transform: translate(0.25rem, 0.25rem);
   box-shadow: none;
+}
+
+.premium-card-soft {
+  background-color: white;
+  border-radius: 2.5rem;
+  padding: 2rem;
+  border: 1px solid #f9fafb;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.035);
+  transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-card-soft:hover {
+  box-shadow: 0 32px 64px -16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
+}
+
+.premium-input {
+  width: 100%;
+  padding: 1.25rem 1.5rem;
+  background-color: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: 1.25rem;
+  font-weight: 700;
+  outline: none;
+  transition: all 200ms ease;
+}
+
+.premium-input:focus {
+  background-color: white;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 4px rgba(255, 221, 0, 0.15);
+}
+
+.label-mini {
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #9ca3af;
+  margin-bottom: 0.5rem;
+  display: block;
 }

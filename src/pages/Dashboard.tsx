@@ -21,6 +21,7 @@ import {
 import { formatCurrency, cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import { PayoutSettings } from '../components/PayoutSettings';
+import { VoicePlayer } from '../components/VoicePlayer';
 
 export function Dashboard() {
   const { user, profile } = useAuth();
@@ -135,36 +136,36 @@ export function Dashboard() {
   if (loading) return <div className="flex items-center justify-center min-h-[60vh] font-black text-primary animate-pulse">Loading...</div>;
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-12 pb-20">
       {/* Withdrawal Modal */}
       {isWithdrawing && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md">
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
+            initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-[2.5rem] p-8 max-w-md w-full space-y-6 shadow-[12px_12px_0_0_#111111] border-4 border-ink"
+            className="bg-white rounded-[2.5rem] p-10 max-w-md w-full space-y-8 shadow-2xl border border-gray-100"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-black text-ink">Withdraw Funds</h2>
-              <button onClick={() => setIsWithdrawing(false)} className="text-ink/40 hover:text-ink">
-                <AlertCircle size={24} className="rotate-45" />
+              <h2 className="text-3xl font-black text-gray-900 tracking-tight">Withdraw Funds</h2>
+              <button onClick={() => setIsWithdrawing(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
+                <X size={28} />
               </button>
             </div>
 
             {withdrawSuccess ? (
               <div className="text-center py-8 space-y-4">
-                <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto border-2 border-ink">
-                  <CheckCircle2 size={32} />
+                <div className="w-20 h-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mx-auto">
+                  <CheckCircle2 size={40} />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-black text-ink">Request Received!</h3>
-                  <p className="text-ink/60 text-sm font-black">Your withdrawal is being processed and will arrive in your bank account within 24-48 hours.</p>
+                  <h3 className="text-2xl font-black text-gray-900">Request Received!</h3>
+                  <p className="text-gray-500 font-bold leading-relaxed">Your withdrawal is being processed and will arrive in your bank account shortly.</p>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleWithdraw} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-black text-ink/40 uppercase tracking-widest">Amount to Withdraw (₦)</label>
+              <form onSubmit={handleWithdraw} className="space-y-8">
+                <div className="space-y-3">
+                  <label className="label-mini">Amount to Withdraw (₦)</label>
                   <input
                     type="number"
                     required
@@ -172,13 +173,13 @@ export function Dashboard() {
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
                     placeholder="e.g. 5000"
-                    className="w-full px-4 py-4 bg-cream/50 border-2 border-ink rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all font-black text-lg"
+                    className="premium-input text-2xl font-black"
                   />
-                  <p className="text-xs text-ink/40 font-black uppercase tracking-widest">Available: {formatCurrency(availableBalance)}</p>
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-widest text-right">Available: {formatCurrency(availableBalance)}</p>
                 </div>
 
                 {withdrawError && (
-                  <div className="p-4 bg-red-50 border-2 border-red-200 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-black">
+                  <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold">
                     <AlertCircle size={18} />
                     {withdrawError}
                   </div>
@@ -187,9 +188,9 @@ export function Dashboard() {
                 <button
                   type="submit"
                   disabled={withdrawLoading}
-                  className="w-full py-4 bg-primary text-white rounded-2xl font-black hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-[0_4px_0_0_#111111] active:shadow-none active:translate-y-1"
+                  className="w-full py-5 bg-black text-white rounded-full font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  {withdrawLoading ? <Loader2 className="animate-spin" size={20} /> : 'Confirm Withdrawal'}
+                  {withdrawLoading ? <Loader2 className="animate-spin" size={24} /> : 'Confirm Withdrawal'}
                 </button>
               </form>
             )}
@@ -197,247 +198,262 @@ export function Dashboard() {
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-black text-ink">Welcome back, {profile?.displayName}</h1>
-          <p className="text-ink/60 font-black">Here's how your hustle is doing.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pt-4">
+        <div className="space-y-2">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-gray-900">Welcome back, {profile?.displayName}</h1>
+          <p className="text-xl text-gray-500 font-bold">Here's how your hustle is doing today.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Link
             to={`/${profile?.username}`}
-            className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-ink rounded-xl text-sm font-black hover:bg-cream transition-colors shadow-[2px_2px_0_0_#111111]"
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-100 rounded-full text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm hover:shadow-md"
           >
-            <ExternalLink size={16} />
+            <ExternalLink size={18} />
             View Page
           </Link>
           <button
             onClick={handleShare}
-            className="flex items-center gap-2 px-4 py-2 bg-ink text-white rounded-xl text-sm font-black hover:bg-ink/90 transition-colors shadow-[2px_2px_0_0_#FF4D8D]"
+            className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-full text-sm font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
           >
-            <Share2 size={16} />
+            <Share2 size={18} />
             Share Page
           </button>
           <button
             onClick={copyLink}
-            className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-ink rounded-xl text-sm font-black hover:bg-cream transition-colors shadow-[2px_2px_0_0_#111111]"
+            className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-100 rounded-full text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm hover:shadow-md"
           >
-            {copied ? <CheckCircle2 size={16} className="text-primary" /> : <Copy size={16} />}
+            {copied ? <CheckCircle2 size={18} className="text-primary" /> : <Copy size={18} />}
             {copied ? 'Copied!' : 'Copy Link'}
           </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 bg-ink/5 p-1 rounded-2xl w-fit border-2 border-ink">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={cn(
-            "px-6 py-2.5 rounded-xl text-sm font-black transition-all",
-            activeTab === 'overview'
-              ? "bg-white text-ink shadow-[2px_2px_0_0_#111111] border-2 border-ink"
-              : "text-ink/60 hover:text-ink"
-          )}
-        >
-          Overview
-        </button>
-        <button
-          onClick={() => setActiveTab('tips')}
-          className={cn(
-            "px-6 py-2.5 rounded-xl text-sm font-black transition-all",
-            activeTab === 'tips'
-              ? "bg-white text-ink shadow-[2px_2px_0_0_#111111] border-2 border-ink"
-              : "text-ink/60 hover:text-ink"
-          )}
-        >
-          Tip History
-        </button>
-        <button
-          onClick={() => setActiveTab('payouts')}
-          className={cn(
-            "px-6 py-2.5 rounded-xl text-sm font-black transition-all",
-            activeTab === 'payouts'
-              ? "bg-white text-ink shadow-[2px_2px_0_0_#111111] border-2 border-ink"
-              : "text-ink/60 hover:text-ink"
-          )}
-        >
-          Payout Settings
-        </button>
+      <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-full w-fit border border-gray-100 shadow-inner">
+        {(['overview', 'tips', 'payouts'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              "px-8 py-3 rounded-full text-sm font-black transition-all capitalize",
+              activeTab === tab
+                ? "bg-white text-gray-900 shadow-md scale-[1.02]"
+                : "text-gray-400 hover:text-gray-600"
+            )}
+          >
+            {tab === 'tips' ? 'Tip History' : tab === 'payouts' ? 'Payout Settings' : tab}
+          </button>
+        ))}
       </div>
 
       {activeTab === 'overview' ? (
-        <>
+        <div className="space-y-12">
           {!profile?.isVerified && (
-            <div className="bg-accent/10 border-4 border-ink p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-4 shadow-[8px_8px_0_0_#111111]">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-accent text-white rounded-2xl flex items-center justify-center flex-shrink-0 border-2 border-ink shadow-[2px_2px_0_0_#111111]">
-                  <Shield size={24} />
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-accent/10 border border-accent/20 p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6"
+            >
+              <div className="flex items-center gap-6">
+                <div className="w-14 h-14 bg-accent text-white rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg rotate-3">
+                  <Shield size={28} />
                 </div>
                 <div>
-                  <h3 className="font-black text-ink">Verify your identity</h3>
-                  <p className="text-sm text-ink/70 font-black">Complete KYC to unlock withdrawals and get a verified badge.</p>
+                  <h3 className="text-xl font-black text-gray-900">Verify your identity</h3>
+                  <p className="text-gray-600 font-bold">Complete KYC to unlock withdrawals and get a verified badge.</p>
                 </div>
               </div>
               <Link
                 to="/kyc"
-                className="px-6 py-3 bg-ink text-white rounded-xl font-black text-sm hover:scale-105 transition-all shadow-[4px_4px_0_0_#FF7A00] whitespace-nowrap"
+                className="px-8 py-4 bg-gray-900 text-white rounded-full font-black text-sm hover:scale-105 transition-all shadow-xl whitespace-nowrap"
               >
                 Verify Now
               </Link>
-            </div>
+            </motion.div>
           )}
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-[2rem] border-4 border-ink shadow-[8px_8px_0_0_#111111] space-y-4">
-              <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center border-2 border-ink">
-                <Wallet size={24} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="premium-card-soft space-y-6">
+              <div className="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
+                <Wallet size={28} />
               </div>
-              <div>
-                <p className="text-sm font-black text-ink/40 uppercase tracking-widest">Available Balance</p>
-                <p className="text-3xl font-black text-ink">{formatCurrency(availableBalance)}</p>
+              <div className="space-y-1">
+                <p className="label-mini">Available Balance</p>
+                <p className="text-4xl font-black text-gray-900 tracking-tight">{formatCurrency(availableBalance)}</p>
               </div>
               <button
                 onClick={() => setIsWithdrawing(true)}
-                className="w-full py-3 bg-primary text-white rounded-xl font-black text-sm hover:scale-[1.02] transition-all shadow-[0_4px_0_0_#111111] active:shadow-none active:translate-y-1"
+                className="w-full py-4 bg-primary text-white rounded-full font-black text-sm hover:shadow-lg hover:-translate-y-0.5 transition-all"
               >
                 Withdraw Funds
               </button>
             </div>
 
-            <div className="bg-white p-6 rounded-[2rem] border-4 border-ink shadow-[8px_8px_0_0_#6B3CF6] space-y-4">
-              <div className="w-12 h-12 bg-secondary/10 text-secondary rounded-2xl flex items-center justify-center border-2 border-ink">
-                <Users size={24} />
+            <div className="premium-card-soft space-y-6">
+              <div className="w-14 h-14 bg-secondary/10 text-secondary rounded-2xl flex items-center justify-center">
+                <Users size={28} />
               </div>
-              <div>
-                <p className="text-sm font-black text-ink/40 uppercase tracking-widest">Total Supporters</p>
-                <p className="text-3xl font-black text-ink">{successfulTips.length}</p>
+              <div className="space-y-1">
+                <p className="label-mini">Total Supporters</p>
+                <p className="text-4xl font-black text-gray-900 tracking-tight">{successfulTips.length}</p>
               </div>
-              <p className="text-sm text-ink/60 font-black uppercase tracking-widest">Across all time</p>
+              <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Across all time</p>
             </div>
 
-            <div className="bg-white p-6 rounded-[2rem] border-4 border-ink shadow-[8px_8px_0_0_#FF7A00] space-y-4">
-              <div className="w-12 h-12 bg-accent/10 text-accent rounded-2xl flex items-center justify-center border-2 border-ink">
-                <ArrowUpRight size={24} />
+            <div className="premium-card-soft space-y-6">
+              <div className="w-14 h-14 bg-accent/10 text-accent rounded-2xl flex items-center justify-center">
+                <ArrowUpRight size={28} />
               </div>
-              <div>
-                <p className="text-sm font-black text-ink/40 uppercase tracking-widest">Total Earnings</p>
-                <p className="text-3xl font-black text-ink">{formatCurrency(totalEarnings)}</p>
+              <div className="space-y-1">
+                <p className="label-mini">Total Earnings</p>
+                <p className="text-4xl font-black text-gray-900 tracking-tight">{formatCurrency(totalEarnings)}</p>
               </div>
-              <p className="text-sm text-ink/60 font-black uppercase tracking-widest">Gross revenue</p>
+              <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Gross revenue</p>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid lg:grid-cols-2 gap-12">
             {/* Recent Tips */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-black text-ink flex items-center gap-2">
-                <MessageSquare size={20} className="text-primary" />
+            <div className="space-y-6">
+              <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                  <MessageSquare size={20} fill="currentColor" />
+                </div>
                 Recent Supporters
               </h2>
-              <div className="bg-white rounded-[2rem] border-4 border-ink shadow-[8px_8px_0_0_#111111] divide-y-4 divide-ink overflow-hidden">
+              <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl divide-y divide-gray-50 overflow-hidden">
                 {successfulTips.slice(0, 5).map((tip) => (
-                  <div key={tip._id} className="p-6 flex gap-4">
-                    <div className="w-10 h-10 bg-cream border-2 border-ink rounded-xl flex items-center justify-center text-ink font-black flex-shrink-0">
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    key={tip._id} 
+                    className="p-8 flex gap-6 hover:bg-gray-50/50 transition-colors"
+                  >
+                    <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 font-black flex-shrink-0 text-xl border border-gray-200">
                       {tip.supporterName[0].toUpperCase()}
                     </div>
-                    <div className="space-y-1 flex-1">
+                    <div className="space-y-2 flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="font-black text-ink">{tip.supporterName}</p>
-                        <p className="font-black text-primary">{formatCurrency(tip.amount)}</p>
+                        <p className="text-lg font-black text-gray-900">{tip.supporterName}</p>
+                        <p className="text-lg font-black text-primary">{formatCurrency(tip.amount)}</p>
                       </div>
                       {tip.message && (
-                        <p className="text-sm text-ink/70 font-black italic">"{tip.message}"</p>
+                        <p className="text-gray-500 font-bold leading-relaxed italic">"{tip.message}"</p>
                       )}
-                      <p className="text-[10px] text-ink/40 uppercase font-black tracking-widest">
-                        {new Date(tip.createdAt).toLocaleDateString()}
+                      {tip.voiceUrl && (
+                        <div className="pt-2">
+                           <VoicePlayer url={tip.voiceUrl} className="scale-75 origin-left" />
+                        </div>
+                      )}
+                      <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest pt-2">
+                        {new Date(tip.createdAt).toLocaleDateString('en-NG', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
                       </p>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
                 {successfulTips.length === 0 && (
-                  <div className="p-12 text-center text-ink/40">
-                    <p className="font-black">No tips yet. Share your link to start earning!</p>
+                  <div className="p-20 text-center space-y-4">
+                    <p className="text-gray-400 font-bold text-lg">No tips yet. Share your link to start earning!</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Withdrawal History */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-black text-ink flex items-center gap-2">
-                <Clock size={20} className="text-secondary" />
+            <div className="space-y-6">
+              <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
+                <div className="w-10 h-10 bg-secondary/10 text-secondary rounded-xl flex items-center justify-center">
+                  <Clock size={20} />
+                </div>
                 Withdrawal History
               </h2>
-              <div className="bg-white rounded-[2rem] border-4 border-ink shadow-[8px_8px_0_0_#111111] divide-y-4 divide-ink overflow-hidden">
+              <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl divide-y divide-gray-50 overflow-hidden">
                 {(withdrawals ?? []).slice(0, 5).map((w) => (
-                  <div key={w._id} className="p-6 flex items-center justify-between">
+                  <div key={w._id} className="p-8 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
                     <div className="space-y-1">
-                      <p className="font-black text-ink">{formatCurrency(w.amount)}</p>
-                      <p className="text-xs text-ink/60 font-black uppercase tracking-widest">{w.bankName} • {w.accountNumber}</p>
-                      <p className="text-[10px] text-ink/40 uppercase font-black tracking-widest">
-                        {new Date(w.createdAt).toLocaleDateString()}
+                      <p className="text-lg font-black text-gray-900">{formatCurrency(w.amount)}</p>
+                      <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">{w.bankName} • {w.accountNumber}</p>
+                      <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest pt-1">
+                        {new Date(w.createdAt).toLocaleDateString('en-NG', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
                       </p>
                     </div>
                     <div className={cn(
-                      "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border-2 border-ink",
-                      w.status === 'completed' ? "bg-primary/10 text-primary" :
-                        w.status === 'pending' ? "bg-accent/10 text-accent" :
-                          "bg-red-100 text-red-700"
+                      "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                      w.status === 'completed' ? "bg-green-50 text-green-600 border-green-100" :
+                        w.status === 'pending' ? "bg-accent/10 text-accent border-accent/20" :
+                          "bg-red-50 text-red-600 border-red-100"
                     )}>
                       {w.status}
                     </div>
                   </div>
                 ))}
                 {(withdrawals ?? []).length === 0 && (
-                  <div className="p-12 text-center text-ink/40">
-                    <p className="font-black">No withdrawals yet.</p>
+                  <div className="p-20 text-center space-y-4">
+                    <p className="text-gray-400 font-bold text-lg">No withdrawals yet.</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
-        </>
+        </div>
       ) : activeTab === 'tips' ? (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-black text-ink">Tip History</h2>
-            <p className="text-ink/60 font-black uppercase tracking-widest text-sm">{successfulTips.length} successful tips received</p>
+        <div className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Tip History</h2>
+            <div className="px-6 py-2 bg-gray-50 rounded-full border border-gray-100 text-gray-400 font-black uppercase tracking-widest text-xs">
+              {successfulTips.length} tips received
+            </div>
           </div>
 
-          <div className="bg-white rounded-[2.5rem] border-4 border-ink shadow-[12px_12px_0_0_#111111] overflow-hidden">
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-cream border-b-4 border-ink">
-                    <th className="px-8 py-5 text-xs font-black text-ink/40 uppercase tracking-widest">Supporter</th>
-                    <th className="px-8 py-5 text-xs font-black text-ink/40 uppercase tracking-widest">Amount</th>
-                    <th className="px-8 py-5 text-xs font-black text-ink/40 uppercase tracking-widest">Message</th>
-                    <th className="px-8 py-5 text-xs font-black text-ink/40 uppercase tracking-widest">Date</th>
+                  <tr className="bg-gray-50/50 border-b border-gray-100">
+                    <th className="px-10 py-6 text-xs font-black text-gray-400 uppercase tracking-widest">Supporter</th>
+                    <th className="px-10 py-6 text-xs font-black text-gray-400 uppercase tracking-widest">Amount</th>
+                    <th className="px-10 py-6 text-xs font-black text-gray-400 uppercase tracking-widest">Message</th>
+                    <th className="px-10 py-6 text-xs font-black text-gray-400 uppercase tracking-widest">Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y-4 divide-ink">
+                <tbody className="divide-y divide-gray-50">
                   {successfulTips.map((tip) => (
-                    <tr key={tip._id} className="hover:bg-cream/50 transition-colors">
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-primary/10 text-primary border-2 border-ink rounded-xl flex items-center justify-center font-black">
+                    <tr key={tip._id} className="hover:bg-gray-50/30 transition-colors">
+                      <td className="px-10 py-8">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center font-black text-lg border border-primary/20">
                             {tip.supporterName[0].toUpperCase()}
                           </div>
-                          <span className="font-black text-ink">{tip.supporterName}</span>
+                          <span className="font-black text-gray-900 text-lg">{tip.supporterName}</span>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
-                        <span className="font-black text-primary">{formatCurrency(tip.amount)}</span>
+                      <td className="px-10 py-8">
+                        <span className="font-black text-primary text-lg">{formatCurrency(tip.amount)}</span>
                       </td>
-                      <td className="px-8 py-6 max-w-xs">
-                        {tip.message ? (
-                          <p className="text-sm text-ink/70 font-black italic">"{tip.message}"</p>
-                        ) : (
-                          <span className="text-ink/20 text-sm italic font-black">No message</span>
-                        )}
+                      <td className="px-10 py-8 max-w-sm">
+                        <div className="space-y-4">
+                          {tip.message && (
+                            <p className="text-gray-500 font-bold leading-relaxed italic text-base">"{tip.message}"</p>
+                          )}
+                          {tip.voiceUrl && (
+                            <VoicePlayer url={tip.voiceUrl} className="scale-90 origin-left" />
+                          )}
+                          {!tip.message && !tip.voiceUrl && (
+                            <span className="text-gray-300 italic font-bold">No feedback left</span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-8 py-6">
-                        <span className="text-sm text-ink/60 font-black uppercase tracking-widest">
+                      <td className="px-10 py-8">
+                        <span className="text-sm text-gray-400 font-black uppercase tracking-widest">
                           {new Date(tip.createdAt).toLocaleDateString('en-NG', {
                             year: 'numeric',
                             month: 'short',
@@ -452,17 +468,19 @@ export function Dashboard() {
             </div>
 
             {successfulTips.length === 0 && (
-              <div className="py-20 text-center space-y-4">
-                <div className="w-16 h-16 bg-cream border-4 border-ink rounded-full flex items-center justify-center mx-auto text-ink/20">
-                  <MessageSquare size={32} />
+              <div className="py-32 text-center space-y-6">
+                <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto text-gray-200">
+                  <MessageSquare size={40} />
                 </div>
-                <p className="text-ink/40 font-black">No tips received yet. Keep sharing your link!</p>
+                <p className="text-gray-400 font-bold text-xl">Your tip jar is currently empty.</p>
               </div>
             )}
           </div>
         </div>
       ) : (
-        <PayoutSettings />
+        <div className="premium-card-soft">
+          <PayoutSettings />
+        </div>
       )}
     </div>
   );

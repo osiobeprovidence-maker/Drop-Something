@@ -60,6 +60,7 @@ export default defineSchema({
     message: v.string(),
     isAnonymous: v.boolean(),
     paymentReference: v.string(),
+    voiceUrl: v.optional(v.string()), // URL to the voice message audio file
     status: v.union(
       v.literal("pending"),
       v.literal("success"),

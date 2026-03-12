@@ -99,61 +99,127 @@ export function EditProfile() {
   };
 
   return (
-    <div className="max-w-lg mx-auto py-12">
+    <div className="max-w-2xl mx-auto py-20 px-6">
       <motion.form
         onSubmit={handleSave}
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white p-8 rounded-[2.5rem] border-4 border-ink shadow-[12px_12px_0_0_#111111] space-y-6"
+        className="premium-card-soft space-y-12"
       >
-        <div className="text-center">
-          <div className="w-16 h-16 bg-primary/10 text-primary border-2 border-ink rounded-2xl flex items-center justify-center mx-auto">
-            <User size={28} />
+        <div className="text-center space-y-4">
+          <div className="w-20 h-20 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center mx-auto shadow-inner">
+            <User size={40} />
           </div>
-          <h2 className="text-2xl font-black mt-2">Edit Profile</h2>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-black text-ink/70 uppercase tracking-widest ml-1">Display Name</label>
-          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full px-4 py-3 bg-cream border-2 border-ink rounded-2xl font-black" />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-black text-ink/70 uppercase tracking-widest ml-1">Profile photo URL</label>
-          <input value={photoURL} onChange={(e) => setPhotoURL(e.target.value)} className="w-full px-4 py-3 bg-cream border-2 border-ink rounded-2xl font-black" />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-black text-ink/70 uppercase tracking-widest ml-1">Bio</label>
-          <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} className="w-full px-4 py-3 bg-cream border-2 border-ink rounded-2xl font-black resize-none" />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="Twitter" className="px-3 py-3 bg-cream border-2 border-ink rounded-2xl font-black" />
-          <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="Instagram" className="px-3 py-3 bg-cream border-2 border-ink rounded-2xl font-black" />
-          <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Website" className="px-3 py-3 bg-cream border-2 border-ink rounded-2xl font-black" />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-black text-ink/70 uppercase tracking-widest ml-1">Support message</label>
-          <input value={supportMessage} onChange={(e) => setSupportMessage(e.target.value)} placeholder="Message shown on your page" className="w-full px-4 py-3 bg-cream border-2 border-ink rounded-2xl font-black" />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-black text-ink/70 uppercase tracking-widest ml-1">Suggested tip amounts (comma separated)</label>
-          <input value={suggested} onChange={(e) => setSuggested(e.target.value)} className="w-full px-4 py-3 bg-cream border-2 border-ink rounded-2xl font-black" />
-        </div>
-
-        <div className="pt-4 border-t-2 space-y-3">
-          <h4 className="text-sm font-black uppercase text-ink/60">Support Goal</h4>
-          <input value={goalTitle} onChange={(e) => setGoalTitle(e.target.value)} placeholder="Goal title (e.g. Buy a new camera)" className="w-full px-4 py-3 bg-cream border-2 border-ink rounded-2xl font-black" />
-          <div className="grid grid-cols-2 gap-3">
-            <input value={goalTarget as any} onChange={(e) => setGoalTarget(e.target.value === '' ? '' : Number(e.target.value))} type="number" placeholder="Target (₦)" className="px-4 py-3 bg-cream border-2 border-ink rounded-2xl font-black" />
-            <input value={goalCurrent as any} onChange={(e) => setGoalCurrent(e.target.value === '' ? '' : Number(e.target.value))} type="number" placeholder="Current (₦)" className="px-4 py-3 bg-cream border-2 border-ink rounded-2xl font-black" />
+          <div className="space-y-2">
+            <h2 className="text-4xl font-black text-gray-900 tracking-tighter">Edit Profile</h2>
+            <p className="text-lg text-gray-500 font-bold italic">Customize how you look to your supporters.</p>
           </div>
-          <div className="flex gap-3">
-            <button type="submit" disabled={isSaving} className="flex-1 py-3 bg-primary text-white rounded-2xl font-black">{isSaving ? <Loader2 className="animate-spin" /> : 'Save Profile'}</button>
-            <button type="button" onClick={handleRemoveGoal} disabled={isSaving} className="py-3 px-4 bg-cream border-2 border-ink rounded-2xl font-black">Remove Goal</button>
+        </div>
+
+        <div className="space-y-8">
+          <div className="space-y-2">
+            <label className="label-mini ml-1">Display Name</label>
+            <input 
+              value={displayName} 
+              onChange={(e) => setDisplayName(e.target.value)} 
+              placeholder="Your full name or stage name"
+              className="premium-input text-lg" 
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="label-mini ml-1">Profile Photo URL</label>
+            <input 
+              value={photoURL} 
+              onChange={(e) => setPhotoURL(e.target.value)} 
+              placeholder="https://example.com/photo.jpg"
+              className="premium-input text-lg" 
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="label-mini ml-1">Bio</label>
+            <textarea 
+              value={bio} 
+              onChange={(e) => setBio(e.target.value)} 
+              rows={4} 
+              placeholder="Tell your fans who you are..."
+              className="premium-input text-lg resize-none" 
+            />
+          </div>
+
+          <div className="space-y-4">
+             <label className="label-mini ml-1 text-gray-400">Social Links</label>
+             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="Twitter @handle" className="premium-input !py-4" />
+              <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="Instagram @handle" className="premium-input !py-4" />
+              <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="Website URL" className="premium-input !py-4" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="label-mini ml-1">Direct Support Message</label>
+            <input 
+              value={supportMessage} 
+              onChange={(e) => setSupportMessage(e.target.value)} 
+              placeholder="What do you want to say to your supporters?" 
+              className="premium-input text-lg" 
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="label-mini ml-1">Suggested Tip Amounts</label>
+            <input 
+              value={suggested} 
+              onChange={(e) => setSuggested(e.target.value)} 
+              placeholder="500,1000,5000"
+              className="premium-input text-lg font-black tracking-widest" 
+            />
+            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black ml-1 pt-2">Comma separated values in Naira</p>
+          </div>
+
+          <div className="pt-10 border-t border-gray-50 space-y-6">
+            <div className="flex items-center gap-3">
+               <h4 className="text-sm font-black uppercase text-gray-400 tracking-[0.2em]">Support Goal</h4>
+               <div className="h-px flex-1 bg-gray-50" />
+            </div>
+            
+            <div className="space-y-4">
+              <input 
+                value={goalTitle} 
+                onChange={(e) => setGoalTitle(e.target.value)} 
+                placeholder="Goal title (e.g. Buy a new camera)" 
+                className="premium-input text-lg" 
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <span className="text-[10px] font-black uppercase text-gray-300 ml-1">Target (₦)</span>
+                  <input value={goalTarget as any} onChange={(e) => setGoalTarget(e.target.value === '' ? '' : Number(e.target.value))} type="number" placeholder="50,000" className="premium-input" />
+                </div>
+                <div className="space-y-2">
+                  <span className="text-[10px] font-black uppercase text-gray-300 ml-1">Current (₦)</span>
+                  <input value={goalCurrent as any} onChange={(e) => setGoalCurrent(e.target.value === '' ? '' : Number(e.target.value))} type="number" placeholder="0" className="premium-input" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <button 
+                type="submit" 
+                disabled={isSaving} 
+                className="flex-1 py-6 bg-black text-white rounded-full font-black text-xl hover:scale-[1.02] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+              >
+                {isSaving ? <Loader2 className="animate-spin" size={24} /> : 'Save Profile'}
+              </button>
+              <button 
+                type="button" 
+                onClick={handleRemoveGoal} 
+                disabled={isSaving} 
+                className="py-6 px-10 bg-gray-50 text-gray-600 rounded-full font-black text-lg hover:bg-gray-100 transition-all active:scale-95"
+              >
+                Remove Goal
+              </button>
+            </div>
           </div>
         </div>
       </motion.form>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { User, LayoutDashboard, ShieldCheck, LogOut, Menu, X, Search } from 'lucide-react';
+import { User, LayoutDashboard, ShieldCheck, LogOut, Menu, X, Search, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -17,12 +17,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const isHomePage = location.pathname === '/';
 
   return (
-    <div className="min-h-screen bg-white text-black font-sans selection:bg-primary selection:text-black">
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-accent selection:text-black">
+      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-gray-50">
+        <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-2 group">
-              <span className="text-xl font-black tracking-tighter text-gray-1000">DropSomething</span>
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+                <Heart size={20} className="text-white" fill="currentColor" />
+              </div>
+              <span className="text-2xl font-black tracking-tighter text-gray-900">DropSomething</span>
             </Link>
           </div>
 
@@ -112,11 +115,53 @@ export function Layout({ children }: { children: React.ReactNode }) {
       )}
 
       <main className={cn(
-        "w-full",
-        !isHomePage && "max-w-7xl mx-auto px-4 py-12"
+        "w-full pt-8",
+        !isHomePage && "max-w-7xl mx-auto px-6 pb-32"
       )}>
         {children}
       </main>
+
+      <footer className="py-24 border-t border-gray-50 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-4 gap-16 mb-16">
+            <div className="col-span-2 space-y-8">
+              <Link to="/" className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-md">
+                   <Heart size={16} className="text-white" fill="currentColor" />
+                </div>
+                <span className="text-xl font-black tracking-tighter text-gray-900">DropSomething</span>
+              </Link>
+              <p className="text-gray-500 font-bold max-w-sm leading-relaxed">
+                Supporting the hustle. A simple way for fans and communities to show love to the creators they appreciate.
+              </p>
+            </div>
+            <div className="space-y-6">
+              <h4 className="font-black text-gray-900 uppercase tracking-widest text-xs">Product</h4>
+              <nav className="flex flex-col gap-4 text-gray-400 font-bold">
+                <Link to="/explore" className="hover:text-primary transition-colors">Explore</Link>
+                <a href="/#how-it-works" className="hover:text-primary transition-colors">How it Works</a>
+                <a href="/#creators" className="hover:text-primary transition-colors">Creators</a>
+                <a href="/#faq" className="hover:text-primary transition-colors">FAQ</a>
+              </nav>
+            </div>
+            <div className="space-y-6">
+              <h4 className="font-black text-gray-900 uppercase tracking-widest text-xs">Connect</h4>
+              <nav className="flex flex-col gap-4 text-gray-400 font-bold">
+                <a href="#" className="hover:text-primary transition-colors">Twitter</a>
+                <a href="#" className="hover:text-primary transition-colors">Instagram</a>
+                <a href="#" className="hover:text-primary transition-colors">Telegram</a>
+              </nav>
+            </div>
+          </div>
+          <div className="pt-12 border-t border-gray-50 flex flex-col md:flex-row items-center justify-between gap-6 text-sm font-bold text-gray-400">
+            <p>© 2026 DropSomething. All rights reserved.</p>
+            <div className="flex gap-10">
+              <Link to="/privacy" className="hover:text-gray-900 transition-colors">Privacy</Link>
+              <Link to="/terms" className="hover:text-gray-900 transition-colors">Terms</Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
