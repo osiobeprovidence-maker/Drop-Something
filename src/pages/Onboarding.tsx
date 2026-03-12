@@ -25,6 +25,7 @@ import {
   Instagram
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { CreatorPreview } from '../components/CreatorPreview';
 
 type Step = 'email' | 'profile' | 'membership' | 'shop' | 'bio' | 'publish' | 'success';
 
@@ -34,6 +35,7 @@ export function Onboarding() {
   const createUser = useMutation(api.users.createUser);
   const [currentStep, setCurrentStep] = useState<Step>('email');
   const [loading, setLoading] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'edit' | 'preview'>('edit');
 
   // Form State
   const [email, setEmail] = useState('');
@@ -133,28 +135,38 @@ export function Onboarding() {
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 blur-[120px] rounded-full -mr-32 -mt-32 pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-secondary/5 blur-[120px] rounded-full -ml-32 -mb-32 pointer-events-none" />
 
-      <div className="max-w-2xl mx-auto relative z-10">
-        {/* Progress Indicator */}
-        {currentStep !== 'email' && currentStep !== 'success' && (
-          <div className="mb-12 space-y-4">
-            <div className="flex justify-between items-end">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/5 px-3 py-1 rounded-full">Step {currentStepIndex} of 5</span>
-                <h2 className="text-2xl font-black text-gray-900 tracking-tighter mt-2">{currentStep.charAt(0).toUpperCase() + currentStep.slice(1)} Setup</h2>
+      <div className="relative z-10">
+        <div className={cn(
+          "grid lg:grid-cols-12 gap-12 items-start",
+          (currentStep === 'email' || currentStep === 'success') && "max-w-2xl mx-auto"
+        )}>
+          {/* LEFT SIDE: FORM */}
+          <div className={cn(
+            "lg:col-span-7 space-y-8",
+            (currentStep === 'email' || currentStep === 'success') && "lg:col-span-12",
+            currentStep !== 'email' && currentStep !== 'success' && mobileTab === 'preview' && "hidden lg:block"
+          )}>
+            {/* Progress Indicator */}
+            {currentStep !== 'email' && currentStep !== 'success' && (
+              <div className="mb-12 space-y-4">
+                <div className="flex justify-between items-end">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary bg-primary/5 px-3 py-1 rounded-full">Step {currentStepIndex} of 5</span>
+                    <h2 className="text-2xl font-black text-gray-900 tracking-tighter mt-2">{currentStep.charAt(0).toUpperCase() + currentStep.slice(1)} Setup</h2>
+                  </div>
+                  <span className="text-sm font-black text-gray-400">{Math.round((currentStepIndex / 5) * 100)}%</span>
+                </div>
+                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(currentStepIndex / 5) * 100}%` }}
+                    className="h-full bg-primary"
+                  />
+                </div>
               </div>
-              <span className="text-sm font-black text-gray-400">{Math.round((currentStepIndex / 5) * 100)}%</span>
-            </div>
-            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${(currentStepIndex / 5) * 100}%` }}
-                className="h-full bg-primary"
-              />
-            </div>
-          </div>
-        )}
+            )}
 
-        <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait">
           {currentStep === 'email' && (
             <motion.div
               key="email"
@@ -662,7 +674,54 @@ export function Onboarding() {
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
+            </AnimatePresence>
+          </div>
+
+          {/* RIGHT SIDE: PREVIEW */}
+          {currentStep !== 'email' && currentStep !== 'success' && (
+            <div className={cn(
+              "lg:col-span-5 lg:sticky lg:top-12 h-[85vh] min-h-[600px]",
+              mobileTab === 'edit' && "hidden lg:block"
+            )}>
+              <div className="h-full relative overflow-hidden">
+                {/* Mobile Preview Badge */}
+                <div className="lg:hidden absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-black/80 backdrop-blur-md px-4 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-widest">
+                  Live Preview
+                </div>
+                <CreatorPreview 
+                  profileData={profileData}
+                  tiers={tiers}
+                  products={products}
+                  bioData={bioData}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* MOBILE TABS */}
+        {currentStep !== 'email' && currentStep !== 'success' && (
+          <div className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 flex gap-1 shadow-2xl">
+            <button 
+              onClick={() => setMobileTab('edit')}
+              className={cn(
+                "px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                mobileTab === 'edit' ? "bg-primary text-white" : "text-gray-400"
+              )}
+            >
+              Edit
+            </button>
+            <button 
+              onClick={() => setMobileTab('preview')}
+              className={cn(
+                "px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                mobileTab === 'preview' ? "bg-primary text-white" : "text-gray-400"
+              )}
+            >
+              Preview
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

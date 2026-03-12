@@ -160,3 +160,22 @@ body::before {
   margin-bottom: 0.5rem;
   display: block;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 99px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
