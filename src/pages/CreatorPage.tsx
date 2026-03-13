@@ -300,24 +300,51 @@ export function CreatorPage() {
                 </p>
               )}
             </div>
-            <div className="flex items-center justify-center md:justify-start gap-4">
-              <button onClick={() => {
-                navigator.share?.({ title: creator.displayName, url: window.location.href });
-              }} className="p-4 bg-white/10 backdrop-blur-md rounded-2xl text-white border border-white/20 hover:bg-white/20 transition-all active:scale-95 shadow-lg">
-                <Share2 size={24} />
-              </button>
-              <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20 text-white flex gap-8 shadow-lg">
-                <div className="text-center border-r border-white/10 pr-8">
-                  <p className="text-2xl font-black">{successfulTips.length}</p>
-                  <p className="text-[10px] uppercase font-black tracking-widest opacity-60">Supporters</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-6">
+              {/* Support Pill (Quick Action) */}
+              <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-3xl border border-white/20 text-white flex items-center gap-6 shadow-xl">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">Support</span>
+                  <div className="flex gap-2">
+                    {[500, 1000].map(v => (
+                      <button 
+                        key={v}
+                        onClick={() => { setAmount(v); setCustomAmount(''); window.scrollTo({ top: 400, behavior: 'smooth' }); }}
+                        className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-black transition-all"
+                      >
+                        ₦{v}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="text-center border-r border-white/10 pr-8">
-                  <p className="text-2xl font-black">{(creator.membershipTiers?.length || 0) * 12 + 5}</p>
-                  <p className="text-[10px] uppercase font-black tracking-widest opacity-60">Members</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-black">{creator.products?.length || 0}</p>
-                  <p className="text-[10px] uppercase font-black tracking-widest opacity-60">Products</p>
+                <div className="h-8 w-[1px] bg-white/10" />
+                <button 
+                  onClick={() => window.scrollTo({ top: 400, behavior: 'smooth' })}
+                  className="bg-primary text-white p-3 rounded-2xl hover:scale-105 transition-transform shadow-lg"
+                >
+                  <Zap size={20} fill="currentColor" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <button onClick={() => {
+                  navigator.share?.({ title: creator.displayName, url: window.location.href });
+                }} className="p-4 bg-white/10 backdrop-blur-md rounded-2xl text-white border border-white/20 hover:bg-white/20 transition-all active:scale-95 shadow-lg">
+                  <Share2 size={24} />
+                </button>
+                <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20 text-white flex gap-8 shadow-lg">
+                  <div className="text-center border-r border-white/10 pr-8">
+                    <p className="text-2xl font-black">{successfulTips.length}</p>
+                    <p className="text-[10px] uppercase font-black tracking-widest opacity-60">Supporters</p>
+                  </div>
+                  <div className="text-center border-r border-white/10 pr-8">
+                    <p className="text-2xl font-black">{(creator.membershipTiers?.length || 0) * 12 + 5}</p>
+                    <p className="text-[10px] uppercase font-black tracking-widest opacity-60">Members</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-black">{creator.products?.length || 0}</p>
+                    <p className="text-[10px] uppercase font-black tracking-widest opacity-60">Products</p>
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Heart, 
   Share2, 
   ShieldCheck, 
   Home as HomeIcon, 
@@ -21,7 +20,8 @@ import {
   Globe,
   Zap,
   Star,
-  Award
+  Award,
+  Coffee
 } from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
 import { VoicePlayer } from './VoicePlayer';
@@ -78,6 +78,18 @@ export function CreatorPreview({ profileData, tiers, products, bioData }: Creato
                 <p className="text-sm font-bold opacity-90 tracking-tight drop-shadow-md">
                     @{username}
                 </p>
+                {profileData.tagline && (
+                    <div className="mt-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 w-fit">
+                        <p className="text-[10px] font-black text-white italic tracking-tight">
+                            {profileData.tagline}
+                        </p>
+                    </div>
+                )}
+            </div>
+            <div className="pb-2">
+                <button className="bg-primary text-white p-3 rounded-2xl shadow-xl hover:scale-105 transition-all">
+                    <Zap size={16} fill="currentColor" />
+                </button>
             </div>
         </div>
       </div>
@@ -127,7 +139,7 @@ export function CreatorPreview({ profileData, tiers, products, bioData }: Creato
               <div className="premium-card-soft space-y-6 relative overflow-hidden bg-white border border-gray-50 !p-6">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
-                    <Heart size={20} fill="currentColor" />
+                    <Coffee size={20} />
                   </div>
                   <h2 className="text-lg font-black text-gray-900 tracking-tighter leading-none">Drop something for {displayName}</h2>
                 </div>
@@ -144,20 +156,11 @@ export function CreatorPreview({ profileData, tiers, products, bioData }: Creato
                     Custom amount...
                   </div>
                   <button className="w-full py-4 bg-black text-white rounded-full font-black text-sm flex items-center justify-center gap-3 shadow-lg">
-                    <Heart size={16} fill="currentColor" />
+                    <Zap size={16} fill="currentColor" />
                     Support
                   </button>
                 </div>
               </div>
-
-              {/* Tagline Badge */}
-              {profileData.tagline && (
-                <div className="px-4 py-2 bg-primary/5 rounded-2xl border border-primary/10">
-                    <p className="text-xs font-black text-primary italic text-center leading-relaxed">
-                        "{profileData.tagline}"
-                    </p>
-                </div>
-              )}
 
               {/* Goal Preview */}
               <div className="premium-card-soft bg-white border border-gray-100 !p-6 space-y-4">
@@ -321,7 +324,7 @@ export function CreatorPreview({ profileData, tiers, products, bioData }: Creato
                 </div>
 
                 <button className="w-full py-4 bg-primary/10 text-primary rounded-full font-black text-sm flex items-center justify-center gap-3">
-                    <Heart size={16} fill="currentColor" />
+                    <Zap size={16} fill="currentColor" />
                     Support Creator
                 </button>
               </motion.div>
