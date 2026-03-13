@@ -18,11 +18,15 @@ import {
   CheckCircle2,
   Loader2,
   Lock,
-  Plus,
-  Trash2,
-  Globe,
-  Twitter,
-  Instagram
+  Plus, 
+  Trash2, 
+  Globe, 
+  Twitter, 
+  Instagram,
+  Youtube,
+  Facebook,
+  MessageCircle,
+  Video
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { CreatorPreview } from '../components/CreatorPreview';
@@ -64,6 +68,10 @@ export function Onboarding() {
     bio: '',
     twitter: '',
     instagram: '',
+    youtube: '',
+    tiktok: '',
+    facebook: '',
+    discord: '',
     website: ''
   });
   const [password, setPassword] = useState('');
@@ -135,6 +143,10 @@ export function Onboarding() {
         socialLinks: {
           twitter: bioData.twitter,
           instagram: bioData.instagram,
+          youtube: bioData.youtube,
+          tiktok: bioData.tiktok,
+          facebook: bioData.facebook,
+          discord: bioData.discord,
           website: bioData.website
         }
       });
@@ -543,6 +555,42 @@ export function Onboarding() {
                         value={bioData.instagram}
                         onChange={(e) => setBioData(prev => ({ ...prev, instagram: e.target.value }))}
                         placeholder="Instagram Handle" 
+                        className="premium-input pl-14 text-sm" 
+                      />
+                    </div>
+                    <div className="relative">
+                      <Youtube size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" />
+                      <input 
+                        value={bioData.youtube}
+                        onChange={(e) => setBioData(prev => ({ ...prev, youtube: e.target.value }))}
+                        placeholder="YouTube Channel Name/URL" 
+                        className="premium-input pl-14 text-sm" 
+                      />
+                    </div>
+                    <div className="relative">
+                      <Video size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" />
+                      <input 
+                        value={bioData.tiktok}
+                        onChange={(e) => setBioData(prev => ({ ...prev, tiktok: e.target.value }))}
+                        placeholder="TikTok Username" 
+                        className="premium-input pl-14 text-sm" 
+                      />
+                    </div>
+                    <div className="relative">
+                      <Facebook size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" />
+                      <input 
+                        value={bioData.facebook}
+                        onChange={(e) => setBioData(prev => ({ ...prev, facebook: e.target.value }))}
+                        placeholder="Facebook Profile" 
+                        className="premium-input pl-14 text-sm" 
+                      />
+                    </div>
+                    <div className="relative">
+                      <MessageCircle size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" />
+                      <input 
+                        value={bioData.discord}
+                        onChange={(e) => setBioData(prev => ({ ...prev, discord: e.target.value }))}
+                        placeholder="Discord Link/Server" 
                         className="premium-input pl-14 text-sm" 
                       />
                     </div>

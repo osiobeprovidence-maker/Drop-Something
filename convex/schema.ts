@@ -14,6 +14,10 @@ export default defineSchema({
     socialLinks: v.object({
       twitter: v.optional(v.string()),
       instagram: v.optional(v.string()),
+      youtube: v.optional(v.string()),
+      tiktok: v.optional(v.string()),
+      facebook: v.optional(v.string()),
+      discord: v.optional(v.string()),
       website: v.optional(v.string()),
     }),
     // Optional creator settings

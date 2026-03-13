@@ -25,7 +25,14 @@ import {
   Layers,
   ShoppingBag,
   BookOpen,
-  Plus
+  Plus,
+  Twitter,
+  Instagram,
+  Youtube,
+  Facebook,
+  MessageCircle,
+  Video,
+  Globe
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency, cn } from '../lib/utils';
@@ -435,26 +442,70 @@ export function Dashboard() {
                          />
                        </div>
                        <div className="space-y-4">
-                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Social Hub</p>
-                         <div className="grid grid-cols-1 gap-4">
-                            <input 
-                              value={editData.socialLinks?.twitter} 
-                              onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, twitter: e.target.value } })}
-                              className="premium-input text-sm"
-                              placeholder="Twitter URL"
-                            />
-                            <input 
-                              value={editData.socialLinks?.instagram} 
-                              onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, instagram: e.target.value } })}
-                              className="premium-input text-sm"
-                              placeholder="Instagram URL"
-                            />
-                            <input 
-                              value={editData.socialLinks?.website} 
-                              onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, website: e.target.value } })}
-                              className="premium-input text-sm"
-                              placeholder="Personal Website"
-                            />
+                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Social Hub</p>                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="relative">
+                               <Twitter size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                               <input 
+                                 value={editData.socialLinks?.twitter} 
+                                 onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, twitter: e.target.value } })}
+                                 className="premium-input pl-12 text-sm"
+                                 placeholder="Twitter Handle"
+                               />
+                            </div>
+                            <div className="relative">
+                               <Instagram size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                               <input 
+                                 value={editData.socialLinks?.instagram} 
+                                 onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, instagram: e.target.value } })}
+                                 className="premium-input pl-12 text-sm"
+                                 placeholder="Instagram Handle"
+                               />
+                            </div>
+                            <div className="relative">
+                               <Youtube size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                               <input 
+                                 value={editData.socialLinks?.youtube} 
+                                 onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, youtube: e.target.value } })}
+                                 className="premium-input pl-12 text-sm"
+                                 placeholder="YouTube Link"
+                               />
+                            </div>
+                            <div className="relative">
+                               <Video size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                               <input 
+                                 value={editData.socialLinks?.tiktok} 
+                                 onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, tiktok: e.target.value } })}
+                                 className="premium-input pl-12 text-sm"
+                                 placeholder="TikTok Handle"
+                               />
+                            </div>
+                            <div className="relative">
+                               <Facebook size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                               <input 
+                                 value={editData.socialLinks?.facebook} 
+                                 onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, facebook: e.target.value } })}
+                                 className="premium-input pl-12 text-sm"
+                                 placeholder="Facebook Profile"
+                               />
+                            </div>
+                            <div className="relative">
+                               <MessageCircle size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                               <input 
+                                 value={editData.socialLinks?.discord} 
+                                 onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, discord: e.target.value } })}
+                                 className="premium-input pl-12 text-sm"
+                                 placeholder="Discord Invite"
+                               />
+                            </div>
+                            <div className="relative md:col-span-2">
+                               <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" />
+                               <input 
+                                 value={editData.socialLinks?.website} 
+                                 onChange={(e) => setEditData({ ...editData, socialLinks: { ...editData.socialLinks, website: e.target.value } })}
+                                 className="premium-input pl-12 text-sm"
+                                 placeholder="Website URL"
+                               />
+                            </div>
                          </div>
                        </div>
                     </div>

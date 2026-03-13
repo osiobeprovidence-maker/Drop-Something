@@ -23,14 +23,17 @@ import {
   Target,
   Zap,
   Star,
-  Award,
-  Video,
-  ArrowRight,
-  Sparkles,
-  ShoppingBag as ShopIcon,
-  LayoutGrid,
-  Twitter,
-  Instagram,
+  Award, 
+  Video, 
+  ArrowRight, 
+  Sparkles, 
+  ShoppingBag as ShopIcon, 
+  LayoutGrid, 
+  Twitter, 
+  Instagram, 
+  Youtube,
+  Facebook,
+  MessageCircle,
   Globe
 } from 'lucide-react';
 import { cn, formatCurrency } from '../lib/utils';
@@ -786,6 +789,50 @@ export function CreatorPage() {
                                <Instagram size={20} />
                              </div>
                              <span className="font-black text-gray-900">Instagram</span>
+                          </div>
+                          <ArrowRight size={20} className="text-gray-300 group-hover:text-primary transition-colors" />
+                        </a>
+                      )}
+                      {creator.socialLinks?.youtube && (
+                        <a href={creator.socialLinks.youtube.startsWith('http') ? creator.socialLinks.youtube : `https://youtube.com/@${creator.socialLinks.youtube}`} target="_blank" rel="noreferrer" className="premium-card-soft bg-white border border-gray-100 flex items-center justify-between hover:scale-105 transition-transform group">
+                          <div className="flex items-center gap-4">
+                             <div className="w-12 h-12 bg-[#FF0000] text-white rounded-xl flex items-center justify-center">
+                               <Youtube size={20} />
+                             </div>
+                             <span className="font-black text-gray-900">YouTube</span>
+                          </div>
+                          <ArrowRight size={20} className="text-gray-300 group-hover:text-primary transition-colors" />
+                        </a>
+                      )}
+                      {creator.socialLinks?.tiktok && (
+                        <a href={creator.socialLinks.tiktok.startsWith('http') ? creator.socialLinks.tiktok : `https://tiktok.com/@${creator.socialLinks.tiktok}`} target="_blank" rel="noreferrer" className="premium-card-soft bg-white border border-gray-100 flex items-center justify-between hover:scale-105 transition-transform group">
+                          <div className="flex items-center gap-4">
+                             <div className="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center">
+                               <Video size={20} />
+                             </div>
+                             <span className="font-black text-gray-900">TikTok</span>
+                          </div>
+                          <ArrowRight size={20} className="text-gray-300 group-hover:text-primary transition-colors" />
+                        </a>
+                      )}
+                      {creator.socialLinks?.facebook && (
+                        <a href={creator.socialLinks.facebook.startsWith('http') ? creator.socialLinks.facebook : `https://facebook.com/${creator.socialLinks.facebook}`} target="_blank" rel="noreferrer" className="premium-card-soft bg-white border border-gray-100 flex items-center justify-between hover:scale-105 transition-transform group">
+                          <div className="flex items-center gap-4">
+                             <div className="w-12 h-12 bg-[#1877F2] text-white rounded-xl flex items-center justify-center">
+                               <Facebook size={20} fill="currentColor" />
+                             </div>
+                             <span className="font-black text-gray-900">Facebook</span>
+                          </div>
+                          <ArrowRight size={20} className="text-gray-300 group-hover:text-primary transition-colors" />
+                        </a>
+                      )}
+                      {creator.socialLinks?.discord && (
+                        <a href={creator.socialLinks.discord} target="_blank" rel="noreferrer" className="premium-card-soft bg-white border border-gray-100 flex items-center justify-between hover:scale-105 transition-transform group">
+                          <div className="flex items-center gap-4">
+                             <div className="w-12 h-12 bg-[#5865F2] text-white rounded-xl flex items-center justify-center">
+                               <MessageCircle size={20} fill="currentColor" />
+                             </div>
+                             <span className="font-black text-gray-900">Discord</span>
                           </div>
                           <ArrowRight size={20} className="text-gray-300 group-hover:text-primary transition-colors" />
                         </a>

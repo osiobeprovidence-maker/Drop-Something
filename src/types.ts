@@ -15,6 +15,10 @@ export interface UserProfile {
   socialLinks: {
     twitter?: string;
     instagram?: string;
+    youtube?: string;
+    tiktok?: string;
+    facebook?: string;
+    discord?: string;
     website?: string;
   };
   suggestedAmounts?: number[];

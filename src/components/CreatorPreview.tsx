@@ -15,8 +15,11 @@ import {
   Target,
   Sparkles,
   ArrowRight,
-  Twitter,
+  Twitter, 
   Instagram,
+  Youtube,
+  Facebook,
+  MessageCircle,
   Globe,
   Zap,
   Star,
@@ -40,6 +43,10 @@ interface CreatorPreviewProps {
     bio: string;
     twitter: string;
     instagram: string;
+    youtube?: string;
+    tiktok?: string;
+    facebook?: string;
+    discord?: string;
     website: string;
   };
 }
@@ -306,6 +313,26 @@ export function CreatorPreview({ profileData, tiers, products, bioData }: Creato
                     {bioData.instagram && (
                         <div className="px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl flex items-center gap-2 text-[10px] font-black">
                             <Instagram size={12} /> Instagram
+                        </div>
+                    )}
+                    {bioData.youtube && (
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl flex items-center gap-2 text-[10px] font-black">
+                            <Youtube size={12} /> YouTube
+                        </div>
+                    )}
+                    {bioData.tiktok && (
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl flex items-center gap-2 text-[10px] font-black">
+                            <Video size={12} /> TikTok
+                        </div>
+                    )}
+                    {bioData.facebook && (
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl flex items-center gap-2 text-[10px] font-black">
+                            <Facebook size={12} /> Facebook
+                        </div>
+                    )}
+                    {bioData.discord && (
+                        <div className="px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl flex items-center gap-2 text-[10px] font-black">
+                            <MessageCircle size={12} /> Discord
                         </div>
                     )}
                     {bioData.website && (
