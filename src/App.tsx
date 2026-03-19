@@ -14,6 +14,8 @@ import HowItWorks from "./pages/HowItWorks";
 import CreatorsInfo from "./pages/CreatorsInfo";
 import FAQ from "./pages/FAQ";
 import { ThemeProvider } from "./context/ThemeContext";
+import { FollowProvider } from "./context/FollowContext";
+import { DataProvider } from "./context/DataContext";
 
 function AppContent() {
   const location = useLocation();
@@ -77,10 +79,14 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </ThemeProvider>
+    <DataProvider>
+      <FollowProvider>
+        <ThemeProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </ThemeProvider>
+      </FollowProvider>
+    </DataProvider>
   );
 }
