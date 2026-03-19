@@ -15,6 +15,7 @@ export default function Onboarding() {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +31,7 @@ export default function Onboarding() {
     avatarUrl.startsWith("kg") ? { storageId: avatarUrl } : "skip" as any
   );
 
-  const avatarDisplayUrl = convexAvatarUrl || (avatarUrl.startsWith("http") ? avatarUrl : null) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
+  const avatarDisplayUrl = localPreview || convexAvatarUrl || (avatarUrl.startsWith("http") ? avatarUrl : null) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
 
   const handleLogout = async () => {
     await signOut();
@@ -66,8 +67,9 @@ export default function Onboarding() {
       setError("");
       
       try {
-        // Use the resolved avatar URL if available, otherwise use storageId, otherwise default
-        const finalAvatar = avatarDisplayUrl || avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
+        // Use the storageId (avatarUrl) for the database if available, 
+        // otherwise fallback to a default avatar
+        const finalAvatar = convexAvatarUrl || avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
 
         await createCreator({
           userId: convexUserId,
@@ -93,6 +95,19 @@ export default function Onboarding() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size must be less than 5MB.");
+      return;
+    }
+
+    // Set immediate local preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLocalPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
     setIsUploading(true);
     setError("");
     try {
@@ -115,21 +130,22 @@ export default function Onboarding() {
     } catch (err) {
       console.error("Upload error:", err);
       setError("Failed to upload image. Please try again.");
+      setLocalPreview(null); // Clear preview on error
     } finally {
       setIsUploading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-black/5 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div className="flex items-center justify-between">
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-black/5 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="w-full max-w-md space-y-6 sm:space-y-8">
+        <div className="flex items-center justify-between px-2 sm:px-0">
           <div className="flex gap-2">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
                 className={cn(
-                  "h-1.5 w-12 rounded-full transition-all duration-500",
+                  "h-1.5 w-10 sm:w-12 rounded-full transition-all duration-500",
                   step >= i ? "bg-black" : "bg-black/10"
                 )}
               />
@@ -145,10 +161,10 @@ export default function Onboarding() {
 
         <motion.div
           key={step}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          className="rounded-[2.5rem] bg-white p-8 shadow-2xl shadow-black/5 sm:p-12"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="rounded-[2.5rem] bg-white p-6 shadow-2xl shadow-black/5 sm:p-12 overflow-y-auto max-h-[85dvh]"
         >
           {error && (
             <div className="mb-6 flex items-center gap-2 rounded-xl bg-rose-50 p-4 text-sm font-medium text-rose-500 border border-rose-100">
