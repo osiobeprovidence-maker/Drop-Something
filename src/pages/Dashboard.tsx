@@ -374,11 +374,18 @@ export default function Dashboard() {
               >
                 <div className="rounded-3xl border border-black/5 bg-white p-8 shadow-sm">
                   <div className="flex flex-col items-center text-center">
-                    <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-black/5">
-                      <img src={profile.avatar} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                    <div className="h-20 w-20 overflow-hidden rounded-3xl bg-black/5 ring-4 ring-white shadow-sm">
+                      <img src={profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.displayName}`} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
                     </div>
-                    <h2 className="mt-4 text-2xl font-black text-black">@{profile.username}</h2>
-                    <p className="mt-2 text-black/60">{profile.bio}</p>
+                    <h2 className="mt-4 text-2xl font-black text-black">@{profile?.username || user?.displayName}</h2>
+                    <Link
+                      to={`/${profile?.username || user?.displayName}`}
+                      className="inline-flex items-center gap-2 text-sm font-bold text-black/40 hover:text-black transition-colors"
+                    >
+                      <ExternalLink size={14} />
+                      View live page
+                    </Link>
+                    <p className="mt-2 text-black/60">{profile?.bio || "No bio yet"}</p>
                     
                     <div className="mt-8 flex w-full flex-col gap-3">
                       <Link 
