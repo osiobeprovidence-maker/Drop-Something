@@ -23,14 +23,6 @@ function AppContent() {
   const { user, hasProfile, isLoading } = useAuth();
   const path = location.pathname;
   
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-white">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-black border-t-transparent" />
-      </div>
-    );
-  }
-  
   // Reserved platform paths
   const reservedPaths = ["explore", "how-it-works", "creators", "faq", "dashboard", "admin", "login", "signup", "onboarding"];
   
@@ -67,6 +59,23 @@ function AppContent() {
     // All other platform pages (Landing, Explore, etc.)
     navbar = <PlatformNavbar />;
     mainClass = "flex-1 pt-16";
+  }
+
+  // If we're loading, show a centered spinner but keep the layout
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-6">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-black text-white shadow-xl">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-white" />
+          </div>
+          <div className="text-center space-y-2">
+            <h2 className="text-xl font-black text-black">DropSomething</h2>
+            <p className="text-sm font-bold text-black/40 animate-pulse">Syncing your profile...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

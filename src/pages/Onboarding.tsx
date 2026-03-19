@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { User, FileText, ArrowRight, ImageIcon, Camera, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useMutation, useQuery } from "convex/react";
@@ -11,16 +11,30 @@ import { auth } from "@/src/lib/firebase";
 export default function Onboarding() {
   const navigate = useNavigate();
   const { convexUserId, user, reloadUser, signOut } = useAuth();
-  const [step, setStep] = useState(1);
-  const [username, setUsername] = useState("");
-  const [bio, setBio] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
+  
+  // Initialize state from localStorage if available
+  const [step, setStep] = useState(() => {
+    const saved = localStorage.getItem("onboarding_step");
+    return saved ? parseInt(saved) : 1;
+  });
+  const [username, setUsername] = useState(() => localStorage.getItem("onboarding_username") || "");
+  const [bio, setBio] = useState(() => localStorage.getItem("onboarding_bio") || "");
+  const [avatarUrl, setAvatarUrl] = useState(() => localStorage.getItem("onboarding_avatarUrl") || "");
   const [localPreview, setLocalPreview] = useState<string | null>(null);
+  
   const [isVerifying, setIsVerifying] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
+  // Persist state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("onboarding_step", step.toString());
+    localStorage.setItem("onboarding_username", username);
+    localStorage.setItem("onboarding_bio", bio);
+    localStorage.setItem("onboarding_avatarUrl", avatarUrl);
+  }, [step, username, bio, avatarUrl]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const generateUploadUrl = useMutation(api.creators.generateUploadUrl);
@@ -80,6 +94,13 @@ export default function Onboarding() {
           coverImage: "https://picsum.photos/seed/cover/1200/400",
           pageStyle: "hybrid",
         });
+
+        // Clear localStorage on success
+        localStorage.removeItem("onboarding_step");
+        localStorage.removeItem("onboarding_username");
+        localStorage.removeItem("onboarding_bio");
+        localStorage.removeItem("onboarding_avatarUrl");
+
         navigate("/dashboard");
       } catch (err: any) {
         console.error("Onboarding error:", err);
