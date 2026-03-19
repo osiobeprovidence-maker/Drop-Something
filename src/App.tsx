@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation, useParams } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, useParams } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import CreatorPage from "./pages/CreatorPage";
 import Dashboard from "./pages/Dashboard";
@@ -16,14 +16,20 @@ import FAQ from "./pages/FAQ";
 import { ThemeProvider } from "./context/ThemeContext";
 import { FollowProvider } from "./context/FollowContext";
 import { DataProvider } from "./context/DataContext";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 function AppContent() {
   const location = useLocation();
+  const { user, hasProfile, isLoading } = useAuth();
   const path = location.pathname;
   
-  // Safe check for useLocation() if Router is not ready
-  if (!location) return null;
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-black border-t-transparent" />
+      </div>
+    );
+  }
   
   // Reserved platform paths
   const reservedPaths = ["explore", "how-it-works", "creators", "faq", "dashboard", "admin", "login", "signup", "onboarding"];
@@ -31,11 +37,18 @@ function AppContent() {
   // Extract segments
   const segments = path.split("/").filter(Boolean);
   const firstSegment = segments[0];
+
+  // If user is logged in but hasn't finished onboarding, redirect them to onboarding
+  // except if they are already on onboarding, login, or signup pages
+  const isAuthPage = ["login", "signup", "onboarding"].includes(firstSegment);
+  
+  if (!isLoading && user && !hasProfile && !isAuthPage) {
+    return <Navigate to="/onboarding" replace />;
+  }
   
   // Page type detection
   const isDashboardPage = firstSegment === "dashboard";
   const isAdminPage = firstSegment === "admin";
-  const isAuthPage = ["login", "signup", "onboarding"].includes(firstSegment);
   
   // A creator page is a single segment path that is NOT a reserved platform path
   const isCreatorPage = segments.length === 1 && !reservedPaths.includes(firstSegment);

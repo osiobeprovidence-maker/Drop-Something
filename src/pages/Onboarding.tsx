@@ -10,7 +10,7 @@ import { auth } from "@/src/lib/firebase";
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { convexUserId, user, reloadUser } = useAuth();
+  const { convexUserId, user, reloadUser, signOut } = useAuth();
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -31,6 +31,11 @@ export default function Onboarding() {
   );
 
   const avatarDisplayUrl = convexAvatarUrl || (avatarUrl.startsWith("http") ? avatarUrl : null) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   const checkEmailVerification = async () => {
     setIsVerifying(true);
@@ -118,17 +123,24 @@ export default function Onboarding() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-black/5 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
-        {/* Progress Bar */}
-        <div className="flex justify-center gap-2">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className={cn(
-                "h-1.5 w-12 rounded-full transition-all duration-500",
-                step >= i ? "bg-black" : "bg-black/10"
-              )}
-            />
-          ))}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className={cn(
+                  "h-1.5 w-12 rounded-full transition-all duration-500",
+                  step >= i ? "bg-black" : "bg-black/10"
+                )}
+              />
+            ))}
+          </div>
+          <button 
+            onClick={handleLogout}
+            className="text-xs font-bold text-black/40 hover:text-black transition-colors"
+          >
+            Logout
+          </button>
         </div>
 
         <motion.div

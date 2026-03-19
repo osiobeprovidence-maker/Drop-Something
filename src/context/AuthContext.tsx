@@ -5,7 +5,7 @@ import {
   signOut as firebaseSignOut 
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 
@@ -16,6 +16,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   reloadUser: () => Promise<void>;
   isNewUser: boolean;
+  hasProfile: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,6 +28,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isNewUser, setIsNewUser] = useState(false);
   
   const storeUser = useMutation(api.users.storeUser);
+  
+  // Query to check if the user has a creator profile
+  const creator = useQuery(api.creators.getCreatorByUserId, { 
+    userId: convexUserId || undefined
+  });
+
+  const isCreatorLoading = convexUserId !== null && creator === undefined;
+  const hasProfile = creator !== null && creator !== undefined;
 
   const reloadUser = async () => {
     if (auth.currentUser) {
@@ -80,7 +89,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, convexUserId, isLoading, signOut, reloadUser, isNewUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      convexUserId, 
+      isLoading: isLoading || isCreatorLoading, 
+      signOut, 
+      reloadUser, 
+      isNewUser, 
+      hasProfile 
+    }}>
       {children}
     </AuthContext.Provider>
   );

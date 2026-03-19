@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = false }) => {
   const location = useLocation();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, hasProfile } = useAuth();
 
   if (isLoading) {
     return (
@@ -22,6 +22,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   if (!user) {
     // Redirect to login but save the current location they were trying to go to
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // If the user is logged in but hasn't completed onboarding, redirect them there
+  // Unless they are already on the onboarding page
+  if (!hasProfile && location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // If the user has a profile but tries to go back to onboarding, send them to dashboard
+  if (hasProfile && location.pathname === "/onboarding") {
+    return <Navigate to="/dashboard" replace />;
   }
 
   // In a real app, you would check admin status from Convex/Firestore data

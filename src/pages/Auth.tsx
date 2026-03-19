@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Coffee, Mail, Lock, User, ArrowRight, CheckCircle } from "lucide-react";
+import { Coffee, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { 
   createUserWithEmailAndPassword, 
@@ -10,19 +10,32 @@ import {
   sendEmailVerification
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import { useAuth } from "../context/AuthContext";
 
 export default function Auth({ mode }: { mode: "login" | "signup" }) {
   const navigate = useNavigate();
+  const { user, hasProfile, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [error, setError] = useState("");
   const [verificationSent, setVerificationSent] = useState(false);
 
+  // If user is already logged in, redirect them away from auth page
+  useEffect(() => {
+    if (!isLoading && user) {
+      if (hasProfile) {
+        navigate("/dashboard");
+      } else {
+        navigate("/onboarding");
+      }
+    }
+  }, [user, hasProfile, isLoading, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsAuthLoading(true);
     setError("");
 
     try {
@@ -40,19 +53,26 @@ export default function Auth({ mode }: { mode: "login" | "signup" }) {
         await sendEmailVerification(userCredential.user);
         setVerificationSent(true);
         
-        // We still navigate to onboarding, but the user will need to verify later
-        setTimeout(() => navigate("/onboarding"), 3000);
+        // Navigation will be handled by the useEffect above once the auth state changes
       } else {
         await signInWithEmailAndPassword(auth, email, password);
-        navigate("/dashboard");
+        // Navigation will be handled by the useEffect above once the auth state changes
       }
     } catch (err: any) {
       console.error("Auth error:", err);
       setError(err.message || "An error occurred during authentication");
     } finally {
-      setIsLoading(false);
+      setIsAuthLoading(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-black border-t-transparent" />
+      </div>
+    );
+  }
 
   if (verificationSent) {
     return (
@@ -171,10 +191,10 @@ export default function Auth({ mode }: { mode: "login" | "signup" }) {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isAuthLoading}
             className="flex h-14 w-full items-center justify-center rounded-full bg-black text-base font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           >
-            {isLoading ? (
+            {isAuthLoading ? (
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
             ) : (
               <div className="flex items-center gap-2">
