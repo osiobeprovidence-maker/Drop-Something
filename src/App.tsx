@@ -22,6 +22,9 @@ function AppContent() {
   const location = useLocation();
   const path = location.pathname;
   
+  // Safe check for useLocation() if Router is not ready
+  if (!location) return null;
+  
   // Reserved platform paths
   const reservedPaths = ["explore", "how-it-works", "creators", "faq", "dashboard", "admin", "login", "signup", "onboarding"];
   
@@ -80,16 +83,16 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <DataProvider>
-        <FollowProvider>
-          <ThemeProvider>
-            <Router>
+    <Router>
+      <AuthProvider>
+        <DataProvider>
+          <FollowProvider>
+            <ThemeProvider>
               <AppContent />
-            </Router>
-          </ThemeProvider>
-        </FollowProvider>
-      </DataProvider>
-    </AuthProvider>
+            </ThemeProvider>
+          </FollowProvider>
+        </DataProvider>
+      </AuthProvider>
+    </Router>
   );
 }

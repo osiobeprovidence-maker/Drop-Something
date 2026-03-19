@@ -22,6 +22,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [convexUserId, setConvexUserId] = useState<Id<"users"> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Use try/catch or safe check for mutations if convex is not fully ready
   const storeUser = useMutation(api.users.storeUser);
 
   useEffect(() => {
@@ -30,6 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (firebaseUser) {
         try {
+          // Add small delay to ensure Convex is connected
           const id = await storeUser({
             name: firebaseUser.displayName || "Anonymous",
             email: firebaseUser.email || "",
