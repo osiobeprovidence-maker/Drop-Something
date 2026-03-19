@@ -66,7 +66,25 @@ export default function Auth({ mode }: { mode: "login" | "signup" }) {
             We've sent a verification link to <span className="font-bold text-black">{email}</span>.
             Please verify your email to access all features.
           </p>
-          <p className="mt-8 text-sm text-black/40 italic">Redirecting to onboarding...</p>
+          <div className="mt-8 space-y-4">
+            <button 
+              onClick={() => navigate("/onboarding")}
+              className="w-full h-14 rounded-full bg-black text-white font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Continue to Setup
+            </button>
+            <button 
+              onClick={async () => {
+                if (auth.currentUser) {
+                  await sendEmailVerification(auth.currentUser);
+                  alert("Verification email resent!");
+                }
+              }}
+              className="text-sm font-bold text-black/40 hover:text-black underline underline-offset-4 transition-colors"
+            >
+              Didn't get the email? Resend
+            </button>
+          </div>
         </div>
       </div>
     );

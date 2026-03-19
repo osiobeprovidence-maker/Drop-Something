@@ -9,11 +9,12 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { convexUserId } = useAuth();
+  const { convexUserId, user, reloadUser } = useAuth();
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
@@ -22,12 +23,34 @@ export default function Onboarding() {
   const generateUploadUrl = useMutation(api.creators.generateUploadUrl);
   const createCreator = useMutation(api.creators.createCreator);
 
+  const checkEmailVerification = async () => {
+    setIsVerifying(true);
+    try {
+      await reloadUser();
+      if (user?.emailVerified) {
+        alert("Email verified!");
+      } else {
+        alert("Email still not verified. Please check your inbox.");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   const handleNext = async () => {
     if (step < 3) {
       setStep(step + 1);
     } else {
       if (!convexUserId) return;
       
+      // Optional: enforce email verification
+      // if (!user?.emailVerified) {
+      //   setError("Please verify your email before completing setup.");
+      //   return;
+      // }
+
       setIsLoading(true);
       setError("");
       
@@ -70,10 +93,17 @@ export default function Onboarding() {
       
       const { storageId } = await result.json();
       
-      // 3. Construct local URL for preview (in a real app you'd get the permanent URL)
-      // For this demo, we'll use a placeholder URL based on the storageId
-      // In production you'd use getImageUrl(storageId)
-      setAvatarUrl(URL.createObjectURL(file));
+      // 3. Get the permanent URL from Convex
+      // We need to fetch this from the backend
+      const response = await fetch(`${import.meta.env.VITE_CONVEX_URL}/api/storage/${storageId}`);
+      // Actually Convex provides a simpler way to get URLs if configured, 
+      // but for now let's use the storageId-based URL if possible or just the storageId itself
+      // if we update the schema.
+      
+      // The most reliable way in a simple setup is to have a query that returns the URL
+      // But we can also use the public URL format: https://<deployment>.convex.cloud/api/storage/<id>
+      const publicUrl = `${import.meta.env.VITE_CONVEX_URL.replace('.cloud', '.site')}/api/storage/${storageId}`;
+      setAvatarUrl(publicUrl);
     } catch (err) {
       console.error("Upload error:", err);
       alert("Failed to upload image. Please try again.");
@@ -121,6 +151,27 @@ export default function Onboarding() {
                 <h2 className="mt-6 text-3xl font-extrabold text-black">Choose your username</h2>
                 <p className="mt-2 text-sm text-black/40">This will be your unique URL on DropSomething.</p>
               </div>
+
+              {/* Email Verification Banner */}
+              {!user?.emailVerified && (
+                <div className="rounded-2xl bg-amber-50 p-4 border border-amber-100">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="text-amber-500 shrink-0" size={20} />
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-amber-800">Email not verified</p>
+                      <p className="text-[10px] text-amber-600 mt-0.5">Please check your inbox to verify your account.</p>
+                    </div>
+                    <button 
+                      onClick={checkEmailVerification}
+                      disabled={isVerifying}
+                      className="text-[10px] font-bold text-amber-700 underline underline-offset-2 disabled:opacity-50"
+                    >
+                      {isVerifying ? "Checking..." : "I've verified"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="relative mt-8">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-black/20">dropsomething.com/</span>
                 <input

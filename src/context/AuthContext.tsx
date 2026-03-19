@@ -14,6 +14,7 @@ interface AuthContextType {
   convexUserId: Id<"users"> | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  reloadUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,6 +26,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Use try/catch or safe check for mutations if convex is not fully ready
   const storeUser = useMutation(api.users.storeUser);
+
+  const reloadUser = async () => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      setUser({ ...auth.currentUser });
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -58,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, convexUserId, isLoading, signOut }}>
+    <AuthContext.Provider value={{ user, convexUserId, isLoading, signOut, reloadUser }}>
       {children}
     </AuthContext.Provider>
   );
