@@ -1,25 +1,84 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { User, FileText, Check, ArrowRight, ImageIcon } from "lucide-react";
+import { User, FileText, Check, ArrowRight, ImageIcon, Camera, AlertCircle } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const { convexUserId } = useAuth();
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const generateUploadUrl = useMutation(api.creators.generateUploadUrl);
+  const createCreator = useMutation(api.creators.createCreator);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < 3) {
       setStep(step + 1);
     } else {
+      if (!convexUserId) return;
+      
       setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
+      setError("");
+      
+      try {
+        await createCreator({
+          userId: convexUserId,
+          username: username.toLowerCase(),
+          name: username,
+          bio: bio,
+          avatar: avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+          coverImage: "https://picsum.photos/seed/cover/1200/400",
+          pageStyle: "hybrid",
+        });
         navigate("/dashboard");
-      }, 1500);
+      } catch (err: any) {
+        console.error("Onboarding error:", err);
+        setError(err.message || "Failed to complete setup. Username might be taken.");
+        setStep(1); // Go back to username step
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    try {
+      // 1. Get upload URL from Convex
+      const postUrl = await generateUploadUrl();
+      
+      // 2. Post file to Convex storage
+      const result = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      
+      const { storageId } = await result.json();
+      
+      // 3. Construct local URL for preview (in a real app you'd get the permanent URL)
+      // For this demo, we'll use a placeholder URL based on the storageId
+      // In production you'd use getImageUrl(storageId)
+      setAvatarUrl(URL.createObjectURL(file));
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -46,6 +105,13 @@ export default function Onboarding() {
           exit={{ opacity: 0, x: -20 }}
           className="rounded-[2.5rem] bg-white p-8 shadow-2xl shadow-black/5 sm:p-12"
         >
+          {error && (
+            <div className="mb-6 flex items-center gap-2 rounded-xl bg-rose-50 p-4 text-sm font-medium text-rose-500 border border-rose-100">
+              <AlertCircle size={18} />
+              {error}
+            </div>
+          )}
+
           {step === 1 && (
             <div className="space-y-8">
               <div className="text-center">
@@ -99,12 +165,29 @@ export default function Onboarding() {
                 <p className="mt-2 text-sm text-black/40">Let your audience see the face behind the hustle.</p>
               </div>
               <div className="mt-8 flex justify-center">
-                <div className="group relative h-32 w-32 overflow-hidden rounded-[2rem] bg-black/5">
-                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-                  <button className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    <ImageIcon size={24} />
-                  </button>
-                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="group relative h-32 w-32 overflow-hidden rounded-[2rem] bg-black/5 border-2 border-dashed border-black/10 hover:border-black/30 transition-all"
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar Preview" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-black/20">
+                      <Camera size={32} />
+                      <span className="mt-2 text-[10px] font-bold uppercase tracking-widest">Upload</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    <Camera size={24} />
+                  </div>
+                </button>
               </div>
             </div>
           )}

@@ -58,12 +58,26 @@ export const createCreator = mutation({
     pageStyle: v.union(v.literal("support"), v.literal("shop"), v.literal("goal"), v.literal("hybrid")),
   },
   handler: async (ctx, args) => {
+    // Check if username already exists
+    const existing = await ctx.db
+      .query("creators")
+      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .unique();
+    
+    if (existing) {
+      throw new Error("Username already taken");
+    }
+
     return await ctx.db.insert("creators", {
       ...args,
       totalRevenue: 0,
       supporterCount: 0,
     });
   },
+});
+
+export const generateUploadUrl = mutation(async (ctx) => {
+  return await ctx.storage.generateUploadUrl();
 });
 
 export const addTip = mutation({

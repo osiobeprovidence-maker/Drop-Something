@@ -6,7 +6,8 @@ import { cn } from "@/src/lib/utils";
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  sendEmailVerification
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
 
@@ -17,6 +18,7 @@ export default function Auth({ mode }: { mode: "login" | "signup" }) {
   const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [verificationSent, setVerificationSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +35,13 @@ export default function Auth({ mode }: { mode: "login" | "signup" }) {
         await updateProfile(userCredential.user, {
           displayName: username
         });
-        navigate("/onboarding");
+        
+        // Send email verification
+        await sendEmailVerification(userCredential.user);
+        setVerificationSent(true);
+        
+        // We still navigate to onboarding, but the user will need to verify later
+        setTimeout(() => navigate("/onboarding"), 3000);
       } else {
         await signInWithEmailAndPassword(auth, email, password);
         navigate("/dashboard");
@@ -45,6 +53,24 @@ export default function Auth({ mode }: { mode: "login" | "signup" }) {
       setIsLoading(false);
     }
   };
+
+  if (verificationSent) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black/5 px-4">
+        <div className="w-full max-w-md rounded-[2.5rem] bg-white p-12 text-center shadow-2xl">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
+            <CheckCircle size={40} />
+          </div>
+          <h2 className="mt-8 text-3xl font-black text-black">Check your email</h2>
+          <p className="mt-4 text-black/60">
+            We've sent a verification link to <span className="font-bold text-black">{email}</span>.
+            Please verify your email to access all features.
+          </p>
+          <p className="mt-8 text-sm text-black/40 italic">Redirecting to onboarding...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-black/5 px-4 py-12 sm:px-6 lg:px-8">
