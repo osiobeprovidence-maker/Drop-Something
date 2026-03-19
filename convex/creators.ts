@@ -29,6 +29,28 @@ export const getCreatorByUserId = query({
 });
 
 async function getCreatorDetails(ctx: any, creator: any) {
+  // Resolve avatar if it's a storageId
+  let avatar = creator.avatar;
+  if (avatar && !avatar.startsWith("http")) {
+    try {
+      const url = await ctx.storage.getUrl(avatar);
+      if (url) avatar = url;
+    } catch (e) {
+      // Not a valid storageId, keep original
+    }
+  }
+
+  // Resolve coverImage if it's a storageId
+  let coverImage = creator.coverImage;
+  if (coverImage && !coverImage.startsWith("http")) {
+    try {
+      const url = await ctx.storage.getUrl(coverImage);
+      if (url) coverImage = url;
+    } catch (e) {
+      // Not a valid storageId, keep original
+    }
+  }
+
   const links = await ctx.db
     .query("links")
     .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
@@ -56,6 +78,8 @@ async function getCreatorDetails(ctx: any, creator: any) {
 
   return {
     ...creator,
+    avatar,
+    coverImage,
     links,
     memberships,
     goals,
@@ -127,6 +151,9 @@ export const addTip = mutation({
 
 export const listCreators = query({
   handler: async (ctx) => {
-    return await ctx.db.query("creators").collect();
+    const creators = await ctx.db.query("creators").collect();
+    return await Promise.all(creators.map(async (creator) => {
+      return await getCreatorDetails(ctx, creator);
+    }));
   },
 });

@@ -42,7 +42,9 @@ export default function Onboarding() {
 
   // Get public URL for the storage ID if it exists
   const convexAvatarUrl = useQuery(api.creators.getFileUrl, 
-    avatarUrl.startsWith("kg") ? { storageId: avatarUrl } : "skip" as any
+    (avatarUrl && !avatarUrl.startsWith("http") && !avatarUrl.startsWith("data:")) 
+      ? { storageId: avatarUrl } 
+      : "skip"
   );
 
   const avatarDisplayUrl = localPreview || convexAvatarUrl || (avatarUrl.startsWith("http") ? avatarUrl : null) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
@@ -83,7 +85,7 @@ export default function Onboarding() {
       try {
         // Use the storageId (avatarUrl) for the database if available, 
         // otherwise fallback to a default avatar
-        const finalAvatar = convexAvatarUrl || avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
+        const finalAvatar = avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
 
         await createCreator({
           userId: convexUserId,
@@ -305,15 +307,24 @@ export default function Onboarding() {
 
           <button
             onClick={handleNext}
-            disabled={isLoading || (step === 1 && !username)}
+            disabled={isLoading || isUploading || (step === 1 && !username)}
             className="mt-10 flex h-14 w-full items-center justify-center rounded-full bg-black text-base font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           >
             {isLoading ? (
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
             ) : (
               <div className="flex items-center gap-2">
-                {step === 3 ? "Complete Setup" : "Next Step"}
-                <ArrowRight size={18} />
+                {isUploading ? (
+                  <>
+                    <span>Uploading Image...</span>
+                    <Loader2 size={18} className="animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    <span>{step === 3 ? "Complete Setup" : "Next Step"}</span>
+                    <ArrowRight size={18} />
+                  </>
+                )}
               </div>
             )}
           </button>
