@@ -3,6 +3,12 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { Coffee, Mail, Lock, User, ArrowRight, CheckCircle } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword,
+  updateProfile
+} from "firebase/auth";
+import { auth } from "../lib/firebase";
 
 export default function Auth({ mode }: { mode: "login" | "signup" }) {
   const navigate = useNavigate();
@@ -12,35 +18,32 @@ export default function Auth({ mode }: { mode: "login" | "signup" }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    // Simulate Auth
-    setTimeout(() => {
-      if (mode === "signup" && !username) {
-        setError("Username is required");
-        setIsLoading(false);
-        return;
-      }
-
-      const mockUser = {
-        id: "123",
-        email,
-        username: username || email.split("@")[0],
-        role: "user",
-      };
-
-      localStorage.setItem("user", JSON.stringify(mockUser));
-      setIsLoading(false);
-      
+    try {
       if (mode === "signup") {
+        if (!username) {
+          throw new Error("Username is required");
+        }
+        
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, {
+          displayName: username
+        });
         navigate("/onboarding");
       } else {
+        await signInWithEmailAndPassword(auth, email, password);
         navigate("/dashboard");
       }
-    }, 1500);
+    } catch (err: any) {
+      console.error("Auth error:", err);
+      setError(err.message || "An error occurred during authentication");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
