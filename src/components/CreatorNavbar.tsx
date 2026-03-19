@@ -14,12 +14,22 @@ interface CreatorNavbarProps {
 }
 
 export const CreatorNavbar: React.FC<CreatorNavbarProps> = ({ username }) => {
-  const { avatar, name, supporterCount, pageStyle } = useData();
+  const { avatar, name, supporterCount, pageStyle, creator: profile } = useData();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const isOwnPage = user?.username === username || !username;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -118,6 +128,22 @@ export const CreatorNavbar: React.FC<CreatorNavbarProps> = ({ username }) => {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
+            {isOwnPage ? (
+              <Link
+                to="/dashboard"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-black text-white text-sm font-bold transition-all hover:scale-105 active:scale-95"
+              >
+                <LayoutDashboard size={16} />
+                Dashboard
+              </Link>
+            ) : (
+              <Link
+                to="/explore"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-black/10 text-black text-sm font-bold transition-all hover:bg-black/5"
+              >
+                Explore
+              </Link>
+            )}
             <button 
               onClick={copyLink}
               className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl bg-gray-50 border border-black/5 text-gray-600 hover:bg-white hover:text-gray-900 transition-all active:scale-95"
@@ -196,6 +222,23 @@ export const CreatorNavbar: React.FC<CreatorNavbarProps> = ({ username }) => {
 
                 <div className="space-y-1">
                   <p className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Navigation</p>
+                  {isOwnPage ? (
+                    <Link
+                      to="/dashboard"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 rounded-xl transition-all"
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      Dashboard
+                    </Link>
+                  ) : (
+                    <Link
+                      to="/explore"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 rounded-xl transition-all"
+                    >
+                      <Home className="w-4 h-4" />
+                      Explore
+                    </Link>
+                  )}
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}

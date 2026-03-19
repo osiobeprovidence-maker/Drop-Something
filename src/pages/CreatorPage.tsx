@@ -9,9 +9,10 @@ import { MOCK_CREATORS } from "@/src/lib/mockData";
 
 export default function CreatorPage() {
   const { username } = useParams();
-  const { creator } = useData();
+  const { creator, addTip } = useData();
   const [tipAmount, setTipAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
+  const [supporterName, setSupporterName] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -32,12 +33,28 @@ export default function CreatorPage() {
   const isOwnPage = !username || username === creator.username;
 
   const handleDropSomething = () => {
+    const amount = tipAmount || (customAmount ? parseInt(customAmount) : 0);
+    if (amount <= 0) return;
+
     setIsSubmitting(true);
+    
+    // Simulate API call
     setTimeout(() => {
+      // If it's our own page, we can actually add the tip to our context
+      if (isOwnPage) {
+        addTip({
+          supporterName: supporterName || "Anonymous Supporter",
+          amount: amount,
+          message: message,
+          type: "tip"
+        });
+      }
+      
       setIsSubmitting(false);
       setShowSuccess(true);
       setTipAmount(null);
       setCustomAmount("");
+      setSupporterName("");
       setMessage("");
       setTimeout(() => setShowSuccess(false), 3000);
     }, 1500);
@@ -158,6 +175,8 @@ export default function CreatorPage() {
                     <input
                       type="text"
                       placeholder="Your name (optional)"
+                      value={supporterName}
+                      onChange={(e) => setSupporterName(e.target.value)}
                       className="h-14 w-full rounded-2xl border-2 border-black/5 bg-zinc-50 px-4 text-sm font-medium text-black focus:border-black/20 focus:outline-none transition-colors"
                     />
                     <textarea

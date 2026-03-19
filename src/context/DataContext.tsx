@@ -32,6 +32,15 @@ export interface Product {
   deliveryInfo?: string; // for physical
 }
 
+export interface Tip {
+  id: string;
+  supporterName: string;
+  amount: number;
+  message?: string;
+  createdAt: string;
+  type: "tip" | "membership";
+}
+
 export interface CreatorData {
   username: string;
   name: string;
@@ -45,6 +54,7 @@ export interface CreatorData {
   totalRevenue: number;
   pageStyle: "support" | "shop" | "goal" | "hybrid";
   supporterCount?: number;
+  tips: Tip[];
 }
 
 interface DataContextType {
@@ -62,6 +72,7 @@ interface DataContextType {
   totalRevenue: number;
   pageStyle: "support" | "shop" | "goal" | "hybrid";
   supporterCount?: number;
+  tips: Tip[];
   
   updateProfile: (data: Partial<CreatorData>) => void;
   // Links CRUD
@@ -80,6 +91,8 @@ interface DataContextType {
   addProduct: (product: Omit<Product, "id">) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
+  // Tips
+  addTip: (tip: Omit<Tip, "id" | "createdAt">) => void;
 }
 
 const DEFAULT_DATA: CreatorData = {
@@ -105,6 +118,11 @@ const DEFAULT_DATA: CreatorData = {
   totalRevenue: 124500,
   pageStyle: "hybrid",
   supporterCount: 128,
+  tips: [
+    { id: "1", supporterName: "John D.", amount: 1000, message: "Love your work!", createdAt: new Date(Date.now() - 7200000).toISOString(), type: "tip" },
+    { id: "2", supporterName: "Sarah W.", amount: 500, message: "Thanks for the tips!", createdAt: new Date(Date.now() - 18000000).toISOString(), type: "tip" },
+    { id: "3", supporterName: "Mike R.", amount: 5000, message: "Joining the VIP tier!", createdAt: new Date(Date.now() - 86400000).toISOString(), type: "membership" },
+  ],
 };
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -187,6 +205,20 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setCreator(prev => ({ ...prev, products: prev.products.filter(p => p.id !== id) }));
   };
 
+  const addTip = (tip: Omit<Tip, "id" | "createdAt">) => {
+    const newTip: Tip = {
+      ...tip,
+      id: Math.random().toString(36).substr(2, 9),
+      createdAt: new Date().toISOString(),
+    };
+    setCreator(prev => ({
+      ...prev,
+      tips: [newTip, ...prev.tips],
+      totalRevenue: prev.totalRevenue + tip.amount,
+      supporterCount: (prev.supporterCount || 0) + 1
+    }));
+  };
+
   return (
     <DataContext.Provider value={{
       creator,
@@ -195,7 +227,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       addLink, updateLink, deleteLink,
       addMembership, updateMembership, deleteMembership,
       addGoal, updateGoal, deleteGoal,
-      addProduct, updateProduct, deleteProduct
+      addProduct, updateProduct, deleteProduct,
+      addTip
     }}>
       {children}
     </DataContext.Provider>

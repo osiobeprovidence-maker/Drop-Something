@@ -31,7 +31,8 @@ export default function Dashboard() {
     links, addLink, updateLink, deleteLink,
     memberships, addMembership, updateMembership, deleteMembership,
     goals, addGoal, updateGoal, deleteGoal,
-    products, addProduct, updateProduct, deleteProduct
+    products, addProduct, updateProduct, deleteProduct,
+    tips, totalRevenue, supporterCount
   } = useData();
 
   const [activeTab, setActiveTab] = useState("overview");
@@ -263,10 +264,10 @@ export default function Dashboard() {
               >
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {[
-                    { label: "Total Support", value: `₦450,000`, icon: DollarSign, color: "text-emerald-600" },
-                    { label: "Recent Drops", value: "124", icon: Heart, color: "text-rose-500" },
+                    { label: "Total Support", value: `₦${totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-emerald-600" },
+                    { label: "Total Supporters", value: supporterCount || 0, icon: Heart, color: "text-rose-500" },
                     { label: "Active Members", value: memberships.length, icon: Users, color: "text-blue-500" },
-                    { label: "Goal Progress", value: "65%", icon: TrendingUp, color: "text-amber-500" },
+                    { label: "Goal Progress", value: goals.length > 0 ? `${Math.round((goals[0].currentAmount / goals[0].targetAmount) * 100)}%` : "0%", icon: TrendingUp, color: "text-amber-500" },
                   ].map((stat, i) => (
                     <div key={i} className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
                       <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl bg-black/5", stat.color)}>
@@ -282,27 +283,38 @@ export default function Dashboard() {
                   <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
                     <h2 className="text-lg font-bold text-black">Recent Activity</h2>
                     <div className="mt-6 space-y-4">
-                      {[
-                        { name: "John D.", amount: 1000, type: "tip", time: "2h ago" },
-                        { name: "Sarah W.", amount: 500, type: "tip", time: "5h ago" },
-                        { name: "Mike R.", amount: 5000, type: "membership", time: "1d ago" },
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between rounded-2xl bg-black/5 p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 overflow-hidden rounded-full bg-white">
-                              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.name}`} alt="" referrerPolicy="no-referrer" />
+                      {tips.length === 0 ? (
+                        <p className="text-sm text-black/40 text-center py-8">No activity yet</p>
+                      ) : (
+                        tips.slice(0, 5).map((item, i) => {
+                          const timeAgo = (date: string) => {
+                            const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+                            if (seconds < 60) return "just now";
+                            const minutes = Math.floor(seconds / 60);
+                            if (minutes < 60) return `${minutes}m ago`;
+                            const hours = Math.floor(minutes / 60);
+                            if (hours < 24) return `${hours}h ago`;
+                            return `${Math.floor(hours / 24)}d ago`;
+                          };
+                          return (
+                            <div key={item.id} className="flex items-center justify-between rounded-2xl bg-black/5 p-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 overflow-hidden rounded-full bg-white">
+                                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.supporterName}`} alt="" referrerPolicy="no-referrer" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold text-black">{item.supporterName}</p>
+                                  <p className="text-xs text-black/40 capitalize">{item.type}</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-bold text-black">₦{item.amount.toLocaleString()}</p>
+                                <p className="text-xs text-black/40">{timeAgo(item.createdAt)}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-bold text-black">{item.name}</p>
-                              <p className="text-xs text-black/40 capitalize">{item.type}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-bold text-black">₦{item.amount}</p>
-                            <p className="text-xs text-black/40">{item.time}</p>
-                          </div>
-                        </div>
-                      ))}
+                          );
+                        })
+                      )}
                     </div>
                   </div>
 
