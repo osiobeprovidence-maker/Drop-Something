@@ -10,5 +10,10 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
+// Check for missing config
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PLACEHOLDER") {
+  console.error("Firebase API Key is missing or invalid in .env file.");
+}
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
