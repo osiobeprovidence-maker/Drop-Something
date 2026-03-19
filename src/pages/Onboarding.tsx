@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { User, FileText, Check, ArrowRight, ImageIcon, Camera, AlertCircle } from "lucide-react";
+import { User, FileText, ArrowRight, ImageIcon, Camera, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "../context/AuthContext";
+import { auth } from "@/src/lib/firebase";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export default function Onboarding() {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   
@@ -22,6 +24,13 @@ export default function Onboarding() {
   
   const generateUploadUrl = useMutation(api.creators.generateUploadUrl);
   const createCreator = useMutation(api.creators.createCreator);
+
+  // Get public URL for the storage ID if it exists
+  const convexAvatarUrl = useQuery(api.creators.getFileUrl, 
+    avatarUrl.startsWith("kg") ? { storageId: avatarUrl } : "skip" as any
+  );
+
+  const avatarDisplayUrl = convexAvatarUrl || (avatarUrl.startsWith("http") ? avatarUrl : null) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
 
   const checkEmailVerification = async () => {
     setIsVerifying(true);
@@ -52,12 +61,15 @@ export default function Onboarding() {
       setError("");
       
       try {
+        // Use the resolved avatar URL if available, otherwise use storageId, otherwise default
+        const finalAvatar = avatarDisplayUrl || avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
+
         await createCreator({
           userId: convexUserId,
           username: username.toLowerCase(),
           name: username,
           bio: bio,
-          avatar: avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+          avatar: finalAvatar,
           coverImage: "https://picsum.photos/seed/cover/1200/400",
           pageStyle: "hybrid",
         });
@@ -76,7 +88,8 @@ export default function Onboarding() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsLoading(true);
+    setIsUploading(true);
+    setError("");
     try {
       // 1. Get upload URL from Convex
       const postUrl = await generateUploadUrl();
@@ -92,19 +105,15 @@ export default function Onboarding() {
       
       const { storageId } = await result.json();
       
-      // 3. Resolve the public URL immediately
-      // The public URL for Convex files is https://<deployment>.convex.site/api/storage/<id>
-      const publicUrl = `${import.meta.env.VITE_CONVEX_URL.replace(".cloud", ".site")}/api/storage/${storageId}`;
-      setAvatarUrl(publicUrl);
+      // 3. Store the storageId
+      setAvatarUrl(storageId);
     } catch (err) {
       console.error("Upload error:", err);
-      alert("Failed to upload image. Please try again.");
+      setError("Failed to upload image. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsUploading(false);
     }
   };
-
-  const avatarDisplayUrl = avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-black/5 px-4 py-12 sm:px-6 lg:px-8">
@@ -219,9 +228,15 @@ export default function Onboarding() {
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="group relative h-32 w-32 overflow-hidden rounded-[2rem] bg-black/5 border-2 border-dashed border-black/10 hover:border-black/30 transition-all"
+                  disabled={isUploading}
+                  className="group relative h-32 w-32 overflow-hidden rounded-[2rem] bg-black/5 border-2 border-dashed border-black/10 hover:border-black/30 transition-all disabled:opacity-50"
                 >
-                  {avatarUrl ? (
+                  {isUploading ? (
+                    <div className="flex flex-col items-center justify-center text-black/40">
+                      <Loader2 size={32} className="animate-spin" />
+                      <span className="mt-2 text-[10px] font-bold uppercase tracking-widest">Uploading...</span>
+                    </div>
+                  ) : avatarUrl ? (
                     <img src={avatarDisplayUrl} alt="Avatar Preview" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex flex-col items-center justify-center text-black/20">
@@ -229,9 +244,11 @@ export default function Onboarding() {
                       <span className="mt-2 text-[10px] font-bold uppercase tracking-widest">Upload</span>
                     </div>
                   )}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    <Camera size={24} />
-                  </div>
+                  {!isUploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                      <Camera size={24} />
+                    </div>
+                  )}
                 </button>
               </div>
             </div>
