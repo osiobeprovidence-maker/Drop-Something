@@ -4,70 +4,7 @@ import { Search, Heart, Users, Zap, MessageSquare, ArrowRight, Filter, Plus, Che
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
 import { useFollow } from "@/src/context/FollowContext";
-
-// Mock data for creators
-const MOCK_CREATORS = [
-  {
-    id: "1",
-    username: "alexrivera",
-    name: "Alex Rivera",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-    bio: "Creating digital art & tutorials for aspiring artists.",
-    category: "Designers",
-    supporters: 1240,
-    rank: 1,
-  },
-  {
-    id: "2",
-    username: "sarahdev",
-    name: "Sarah Chen",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-    bio: "Open source developer building tools for the web.",
-    category: "Developers",
-    supporters: 890,
-    rank: 2,
-  },
-  {
-    id: "3",
-    username: "writer_joe",
-    name: "Joe Penna",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Joe",
-    bio: "Weekly essays on philosophy, tech, and the future.",
-    category: "Writers",
-    supporters: 750,
-    rank: 3,
-  },
-  {
-    id: "4",
-    username: "pod_hub",
-    name: "PodHub Community",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Pod",
-    bio: "A community for independent podcasters to share resources.",
-    category: "Communities",
-    supporters: 2100,
-    rank: 4,
-  },
-  {
-    id: "5",
-    username: "maya_cooks",
-    name: "Maya's Kitchen",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Maya",
-    bio: "Sharing traditional recipes with a modern twist.",
-    category: "Content Creators",
-    supporters: 560,
-    rank: 5,
-  },
-  {
-    id: "6",
-    username: "tech_tips",
-    name: "TechTips Daily",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Tech",
-    bio: "Daily bite-sized tech news and productivity hacks.",
-    category: "Content Creators",
-    supporters: 1500,
-    rank: 6,
-  },
-];
+import { MOCK_CREATORS } from "@/src/lib/mockData";
 
 const CATEGORIES = ["All", "Content Creators", "Developers", "Writers", "Designers", "Communities"];
 

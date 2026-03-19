@@ -1,9 +1,11 @@
 import { useParams } from "react-router-dom";
 import { motion } from "motion/react";
-import { useState } from "react";
-import { Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, Share2, Copy } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, Share2, Copy, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
 import { useData } from "@/src/context/DataContext";
+import { MOCK_CREATORS } from "@/src/lib/mockData";
 
 export default function CreatorPage() {
   const { username } = useParams();
@@ -15,10 +17,19 @@ export default function CreatorPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // In a real app, we'd fetch the creator by username. 
-  // For this prototype, we'll use the current user if the username matches or if no username is provided.
+  // Find the creator to display
+  const displayCreator = useMemo(() => {
+    // If it's the current user's page (either matching username or no username)
+    if (!username || username === creator.username) {
+      return creator;
+    }
+    
+    // Otherwise look in mock data
+    const mock = MOCK_CREATORS.find(c => c.username === username);
+    return mock || creator; // fallback to current user if not found
+  }, [username, creator]);
+
   const isOwnPage = !username || username === creator.username;
-  const displayCreator = creator; 
 
   const handleDropSomething = () => {
     setIsSubmitting(true);
@@ -58,6 +69,18 @@ export default function CreatorPage() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-20 pt-20">
+      {/* Navigation for Guests */}
+      {!isOwnPage && (
+        <div className="fixed top-20 left-4 z-40 sm:left-8">
+          <Link
+            to="/explore"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-black shadow-sm backdrop-blur-md border border-black/5 transition-transform hover:scale-110 active:scale-95 sm:h-12 sm:w-12"
+          >
+            <ArrowLeft size={20} />
+          </Link>
+        </div>
+      )}
+
       {/* Cover Image */}
       <div className="relative h-40 w-full bg-zinc-200 sm:h-64 overflow-hidden">
         <img 
