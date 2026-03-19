@@ -10,41 +10,59 @@ export const getCreatorByUsername = query({
       .unique();
     if (!creator) return null;
 
-    const links = await ctx.db
-      .query("links")
-      .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
-      .collect();
-
-    const memberships = await ctx.db
-      .query("memberships")
-      .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
-      .collect();
-
-    const goals = await ctx.db
-      .query("goals")
-      .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
-      .collect();
-
-    const products = await ctx.db
-      .query("products")
-      .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
-      .collect();
-
-    const tips = await ctx.db
-      .query("tips")
-      .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
-      .collect();
-
-    return {
-      ...creator,
-      links,
-      memberships,
-      goals,
-      products,
-      tips,
-    };
+    return await getCreatorDetails(ctx, creator);
   },
 });
+
+export const getCreatorByUserId = query({
+  args: { userId: v.optional(v.id("users")) },
+  handler: async (ctx, args) => {
+    if (!args.userId) return null;
+    const creator = await ctx.db
+      .query("creators")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .unique();
+    if (!creator) return null;
+
+    return await getCreatorDetails(ctx, creator);
+  },
+});
+
+async function getCreatorDetails(ctx: any, creator: any) {
+  const links = await ctx.db
+    .query("links")
+    .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
+    .collect();
+
+  const memberships = await ctx.db
+    .query("memberships")
+    .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
+    .collect();
+
+  const goals = await ctx.db
+    .query("goals")
+    .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
+    .collect();
+
+  const products = await ctx.db
+    .query("products")
+    .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
+    .collect();
+
+  const tips = await ctx.db
+    .query("tips")
+    .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
+    .collect();
+
+  return {
+    ...creator,
+    links,
+    memberships,
+    goals,
+    products,
+    tips,
+  };
+}
 
 // Mutations
 export const createCreator = mutation({

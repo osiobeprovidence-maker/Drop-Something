@@ -32,9 +32,16 @@ export default function Dashboard() {
   } = useData();
 
   // Fetch live data from Convex
-  const convexCreator = useQuery(api.creators.getCreatorByUsername, { 
-    username: user?.displayName || "" 
+  const convexCreator = useQuery(api.creators.getCreatorByUserId, { 
+    userId: convexUserId || undefined
   });
+
+  useEffect(() => {
+    // If auth is done loading and we definitely don't have a creator profile in Convex
+    if (!isAuthLoading && user && convexCreator === null) {
+      navigate("/onboarding");
+    }
+  }, [isAuthLoading, user, convexCreator, navigate]);
 
   // Consolidate profile data
   const profile = useMemo(() => convexCreator || localProfile, [convexCreator, localProfile]);

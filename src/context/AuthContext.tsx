@@ -15,6 +15,7 @@ interface AuthContextType {
   isLoading: boolean;
   signOut: () => Promise<void>;
   reloadUser: () => Promise<void>;
+  isNewUser: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [convexUserId, setConvexUserId] = useState<Id<"users"> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
   
   const storeUser = useMutation(api.users.storeUser);
 
@@ -42,18 +44,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!firebaseUser) {
         setConvexUserId(null);
         setIsLoading(false);
+        setIsNewUser(false);
         return;
       }
 
       // 3. Sync with Convex in the background, but don't let it block the app if it hangs
       try {
-        const id = await storeUser({
+        const result = await storeUser({
           name: firebaseUser.displayName || "Anonymous",
           email: firebaseUser.email || "",
           image: firebaseUser.photoURL || undefined,
           tokenIdentifier: firebaseUser.uid,
         });
-        setConvexUserId(id);
+        
+        // storeUser now returns an object with id and isNew
+        if (typeof result === "object" && result !== null) {
+          setConvexUserId((result as any).id);
+          setIsNewUser((result as any).isNew);
+        } else {
+          setConvexUserId(result as any);
+        }
       } catch (error) {
         console.error("Error storing user in Convex:", error);
       } finally {
@@ -70,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, convexUserId, isLoading, signOut, reloadUser }}>
+    <AuthContext.Provider value={{ user, convexUserId, isLoading, signOut, reloadUser, isNewUser }}>
       {children}
     </AuthContext.Provider>
   );

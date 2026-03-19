@@ -20,10 +20,11 @@ export const storeUser = mutation({
         email: args.email,
         image: args.image,
       });
-      return existingUser._id;
+      return { id: existingUser._id, isNew: false };
     }
 
-    return await ctx.db.insert("users", args);
+    const id = await ctx.db.insert("users", args);
+    return { id, isNew: true };
   },
 });
 
