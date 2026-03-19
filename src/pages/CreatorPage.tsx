@@ -44,6 +44,11 @@ export default function CreatorPage() {
   const isOwnPage = !username || username === creator.username;
   const addConvexTip = useMutation(api.creators.addTip);
 
+  const resolvedAvatar = useMemo(() => {
+    if (displayCreator.avatar.includes("api/storage")) return displayCreator.avatar;
+    return displayCreator.avatar;
+  }, [displayCreator.avatar]);
+
   const handleDropSomething = async () => {
     const amount = tipAmount || (customAmount ? parseInt(customAmount) : 0);
     if (amount <= 0) return;

@@ -38,6 +38,14 @@ export default function Dashboard() {
 
   // Consolidate profile data
   const profile = useMemo(() => convexCreator || localProfile, [convexCreator, localProfile]);
+  
+  // Resolve avatar URL
+  const avatarUrl = useMemo(() => {
+    const rawAvatar = profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.displayName}`;
+    if (rawAvatar.includes("api/storage")) return rawAvatar;
+    return rawAvatar;
+  }, [profile, user]);
+
   const links = useMemo(() => convexCreator?.links || localLinks, [convexCreator, localLinks]);
   const memberships = useMemo(() => convexCreator?.memberships || localMemberships, [convexCreator, localMemberships]);
   const goals = useMemo(() => convexCreator?.goals || localGoals, [convexCreator, localGoals]);
@@ -375,8 +383,8 @@ export default function Dashboard() {
                 <div className="rounded-3xl border border-black/5 bg-white p-8 shadow-sm">
                   <div className="flex flex-col items-center text-center">
                     <div className="h-20 w-20 overflow-hidden rounded-3xl bg-black/5 ring-4 ring-white shadow-sm">
-                      <img src={profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.displayName}`} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-                    </div>
+                        <img src={avatarUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                      </div>
                     <h2 className="mt-4 text-2xl font-black text-black">@{profile?.username || user?.displayName}</h2>
                     <Link
                       to={`/${profile?.username || user?.displayName}`}

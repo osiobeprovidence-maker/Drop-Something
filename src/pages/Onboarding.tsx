@@ -43,14 +43,11 @@ export default function Onboarding() {
     if (step < 3) {
       setStep(step + 1);
     } else {
-      if (!convexUserId) return;
+      if (!convexUserId) {
+        setError("Your account is still syncing. Please wait a moment and try again.");
+        return;
+      }
       
-      // Optional: enforce email verification
-      // if (!user?.emailVerified) {
-      //   setError("Please verify your email before completing setup.");
-      //   return;
-      // }
-
       setIsLoading(true);
       setError("");
       
@@ -95,9 +92,10 @@ export default function Onboarding() {
       
       const { storageId } = await result.json();
       
-      // 3. Get the permanent URL from Convex using our getFileUrl query
-      // This is safer than manual URL construction
-      setAvatarUrl(storageId); // We store the storageId and resolve it when displaying
+      // 3. Resolve the public URL immediately
+      // The public URL for Convex files is https://<deployment>.convex.site/api/storage/<id>
+      const publicUrl = `${import.meta.env.VITE_CONVEX_URL.replace(".cloud", ".site")}/api/storage/${storageId}`;
+      setAvatarUrl(publicUrl);
     } catch (err) {
       console.error("Upload error:", err);
       alert("Failed to upload image. Please try again.");
@@ -106,9 +104,7 @@ export default function Onboarding() {
     }
   };
 
-  const avatarDisplayUrl = useQuery(api.creators.getFileUrl, 
-    avatarUrl.length > 20 ? { storageId: avatarUrl } : "skip" as any
-  ) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
+  const avatarDisplayUrl = avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-black/5 px-4 py-12 sm:px-6 lg:px-8">
