@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, Heart, Users, Zap, MessageSquare, ArrowRight, Filter, Plus, Check } from "lucide-react";
+import { Search, Heart, Users, Zap, MessageSquare, ArrowRight, Filter, Plus, Check, Database } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
 import { useFollow } from "@/src/context/FollowContext";
 import { MOCK_CREATORS } from "@/src/lib/mockData";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 const CATEGORIES = ["All", "Content Creators", "Developers", "Writers", "Designers", "Communities"];
 
@@ -14,11 +16,21 @@ export default function Explore() {
   const [activeTab, setActiveTab] = useState("explore");
   const { isFollowing, follow, unfollow } = useFollow();
 
+  // Fetch creators from Convex
+  const convexCreators = useQuery(api.creators.listCreators);
+  const seedMockData = useMutation(api.seed.seedMockData);
+  const [isSeeding, setIsSeeding] = useState(false);
+
+  const creatorsToDisplay = useMemo(() => {
+    // If we have data in Convex, use it. Otherwise fall back to local mock data for the test.
+    return convexCreators && convexCreators.length > 0 ? convexCreators : MOCK_CREATORS;
+  }, [convexCreators]);
+
   const filteredCreators = useMemo(() => {
-    let result = MOCK_CREATORS;
+    let result = creatorsToDisplay;
     
     if (activeTab === "following") {
-      result = result.filter(c => isFollowing(c.id));
+      result = result.filter(c => isFollowing(c.id || (c as any)._id));
     }
 
     return result.filter((creator) => {
@@ -31,14 +43,41 @@ export default function Explore() {
       
       return matchesSearch && matchesCategory;
     });
-  }, [searchQuery, activeCategory, activeTab, isFollowing]);
+  }, [searchQuery, activeCategory, activeTab, isFollowing, creatorsToDisplay]);
+
+  const handleSeed = async () => {
+    setIsSeeding(true);
+    try {
+      await seedMockData();
+      alert("Dummy data seeded to Convex successfully!");
+    } catch (error) {
+      console.error("Seed error:", error);
+      alert("Failed to seed data. Make sure 'npx convex dev' is running.");
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Page Header */}
       <header className="border-b border-black/5 bg-white pt-12 sm:pt-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-black tracking-tight text-black sm:text-5xl lg:text-6xl">Explore creators</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h1 className="text-4xl font-black tracking-tight text-black sm:text-5xl lg:text-6xl">Explore creators</h1>
+            
+            {/* Dev Seed Button - Only visible if Convex is empty */}
+            {convexCreators && convexCreators.length === 0 && (
+              <button
+                onClick={handleSeed}
+                disabled={isSeeding}
+                className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-2 text-sm font-bold text-amber-600 border border-amber-100 hover:bg-amber-100 transition-all active:scale-95 disabled:opacity-50"
+              >
+                <Database size={16} />
+                {isSeeding ? "Seeding..." : "Seed Dummy Data"}
+              </button>
+            )}
+          </div>
           
           <div className="mt-8 flex gap-8 border-b border-transparent overflow-x-auto scrollbar-hide">
             <button
@@ -119,16 +158,16 @@ export default function Explore() {
                 exit={{ opacity: 0, y: -10 }}
                 className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2"
               >
-                {filteredCreators.map((creator) => (
+                {filteredCreators.map((creator: any) => (
                   <div
-                    key={creator.id}
+                    key={creator.id || creator._id}
                     className="group relative flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-[2.5rem] border border-black/5 bg-white p-6 transition-all hover:shadow-xl hover:shadow-black/5"
                   >
                     <Link to={`/${creator.username}`} className="absolute inset-0 z-0 rounded-[2.5rem]" />
                     
                     <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-4 z-10">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/5 text-base font-black text-black/20">
-                        #{creator.rank}
+                        #{creator.rank || 0}
                       </div>
                       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white bg-black/5 shadow-sm">
                         <img src={creator.avatar} alt={creator.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
@@ -138,16 +177,17 @@ export default function Explore() {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          isFollowing(creator.id) ? unfollow(creator.id) : follow(creator.id);
+                          const id = creator.id || creator._id;
+                          isFollowing(id) ? unfollow(id) : follow(id);
                         }}
                         className={cn(
                           "sm:hidden flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-95",
-                          isFollowing(creator.id) 
+                          isFollowing(creator.id || creator._id) 
                             ? "bg-black text-white" 
                             : "bg-black/5 text-black hover:bg-black/10"
                         )}
                       >
-                        {isFollowing(creator.id) ? <Check size={18} /> : <Plus size={18} />}
+                        {isFollowing(creator.id || creator._id) ? <Check size={18} /> : <Plus size={18} />}
                       </button>
                     </div>
 
@@ -158,16 +198,17 @@ export default function Explore() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            isFollowing(creator.id) ? unfollow(creator.id) : follow(creator.id);
+                            const id = creator.id || creator._id;
+                            isFollowing(id) ? unfollow(id) : follow(id);
                           }}
                           className={cn(
                             "hidden sm:flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all active:scale-95",
-                            isFollowing(creator.id) 
+                            isFollowing(creator.id || creator._id) 
                               ? "bg-black text-white" 
                               : "bg-black/5 text-black hover:bg-black/10"
                           )}
                         >
-                          {isFollowing(creator.id) ? (
+                          {isFollowing(creator.id || creator._id) ? (
                             <>
                               <Check size={14} />
                               <span>Following</span>

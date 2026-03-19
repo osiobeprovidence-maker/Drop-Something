@@ -6,10 +6,18 @@ import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
 import { useData } from "@/src/context/DataContext";
 import { MOCK_CREATORS } from "@/src/lib/mockData";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export default function CreatorPage() {
   const { username } = useParams();
   const { creator, addTip } = useData();
+  
+  // Fetch specific creator from Convex
+  const convexCreator = useQuery(api.creators.getCreatorByUsername, { 
+    username: username || "" 
+  });
+
   const [tipAmount, setTipAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
   const [supporterName, setSupporterName] = useState("");
@@ -20,28 +28,41 @@ export default function CreatorPage() {
 
   // Find the creator to display
   const displayCreator = useMemo(() => {
-    // If it's the current user's page (either matching username or no username)
+    // 1. If Convex has the data, use it (highest priority)
+    if (convexCreator) return convexCreator;
+
+    // 2. If it's the current user's page (local state fallback)
     if (!username || username === creator.username) {
       return creator;
     }
     
-    // Otherwise look in mock data
+    // 3. Otherwise look in mock data (last resort)
     const mock = MOCK_CREATORS.find(c => c.username === username);
-    return mock || creator; // fallback to current user if not found
-  }, [username, creator]);
+    return mock || creator;
+  }, [username, creator, convexCreator]);
 
   const isOwnPage = !username || username === creator.username;
+  const addConvexTip = useMutation(api.creators.addTip);
 
-  const handleDropSomething = () => {
+  const handleDropSomething = async () => {
     const amount = tipAmount || (customAmount ? parseInt(customAmount) : 0);
     if (amount <= 0) return;
 
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // If it's our own page, we can actually add the tip to our context
-      if (isOwnPage) {
+    try {
+      // 1. If the creator is in Convex, use the real mutation
+      if (convexCreator && (convexCreator as any)._id) {
+        await addConvexTip({
+          creatorId: (convexCreator as any)._id,
+          supporterName: supporterName || "Anonymous Supporter",
+          amount: amount,
+          message: message,
+          type: "tip"
+        });
+      } 
+      // 2. Fallback to local context for the logged-in user (legacy/prototype)
+      else if (isOwnPage) {
         addTip({
           supporterName: supporterName || "Anonymous Supporter",
           amount: amount,
@@ -50,14 +71,18 @@ export default function CreatorPage() {
         });
       }
       
-      setIsSubmitting(false);
       setShowSuccess(true);
       setTipAmount(null);
       setCustomAmount("");
       setSupporterName("");
       setMessage("");
       setTimeout(() => setShowSuccess(false), 3000);
-    }, 1500);
+    } catch (error) {
+      console.error("Tip error:", error);
+      alert("Failed to drop tip. Check console for details.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const copyLink = () => {
@@ -217,8 +242,8 @@ export default function CreatorPage() {
                 <h2 className="font-bold uppercase tracking-widest text-[10px]">Memberships</h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                {displayCreator.memberships.map((tier) => (
-                  <div key={tier.id} className="flex flex-col rounded-[2rem] bg-white p-6 shadow-sm border border-black/5">
+                {displayCreator.memberships.map((tier: any) => (
+                  <div key={tier.id || tier._id} className="flex flex-col rounded-[2rem] bg-white p-6 shadow-sm border border-black/5">
                     <div className="mb-4">
                       <h3 className="text-xs font-bold uppercase tracking-widest text-black/30">{tier.title}</h3>
                       <p className="mt-1 text-2xl font-black text-black">₦{tier.price.toLocaleString()}<span className="text-xs font-medium text-black/40">/mo</span></p>
@@ -241,8 +266,8 @@ export default function CreatorPage() {
                 <h2 className="font-bold uppercase tracking-widest text-[10px]">Active Goals</h2>
               </div>
               <div className="space-y-4">
-                {displayCreator.goals.map((goal) => (
-                  <div key={goal.id} className="rounded-[2rem] bg-white p-8 shadow-sm border border-black/5">
+                {displayCreator.goals.map((goal: any) => (
+                  <div key={goal.id || goal._id} className="rounded-[2rem] bg-white p-8 shadow-sm border border-black/5">
                     <h3 className="text-lg font-bold text-black text-center">{goal.title}</h3>
                     <div className="mt-6">
                       <div className="flex items-end justify-between text-xs mb-2">
@@ -276,11 +301,11 @@ export default function CreatorPage() {
                 <h2 className="font-bold uppercase tracking-widest text-[10px]">Shop</h2>
               </div>
               <div className="grid gap-6 sm:grid-cols-2">
-                {displayCreator.products.map((product) => (
-                  <div key={product.id} className="group flex flex-col rounded-[2rem] bg-white overflow-hidden shadow-sm border border-black/5">
+                {displayCreator.products.map((product: any) => (
+                  <div key={product.id || product._id} className="group flex flex-col rounded-[2rem] bg-white overflow-hidden shadow-sm border border-black/5">
                     <div className="aspect-square w-full bg-zinc-100 overflow-hidden">
                       <img 
-                        src={`https://picsum.photos/seed/${product.id}/600/600`} 
+                        src={`https://picsum.photos/seed/${product.id || product._id}/600/600`} 
                         alt="" 
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                         referrerPolicy="no-referrer"
@@ -317,9 +342,9 @@ export default function CreatorPage() {
                 <h2 className="font-bold uppercase tracking-widest text-[10px]">Links</h2>
               </div>
               <div className="flex flex-col gap-3">
-                {displayCreator.links.map((link) => (
+                {displayCreator.links.map((link: any) => (
                   <a
-                    key={link.id}
+                    key={link.id || link._id}
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
