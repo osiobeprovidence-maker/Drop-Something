@@ -142,9 +142,9 @@ export default function CreatorPage() {
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         {/* Profile Section */}
         <div className="relative -mt-12 mb-12 flex flex-col items-center text-center">
-          <div className="relative inline-block">
-            <div className="h-24 w-24 overflow-hidden rounded-3xl border-4 border-white bg-white shadow-lg sm:h-32 sm:w-32">
-              <img src={displayCreator.avatar} alt={displayCreator.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+          <div className="relative mx-auto h-24 w-24 sm:h-32 sm:w-32">
+            <div className="h-full w-full overflow-hidden rounded-[2.5rem] border-4 border-white bg-zinc-100 shadow-xl shadow-black/5">
+              <img src={resolvedAvatar} alt={displayCreator.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
             </div>
           </div>
           <div className="mt-4">
