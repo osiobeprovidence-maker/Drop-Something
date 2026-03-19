@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   LayoutDashboard, User, Heart, Users, Target, ShoppingBag, Link as LinkIcon, 
@@ -8,32 +8,43 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useData } from "@/src/context/DataContext";
+import { useAuth } from "@/src/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const { user, signOut, convexUserId, isLoading: isAuthLoading } = useAuth();
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    await signOut();
     navigate("/login");
   };
 
   const { 
-    creator: profile, updateProfile,
-    links, addLink, updateLink, deleteLink,
-    memberships, addMembership, updateMembership, deleteMembership,
-    goals, addGoal, updateGoal, deleteGoal,
-    products, addProduct, updateProduct, deleteProduct,
-    tips, totalRevenue, supporterCount
+    creator: localProfile, updateProfile,
+    links: localLinks, addLink, updateLink, deleteLink,
+    memberships: localMemberships, addMembership, updateMembership, deleteMembership,
+    goals: localGoals, addGoal, updateGoal, deleteGoal,
+    products: localProducts, addProduct, updateProduct, deleteProduct,
+    tips: localTips, totalRevenue: localRevenue, supporterCount: localSupporters
   } = useData();
+
+  // Fetch live data from Convex
+  const convexCreator = useQuery(api.creators.getCreatorByUsername, { 
+    username: user?.displayName || "" 
+  });
+
+  // Consolidate profile data
+  const profile = useMemo(() => convexCreator || localProfile, [convexCreator, localProfile]);
+  const links = useMemo(() => convexCreator?.links || localLinks, [convexCreator, localLinks]);
+  const memberships = useMemo(() => convexCreator?.memberships || localMemberships, [convexCreator, localMemberships]);
+  const goals = useMemo(() => convexCreator?.goals || localGoals, [convexCreator, localGoals]);
+  const products = useMemo(() => convexCreator?.products || localProducts, [convexCreator, localProducts]);
+  const tips = useMemo(() => convexCreator?.tips || localTips, [convexCreator, localTips]);
+  const totalRevenue = convexCreator?.totalRevenue ?? localRevenue;
+  const supporterCount = convexCreator?.supporterCount ?? localSupporters;
 
   const [activeTab, setActiveTab] = useState("overview");
   const [isSaving, setIsSaving] = useState(false);
@@ -61,18 +72,20 @@ export default function Dashboard() {
   };
 
   const copyToClipboard = () => {
-    const url = `${window.location.origin}/${profile.username}`;
+    const username = profile?.username || user?.displayName;
+    const url = `${window.location.origin}/${username}`;
     navigator.clipboard.writeText(url);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
 
   const sharePage = async () => {
-    const url = `${window.location.origin}/${profile.username}`;
+    const username = profile?.username || user?.displayName;
+    const url = `${window.location.origin}/${username}`;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `DropSomething - ${profile.username}`,
+          title: `DropSomething - ${username}`,
           text: `Check out my creator page!`,
           url: url,
         });
@@ -141,6 +154,16 @@ export default function Dashboard() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isSidebarOpen]);
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-black border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className="flex min-h-screen bg-black/5 transition-colors duration-300">
