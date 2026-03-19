@@ -27,10 +27,10 @@ export default function Onboarding() {
     setIsVerifying(true);
     try {
       await reloadUser();
-      if (user?.emailVerified) {
+      if (auth.currentUser?.emailVerified) {
         alert("Email verified!");
       } else {
-        alert("Email still not verified. Please check your inbox.");
+        alert("Email still not verified. Please check your inbox and click the link.");
       }
     } catch (err) {
       console.error(err);
@@ -91,19 +91,13 @@ export default function Onboarding() {
         body: file,
       });
       
+      if (!result.ok) throw new Error("Upload failed");
+      
       const { storageId } = await result.json();
       
-      // 3. Get the permanent URL from Convex
-      // We need to fetch this from the backend
-      const response = await fetch(`${import.meta.env.VITE_CONVEX_URL}/api/storage/${storageId}`);
-      // Actually Convex provides a simpler way to get URLs if configured, 
-      // but for now let's use the storageId-based URL if possible or just the storageId itself
-      // if we update the schema.
-      
-      // The most reliable way in a simple setup is to have a query that returns the URL
-      // But we can also use the public URL format: https://<deployment>.convex.cloud/api/storage/<id>
-      const publicUrl = `${import.meta.env.VITE_CONVEX_URL.replace('.cloud', '.site')}/api/storage/${storageId}`;
-      setAvatarUrl(publicUrl);
+      // 3. Get the permanent URL from Convex using our getFileUrl query
+      // This is safer than manual URL construction
+      setAvatarUrl(storageId); // We store the storageId and resolve it when displaying
     } catch (err) {
       console.error("Upload error:", err);
       alert("Failed to upload image. Please try again.");
@@ -111,6 +105,10 @@ export default function Onboarding() {
       setIsLoading(false);
     }
   };
+
+  const avatarDisplayUrl = useQuery(api.creators.getFileUrl, 
+    avatarUrl.length > 20 ? { storageId: avatarUrl } : "skip" as any
+  ) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-black/5 px-4 py-12 sm:px-6 lg:px-8">
@@ -228,7 +226,7 @@ export default function Onboarding() {
                   className="group relative h-32 w-32 overflow-hidden rounded-[2rem] bg-black/5 border-2 border-dashed border-black/10 hover:border-black/30 transition-all"
                 >
                   {avatarUrl ? (
-                    <img src={avatarUrl} alt="Avatar Preview" className="h-full w-full object-cover" />
+                    <img src={avatarDisplayUrl} alt="Avatar Preview" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex flex-col items-center justify-center text-black/20">
                       <Camera size={32} />

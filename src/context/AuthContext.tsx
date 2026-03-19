@@ -24,7 +24,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [convexUserId, setConvexUserId] = useState<Id<"users"> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Use try/catch or safe check for mutations if convex is not fully ready
   const storeUser = useMutation(api.users.storeUser);
 
   const reloadUser = async () => {
@@ -36,26 +35,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      // 1. Immediately update the Firebase user state
       setUser(firebaseUser);
       
-      if (firebaseUser) {
-        try {
-          // Add small delay to ensure Convex is connected
-          const id = await storeUser({
-            name: firebaseUser.displayName || "Anonymous",
-            email: firebaseUser.email || "",
-            image: firebaseUser.photoURL || undefined,
-            tokenIdentifier: firebaseUser.uid,
-          });
-          setConvexUserId(id);
-        } catch (error) {
-          console.error("Error storing user in Convex:", error);
-        }
-      } else {
+      // 2. If no user, we're definitely not loading anymore
+      if (!firebaseUser) {
         setConvexUserId(null);
+        setIsLoading(false);
+        return;
       }
-      
-      setIsLoading(false);
+
+      // 3. Sync with Convex in the background, but don't let it block the app if it hangs
+      try {
+        const id = await storeUser({
+          name: firebaseUser.displayName || "Anonymous",
+          email: firebaseUser.email || "",
+          image: firebaseUser.photoURL || undefined,
+          tokenIdentifier: firebaseUser.uid,
+        });
+        setConvexUserId(id);
+      } catch (error) {
+        console.error("Error storing user in Convex:", error);
+      } finally {
+        // 4. Always resolve loading state once we've tried to sync
+        setIsLoading(false);
+      }
     });
 
     return () => unsubscribe();
