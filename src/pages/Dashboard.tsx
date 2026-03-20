@@ -116,7 +116,8 @@ export default function Dashboard() {
       setTimeout(() => setShowSaved(false), 3000);
     } catch (err) {
       console.error("Save error:", err);
-      alert("Failed to save changes. Username might be taken.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to save changes.";
+      alert(errorMessage);
     } finally {
       setIsSaving(false);
     }
