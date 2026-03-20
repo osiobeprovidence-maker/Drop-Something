@@ -386,6 +386,58 @@ export const unfollowCreator = mutation({
   },
 });
 
+// Auto-create a default creator profile if one doesn't exist
+export const ensureCreatorProfile = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("User not found");
+
+    // Check if creator profile already exists
+    const existing = await ctx.db
+      .query("creators")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .unique();
+
+    if (existing) {
+      return existing;
+    }
+
+    // Generate a default username from user email or name
+    const baseUsername = user.name 
+      ? user.name.toLowerCase().replace(/\s+/g, "_").substring(0, 20)
+      : user.email.split("@")[0].toLowerCase().substring(0, 20);
+
+    // Ensure username is unique by appending a random number if needed
+    let username = baseUsername;
+    let counter = 1;
+    while (true) {
+      const taken = await ctx.db
+        .query("creators")
+        .withIndex("by_username", (q) => q.eq("username", username))
+        .unique();
+      if (!taken) break;
+      username = `${baseUsername}_${counter}`;
+      counter++;
+    }
+
+    // Create default creator profile
+    const createdId = await ctx.db.insert("creators", {
+      userId: args.userId,
+      username,
+      name: user.name || "Unnamed Creator",
+      bio: "Welcome to my support page!",
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+      coverImage: "https://picsum.photos/seed/cover/1200/400",
+      pageStyle: "hybrid",
+      totalRevenue: 0,
+      supporterCount: 0,
+    });
+
+    return await ctx.db.get(createdId);
+  },
+});
+
 // Query to check if user is following a creator
 export const isFollowing = query({
   args: {

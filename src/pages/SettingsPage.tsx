@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Settings, User, CreditCard, Shield, Key, MapPin, Star,
@@ -18,6 +18,7 @@ import { sendPasswordResetEmail } from "firebase/auth";
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { user, signOut, convexUserId } = useAuth();
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const handleLogout = async () => {
     await signOut();
@@ -27,18 +28,37 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Ensure creator profile exists for old accounts
+  const ensureCreatorProfile = useMutation(api.creators.ensureCreatorProfile);
+
+  useEffect(() => {
+    const initializeProfile = async () => {
+      if (convexUserId) {
+        try {
+          await ensureCreatorProfile({ userId: convexUserId as Id<"users"> });
+        } catch (err) {
+          console.error("Failed to initialize creator profile:", err);
+        } finally {
+          setIsInitializing(false);
+        }
+      }
+    };
+
+    initializeProfile();
+  }, [convexUserId, ensureCreatorProfile]);
+
   // Fetch data from Convex
   const paymentDetails = useQuery(api.settings.getPaymentDetails, 
-    convexUserId ? { userId: convexUserId as Id<"users"> } : "skip"
+    convexUserId && !isInitializing ? { userId: convexUserId as Id<"users"> } : "skip"
   );
   const kyc = useQuery(api.settings.getKYC,
-    convexUserId ? { userId: convexUserId as Id<"users"> } : "skip"
+    convexUserId && !isInitializing ? { userId: convexUserId as Id<"users"> } : "skip"
   );
   const subscription = useQuery(api.settings.getSubscription,
-    convexUserId ? { userId: convexUserId as Id<"users"> } : "skip"
+    convexUserId && !isInitializing ? { userId: convexUserId as Id<"users"> } : "skip"
   );
   const addresses = useQuery(api.settings.getAddresses,
-    convexUserId ? { userId: convexUserId as Id<"users"> } : "skip"
+    convexUserId && !isInitializing ? { userId: convexUserId as Id<"users"> } : "skip"
   );
 
   const menuItems = [
