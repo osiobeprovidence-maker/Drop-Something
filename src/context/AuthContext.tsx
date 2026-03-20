@@ -6,8 +6,8 @@ import {
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -28,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isNewUser, setIsNewUser] = useState(false);
   
   const storeUser = useMutation(api.users.storeUser);
+  const ensureCreatorProfile = useMutation(api.creators.ensureCreatorProfile);
   
   // Query to check if the user has a creator profile
   const creator = useQuery(api.creators.getCreatorByUserId, { 
@@ -67,11 +68,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         
         // storeUser now returns an object with id and isNew
+        let newId: any = null;
         if (typeof result === "object" && result !== null) {
-          setConvexUserId((result as any).id);
+          newId = (result as any).id;
+          setConvexUserId(newId);
           setIsNewUser((result as any).isNew);
         } else {
-          setConvexUserId(result as any);
+          newId = result as any;
+          setConvexUserId(newId);
+        }
+
+        // Ensure a creator profile exists for this user (creates one if missing)
+        try {
+          if (newId) {
+            await ensureCreatorProfile({ userId: newId });
+          }
+        } catch (err) {
+          console.error("Error ensuring creator profile:", err);
         }
       } catch (error) {
         console.error("Error storing user in Convex:", error);

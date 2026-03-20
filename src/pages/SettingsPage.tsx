@@ -738,7 +738,6 @@ function SubscriptionTab({ subscription, convexUserId }: { subscription?: any, c
       
       // This would be called after successful Paystack payment
       // For demo, we'll just create the subscription directly
-      const createSubscription = await import('convex/_generated/api');
       console.log("Subscription flow initiated for user:", convexUserId);
       
       alert("Payment integration coming soon! This will redirect to Paystack for ₦3000 payment.");
