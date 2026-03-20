@@ -77,6 +77,7 @@ export default function Dashboard() {
   const [profileForm, setProfileForm] = useState({
     username: "",
     bio: "",
+    about: "",
     avatar: "",
     coverImage: ""
   });
@@ -88,6 +89,7 @@ export default function Dashboard() {
       setProfileForm({
         username: convexCreator.username || "",
         bio: convexCreator.bio || "",
+        about: (convexCreator as any).about || "",
         avatar: convexCreator.avatar || "",
         coverImage: convexCreator.coverImage || ""
       });
@@ -105,6 +107,7 @@ export default function Dashboard() {
         creatorId: convexCreator._id,
         username: profileForm.username,
         bio: profileForm.bio,
+        about: profileForm.about,
         avatar: profileForm.avatar,
         coverImage: profileForm.coverImage,
       });
@@ -737,9 +740,19 @@ export default function Dashboard() {
                         <textarea
                           value={profileForm.bio}
                           onChange={(e) => setProfileForm(prev => ({ ...prev, bio: e.target.value }))}
-                          rows={4}
+                          rows={2}
                           className="mt-2 w-full rounded-xl border border-black/10 bg-black/5 p-4 text-sm font-medium text-black focus:border-black/30 focus:outline-none"
-                          placeholder="Tell your supporters about yourself..."
+                          placeholder="Short bio for your profile..."
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-black/40">About Us / Detailed Bio</label>
+                        <textarea
+                          value={profileForm.about}
+                          onChange={(e) => setProfileForm(prev => ({ ...prev, about: e.target.value }))}
+                          rows={6}
+                          className="mt-2 w-full rounded-xl border border-black/10 bg-black/5 p-4 text-sm font-medium text-black focus:border-black/30 focus:outline-none"
+                          placeholder="Tell your supporters more about what you do, your mission, and why they should support you..."
                         />
                       </div>
                     </div>
