@@ -18,11 +18,9 @@ export function getConvexClient(): ConvexReactClient {
     convexClient = new ConvexReactClient(cleanUrl, {
       // Add error handling for connection issues
       unsavedChangesWarning: false,
-    });
-
-    // Listen for connection errors
-    convexClient.setOnServerDisconnectError(() => {
-      console.warn("Convex server disconnected. Attempting to reconnect...");
+      onServerDisconnect: (error) => {
+        console.warn("Convex server disconnected. Attempting to reconnect...", error);
+      },
     });
   }
 
