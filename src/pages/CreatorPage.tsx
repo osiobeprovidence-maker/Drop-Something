@@ -27,6 +27,7 @@ export default function CreatorPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState("home");
 
   // Use Convex data
   const displayCreator = convexCreator;
@@ -126,11 +127,9 @@ export default function CreatorPage() {
 
   const showHome = true;
   const showAbout = true;
-  const showMembership = (displayCreator.pageStyle === "hybrid" || displayCreator.pageStyle === "support") && displayCreator.memberships.length > 0;
-  const showGoals = (displayCreator.pageStyle === "hybrid" || displayCreator.pageStyle === "goal") && displayCreator.goals.length > 0;
-  const showShop = (displayCreator.pageStyle === "hybrid" || displayCreator.pageStyle === "shop") && displayCreator.products.length > 0;
-
-  const [activeTab, setActiveTab] = useState("home");
+  const showMembership = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "support") && displayCreator.memberships.length > 0;
+  const showGoals = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "goal") && displayCreator.goals.length > 0;
+  const showShop = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "shop") && displayCreator.products.length > 0;
 
   // Get recent supporters (last 5)
   const recentSupporters = useMemo(() => {
