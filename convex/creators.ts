@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 
 export const getCreatorByUsername = query({
   args: { username: v.string() },
@@ -25,6 +26,100 @@ export const getCreatorByUserId = query({
     if (!creator) return null;
 
     return await getCreatorDetails(ctx, creator);
+  },
+});
+
+// Get all creators for Explore page
+export const listCreators = query({
+  handler: async (ctx) => {
+    const creators = await ctx.db.query("creators").collect();
+    return await Promise.all(creators.map(async (creator) => {
+      return await getCreatorDetails(ctx, creator);
+    }));
+  },
+});
+
+// Get creators that a user is following
+export const getFollowing = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.userId))
+      .collect();
+    
+    const creatorIds = follows.map(f => f.followingId);
+    const creators = await Promise.all(
+      creatorIds.map(id => ctx.db.get(id))
+    );
+    
+    return creators.filter(Boolean);
+  },
+});
+
+// Check if user follows a creator
+export const isFollowing = query({
+  args: { userId: v.id("users"), creatorId: v.id("creators") },
+  handler: async (ctx, args) => {
+    const follow = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.userId))
+      .filter((q) => q.eq(q.field("followingId"), args.creatorId))
+      .unique();
+    
+    return !!follow;
+  },
+});
+
+// Follow a creator
+export const follow = mutation({
+  args: { userId: v.id("users"), creatorId: v.id("creators") },
+  handler: async (ctx, args) => {
+    // Check if already following
+    const existing = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.userId))
+      .filter((q) => q.eq(q.field("followingId"), args.creatorId))
+      .unique();
+    
+    if (existing) return;
+    
+    await ctx.db.insert("follows", {
+      followerId: args.userId,
+      followingId: args.creatorId,
+    });
+    
+    // Update supporter count
+    const creator = await ctx.db.get(args.creatorId);
+    if (creator) {
+      await ctx.db.patch(creator._id, {
+        supporterCount: creator.supporterCount + 1,
+      });
+    }
+  },
+});
+
+// Unfollow a creator
+export const unfollow = mutation({
+  args: { userId: v.id("users"), creatorId: v.id("creators") },
+  handler: async (ctx, args) => {
+    const follow = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.userId))
+      .filter((q) => q.eq(q.field("followingId"), args.creatorId))
+      .unique();
+    
+    if (!follow) return;
+    
+    await ctx.db.delete(follow._id);
+    
+    // Update supporter count
+    const creator = await ctx.db.get(args.creatorId);
+    if (creator) {
+      await ctx.db.patch(creator._id, {
+        supporterCount: Math.max(0, creator.supporterCount - 1),
+      });
+    }
   },
 });
 
@@ -105,7 +200,7 @@ export const createCreator = mutation({
       .query("creators")
       .withIndex("by_username", (q) => q.eq("username", args.username))
       .unique();
-    
+
     if (existing) {
       throw new Error("Username already taken");
     }
@@ -146,14 +241,5 @@ export const addTip = mutation({
         supporterCount: creator.supporterCount + 1,
       });
     }
-  },
-});
-
-export const listCreators = query({
-  handler: async (ctx) => {
-    const creators = await ctx.db.query("creators").collect();
-    return await Promise.all(creators.map(async (creator) => {
-      return await getCreatorDetails(ctx, creator);
-    }));
   },
 });

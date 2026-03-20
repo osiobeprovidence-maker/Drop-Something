@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, Heart, Users, Zap, MessageSquare, ArrowRight, Filter, Plus, Check, Database } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Heart, Users, Plus, Check, Database } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
 import { useFollow } from "@/src/context/FollowContext";
-import { MOCK_CREATORS } from "@/src/lib/mockData";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 const CATEGORIES = ["All", "Content Creators", "Developers", "Writers", "Designers", "Communities"];
 
@@ -14,36 +14,49 @@ export default function Explore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeTab, setActiveTab] = useState("explore");
-  const { isFollowing, follow, unfollow } = useFollow();
+  const navigate = useNavigate();
+  const { isFollowing, follow, unfollow, isLoading: followLoading } = useFollow();
 
   // Fetch creators from Convex
   const convexCreators = useQuery(api.creators.listCreators);
   const seedMockData = useMutation(api.seed.seedMockData);
   const [isSeeding, setIsSeeding] = useState(false);
 
+  const isLoading = convexCreators === undefined;
+
   const creatorsToDisplay = useMemo(() => {
-    // If we have data in Convex, use it. Otherwise fall back to local mock data for the test.
-    return convexCreators && convexCreators.length > 0 ? convexCreators : MOCK_CREATORS;
+    return convexCreators || [];
   }, [convexCreators]);
 
   const filteredCreators = useMemo(() => {
     let result = creatorsToDisplay;
-    
+
     if (activeTab === "following") {
-      result = result.filter(c => isFollowing(c.id || (c as any)._id));
+      // Filter to only show creators the user is following
+      result = result.filter((creator) => isFollowing(creator._id));
     }
 
     return result.filter((creator) => {
-      const matchesSearch = 
+      const matchesSearch =
         creator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         creator.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         creator.bio.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesCategory = activeCategory === "All" || creator.category === activeCategory;
-      
+
+      // Category mapping - in production you'd store this in Convex
+      const categoryMap: Record<string, string> = {
+        alexrivera: "Designers",
+        sarahdev: "Developers",
+        writer_joe: "Writers",
+        pod_hub: "Communities",
+        maya_cooks: "Content Creators",
+        tech_tips: "Content Creators",
+      };
+      const creatorCategory = categoryMap[creator.username] || "Content Creators";
+      const matchesCategory = activeCategory === "All" || creatorCategory === activeCategory;
+
       return matchesSearch && matchesCategory;
     });
-  }, [searchQuery, activeCategory, activeTab, isFollowing, creatorsToDisplay]);
+  }, [searchQuery, activeCategory, activeTab, creatorsToDisplay, isFollowing]);
 
   const handleSeed = async () => {
     setIsSeeding(true);
@@ -58,14 +71,36 @@ export default function Explore() {
     }
   };
 
+  const handleFollowToggle = (e: React.MouseEvent, creatorId: Id<"creators">) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isFollowing(creatorId)) {
+      unfollow(creatorId);
+    } else {
+      follow(creatorId);
+    }
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-black/20 border-t-black mx-auto mb-4" />
+          <p className="text-black/60 font-medium">Loading creators...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white pb-20 w-full">
       {/* Page Header */}
       <header className="border-b border-black/5 bg-white pt-12 sm:pt-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h1 className="text-4xl font-black tracking-tight text-black sm:text-5xl lg:text-6xl">Explore creators</h1>
-            
+
             {/* Dev Seed Button - Only visible if Convex is empty */}
             {convexCreators && convexCreators.length === 0 && (
               <button
@@ -78,7 +113,7 @@ export default function Explore() {
               </button>
             )}
           </div>
-          
+
           <div className="mt-8 flex gap-8 border-b border-transparent overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveTab("explore")}
@@ -112,7 +147,7 @@ export default function Explore() {
         {/* Search Bar & Filters */}
         <div className="sticky top-16 z-40 bg-white/80 py-6 backdrop-blur-md">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={20} />
+            <Heart className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" size={20} />
             <input
               type="text"
               placeholder="Search creators, bios, or tags..."
@@ -151,20 +186,20 @@ export default function Explore() {
 
           <AnimatePresence mode="wait">
             {filteredCreators.length > 0 ? (
-              <motion.div 
+              <motion.div
                 key={`${activeTab}-results`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2"
               >
-                {filteredCreators.map((creator: any) => (
+                {filteredCreators.map((creator) => (
                   <div
-                    key={creator.id || creator._id}
+                    key={creator._id}
                     className="group relative flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-[2.5rem] border border-black/5 bg-white p-6 transition-all hover:shadow-xl hover:shadow-black/5"
                   >
                     <Link to={`/${creator.username}`} className="absolute inset-0 z-0 rounded-[2.5rem]" />
-                    
+
                     <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-4 z-10">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/5 text-base font-black text-black/20">
                         #{creator.rank || 0}
@@ -172,22 +207,16 @@ export default function Explore() {
                       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white bg-black/5 shadow-sm">
                         <img src={creator.avatar} alt={creator.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
                       </div>
-                      <div className="sm:hidden flex-1" />
                       <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const id = creator.id || creator._id;
-                          isFollowing(id) ? unfollow(id) : follow(id);
-                        }}
+                        onClick={(e) => handleFollowToggle(e, creator._id)}
                         className={cn(
                           "sm:hidden flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-95",
-                          isFollowing(creator.id || creator._id) 
-                            ? "bg-black text-white" 
+                          isFollowing(creator._id)
+                            ? "bg-black text-white"
                             : "bg-black/5 text-black hover:bg-black/10"
                         )}
                       >
-                        {isFollowing(creator.id || creator._id) ? <Check size={18} /> : <Plus size={18} />}
+                        {isFollowing(creator._id) ? <Check size={18} /> : <Plus size={18} />}
                       </button>
                     </div>
 
@@ -195,20 +224,15 @@ export default function Explore() {
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="truncate text-lg font-black text-black group-hover:underline">{creator.name}</h3>
                         <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const id = creator.id || creator._id;
-                            isFollowing(id) ? unfollow(id) : follow(id);
-                          }}
+                          onClick={(e) => handleFollowToggle(e, creator._id)}
                           className={cn(
                             "hidden sm:flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all active:scale-95",
-                            isFollowing(creator.id || creator._id) 
-                              ? "bg-black text-white" 
+                            isFollowing(creator._id)
+                              ? "bg-black text-white"
                               : "bg-black/5 text-black hover:bg-black/10"
                           )}
                         >
-                          {isFollowing(creator.id || creator._id) ? (
+                          {isFollowing(creator._id) ? (
                             <>
                               <Check size={14} />
                               <span>Following</span>
@@ -225,11 +249,8 @@ export default function Explore() {
                       <div className="flex items-center gap-4 flex-wrap">
                         <div className="flex items-center gap-1 text-xs font-bold text-rose-500">
                           <Heart size={14} fill="currentColor" />
-                          <span>{creator.supporters.toLocaleString()} supporters</span>
+                          <span>{creator.supporterCount.toLocaleString()} supporters</span>
                         </div>
-                        <span className="rounded-full bg-black/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-black/40">
-                          {creator.category}
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -249,11 +270,11 @@ export default function Explore() {
                   {activeTab === "following" ? "You're not following anyone yet" : "No creators found"}
                 </h3>
                 <p className="mt-2 text-black/60 max-w-xs">
-                  {activeTab === "following" 
-                    ? "Start exploring and follow creators you love to see them here." 
+                  {activeTab === "following"
+                    ? "Start exploring and follow creators you love to see them here."
                     : "Try adjusting your search or category filters to find what you're looking for."}
                 </p>
-                <button 
+                <button
                   onClick={() => {
                     if (activeTab === "following") setActiveTab("explore");
                     else { setSearchQuery(""); setActiveCategory("All"); }

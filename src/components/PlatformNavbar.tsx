@@ -1,16 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Coffee, Menu, X, User, LayoutDashboard, LogOut, Search, Info, Users, HelpCircle, Copy, Share2, Check } from "lucide-react";
+import { Coffee, Menu, X, Search, Info, Users, HelpCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/src/lib/utils";
-import { useData } from "@/src/context/DataContext";
 import { motion, AnimatePresence } from "motion/react";
 
 export const PlatformNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { creator } = useData();
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
-  const [copied, setCopied] = useState(false);
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -21,6 +18,7 @@ export const PlatformNavbar = () => {
   }, []);
 
   const navLinks = [
+    { name: "Home", href: "/", icon: Coffee },
     { name: "Explore", href: "/explore", icon: Search },
     { name: "How it Works", href: "/how-it-works", icon: Info },
     { name: "Creators", href: "/creators", icon: Users },
@@ -55,31 +53,14 @@ export const PlatformNavbar = () => {
     };
   }, [isOpen]);
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/${creator.username}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const sharePage = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: `Support ${creator.username} on DropSomething`,
-        url: `${window.location.origin}/${creator.username}`,
-      });
-    } else {
-      copyLink();
-    }
-  };
-
   return (
     <nav className={cn(
       "fixed top-0 left-0 right-0 z-50 w-full border-b transition-all duration-300",
-      isScrolled 
-        ? "bg-white border-black/5 shadow-sm py-0" 
+      isScrolled
+        ? "bg-white border-black/5 shadow-sm py-0"
         : "bg-white border-transparent py-1"
     )}>
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-black">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white">
@@ -151,7 +132,7 @@ export const PlatformNavbar = () => {
               onClick={() => setIsOpen(false)}
               className="fixed inset-0 z-[60] bg-black/40 md:hidden"
             />
-            
+
             {/* Menu Panel */}
             <motion.div
               ref={menuRef}

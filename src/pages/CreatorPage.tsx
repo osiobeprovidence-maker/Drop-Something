@@ -4,18 +4,17 @@ import { useState, useMemo } from "react";
 import { Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, Share2, Copy, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
-import { useData } from "@/src/context/DataContext";
-import { MOCK_CREATORS } from "@/src/lib/mockData";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useData } from "@/src/context/DataContext";
 
 export default function CreatorPage() {
   const { username } = useParams();
-  const { creator, addTip } = useData();
-  
+  const { creator: localCreator, addTip } = useData();
+
   // Fetch specific creator from Convex
-  const convexCreator = useQuery(api.creators.getCreatorByUsername, { 
-    username: username || "" 
+  const convexCreator = useQuery(api.creators.getCreatorByUsername, {
+    username: username || ""
   });
 
   const [tipAmount, setTipAmount] = useState<number | null>(null);
@@ -26,22 +25,15 @@ export default function CreatorPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Find the creator to display
+  // Find the creator to display - Convex first, then local fallback
   const displayCreator = useMemo(() => {
-    // 1. If Convex has the data, use it (highest priority)
     if (convexCreator) return convexCreator;
+    // Fallback to local data for demo/prototype
+    return localCreator;
+  }, [convexCreator, localCreator]);
 
-    // 2. If it's the current user's page (local state fallback)
-    if (!username || username === creator.username) {
-      return creator;
-    }
-    
-    // 3. Otherwise look in mock data (last resort)
-    const mock = MOCK_CREATORS.find(c => c.username === username);
-    return mock || creator;
-  }, [username, creator, convexCreator]);
-
-  const isOwnPage = !username || username === creator.username;
+  const isLoading = convexCreator === undefined;
+  const isOwnPage = !username || username === localCreator.username;
   const addConvexTip = useMutation(api.creators.addTip);
 
   const resolvedAvatar = useMemo(() => {
