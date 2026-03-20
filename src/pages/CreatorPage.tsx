@@ -20,9 +20,6 @@ export default function CreatorPage() {
     username: username || ""
   });
 
-  // Navigation tab state
-  const [activeTab, setActiveTab] = useState<"about" | "membership" | "shop" | "goals">("about");
-
   const [tipAmount, setTipAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
   const [supporterName, setSupporterName] = useState("");
@@ -189,110 +186,70 @@ export default function CreatorPage() {
           </div>
         </div>
 
-        {/* Sticky Navigation Tabs */}
-        <div className="sticky top-0 z-30 -mx-4 mb-8 bg-white/95 backdrop-blur-sm px-4 sm:px-6 lg:px-8 border-b border-black/5">
-          <div className="flex justify-center gap-1 sm:gap-2 overflow-x-auto py-4">
-            <button
-              onClick={() => setActiveTab("about")}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all",
-                activeTab === "about"
-                  ? "bg-black text-white"
-                  : "bg-black/5 text-black hover:bg-black/10"
-              )}
-            >
-              About
-            </button>
-            {showMembership && (
-              <button
-                onClick={() => setActiveTab("membership")}
-                className={cn(
-                  "px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all",
-                  activeTab === "membership"
-                    ? "bg-black text-white"
-                    : "bg-black/5 text-black hover:bg-black/10"
-                )}
-              >
-                Membership
-              </button>
-            )}
-            {showShop && (
-              <button
-                onClick={() => setActiveTab("shop")}
-                className={cn(
-                  "px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all",
-                  activeTab === "shop"
-                    ? "bg-black text-white"
-                    : "bg-black/5 text-black hover:bg-black/10"
-                )}
-              >
-                Shop
-              </button>
-            )}
-            {showGoals && (
-              <button
-                onClick={() => setActiveTab("goals")}
-                className={cn(
-                  "px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all",
-                  activeTab === "goals"
-                    ? "bg-black text-white"
-                    : "bg-black/5 text-black hover:bg-black/10"
-                )}
-              >
-                Goals
-              </button>
-            )}
-          </div>
-        </div>
-
         {/* Main Content Grid - 2 Column Desktop / Stacked Mobile */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - About & Links (Hidden on mobile during other tabs) */}
-          <div className={cn(
-            "lg:col-span-2 space-y-6",
-            activeTab !== "about" && "hidden lg:block"
-          )}>
+          {/* Left Column - About & Recent Supporters (Always visible) */}
+          <div className="lg:col-span-2 space-y-6">
             {/* About Section */}
-            {activeTab === "about" ? (
-              <>
-                {/* Creator Description */}
-                <section>
-                  <div className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5 sm:p-8">
-                    <h2 className="text-xl font-black text-black mb-4">About</h2>
-                    <p className="text-base text-black/70 leading-relaxed">
-                      {displayCreator?.bio || "This creator hasn't added a detailed bio yet."}
-                    </p>
+            <section>
+              <div className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5 sm:p-8">
+                <h2 className="text-xl font-black text-black mb-4">About</h2>
+                <p className="text-base text-black/70 leading-relaxed">
+                  {displayCreator?.bio || "This creator hasn't added a detailed bio yet."}
+                </p>
+              </div>
+            </section>
+
+            {/* Links Section */}
+            {displayCreator.links.length > 0 && (
+              <section>
+                <div className="flex items-center justify-start gap-2 mb-4">
+                  <ExternalLink size={18} />
+                  <h2 className="font-bold text-black">Links & Socials</h2>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {displayCreator.links.map((link) => (
+                    <a
+                      key={link._id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between rounded-2xl bg-white border border-black/5 p-4 transition-all hover:scale-[1.02] hover:shadow-md"
+                    >
+                      <span className="font-bold text-black text-sm">{link.title}</span>
+                      <ExternalLink size={16} className="text-black/40" />
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Recent Supporters Section */}
+            {recentSupporters.length > 0 && (
+              <section>
+                <div className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5 sm:p-8">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Heart size={20} className="text-red-500" />
+                    <h2 className="text-xl font-black text-black">Recent supporters</h2>
                   </div>
-                </section>
+                  <div className="space-y-3">
+                    {recentSupporters.map((supporter, idx) => (
+                      <div key={idx} className="flex flex-col py-3 border-b border-black/5 last:border-b-0">
+                        <p className="text-sm font-bold text-black">
+                          {supporter.supporterName} dropped ₦{supporter.amount}
+                        </p>
+                        {supporter.message && (
+                          <p className="text-xs text-black/60 mt-1">"{supporter.message}"</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
 
-                {/* Links Section */}
-                {displayCreator.links.length > 0 && (
-                  <section>
-                    <div className="flex items-center justify-start gap-2 mb-4">
-                      <ExternalLink size={18} />
-                      <h2 className="font-bold text-black">Links & Socials</h2>
-                    </div>
-                    <div className="flex flex-col gap-3">
-                      {displayCreator.links.map((link) => (
-                        <a
-                          key={link._id}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between rounded-2xl bg-white border border-black/5 p-4 transition-all hover:scale-[1.02] hover:shadow-md group"
-                        >
-                          <span className="font-bold text-black text-sm">{link.title}</span>
-                          <ExternalLink size={16} className="text-black/40" />
-                        </a>
-                      ))}
-                    </div>
-                  </section>
-                )}
-              </>
-            ) : null}
-
-            {/* Membership Tab Content */}
-            {activeTab === "membership" && showMembership && (
+            {/* Membership Section */}
+            {showMembership && (
               <section>
                 <div className="flex items-center justify-start gap-2 mb-4">
                   <Users size={18} />
@@ -315,8 +272,8 @@ export default function CreatorPage() {
               </section>
             )}
 
-            {/* Shop Tab Content */}
-            {activeTab === "shop" && showShop && (
+            {/* Shop Section */}
+            {showShop && (
               <section>
                 <div className="flex items-center justify-start gap-2 mb-4">
                   <ShoppingBag size={18} />
@@ -356,8 +313,8 @@ export default function CreatorPage() {
               </section>
             )}
 
-            {/* Goals Tab Content */}
-            {activeTab === "goals" && showGoals && (
+            {/* Goals Section */}
+            {showGoals && (
               <section>
                 <div className="flex items-center justify-start gap-2 mb-4">
                   <Target size={18} />
@@ -392,11 +349,11 @@ export default function CreatorPage() {
             )}
           </div>
 
-          {/* Right Column - Support Card & Social Proof (Sticky on desktop) */}
+          {/* Right Column - Support Card (Sticky on desktop) */}
           <div className="lg:col-span-1">
-            {/* Main Support Card (PRIMARY FOCUS) - Always Visible */}
-            {showHome && (
-              <div className="sticky top-32 space-y-6">
+            <div className="sticky top-20 space-y-6">
+              {/* Main Support Card (PRIMARY FOCUS) */}
+              {showHome && (
                 <section>
                   <div className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5 sm:p-8">
                     <div className="flex flex-col items-center text-center mb-8">
@@ -478,69 +435,46 @@ export default function CreatorPage() {
                     </div>
                   </div>
                 </section>
+              )}
 
-                {/* Membership Card (if exists) */}
-                {showMembership && displayCreator.memberships.length > 0 && (
-                  <section>
-                    <div className="rounded-[2rem] bg-white p-6 shadow-sm border border-black/5">
-                      <div className="mb-4 flex items-center gap-2">
-                        <Users size={16} />
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-black/40">Featured Membership</h3>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-black">{displayCreator.memberships[0].title}</h4>
-                        <p className="text-xl font-black text-black mt-2">₦{displayCreator.memberships[0].price.toLocaleString()}<span className="text-xs font-medium text-black/40">/mo</span></p>
-                        <p className="text-xs text-black/60 leading-relaxed mt-2">{displayCreator.memberships[0].description}</p>
-                        <button className="flex h-10 w-full items-center justify-center rounded-full bg-black text-xs font-bold text-white transition-transform hover:scale-105 active:scale-95 mt-4">
-                          Join
-                        </button>
-                      </div>
+              {/* Membership Card (if exists) */}
+              {showMembership && displayCreator.memberships.length > 0 && (
+                <section>
+                  <div className="rounded-[2rem] bg-white p-6 shadow-sm border border-black/5">
+                    <div className="mb-4 flex items-center gap-2">
+                      <Users size={16} />
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-black/40">Featured Membership</h3>
                     </div>
-                  </section>
-                )}
-
-                {/* Social Proof - Recent Supporters */}
-                {recentSupporters.length > 0 && (
-                  <section>
-                    <div className="rounded-[2rem] bg-white p-6 shadow-sm border border-black/5">
-                      <div className="mb-4 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Heart size={16} className="text-red-500" />
-                          <h3 className="text-xs font-bold uppercase tracking-widest text-black/40">Recent Support</h3>
-                        </div>
-                        <span className="text-xs font-bold text-black">{displayCreator.supporterCount || 0}</span>
-                      </div>
-                      <div className="space-y-2">
-                        {recentSupporters.map((supporter, idx) => (
-                          <div key={idx} className="flex items-center justify-between py-2 border-b border-black/5 last:border-b-0">
-                            <span className="text-xs font-medium text-black">{supporter.supporterName}</span>
-                            <span className="text-xs font-bold text-black">₦{supporter.amount}</span>
-                          </div>
-                        ))}
-                      </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-black">{displayCreator.memberships[0].title}</h4>
+                      <p className="text-xl font-black text-black mt-2">₦{displayCreator.memberships[0].price.toLocaleString()}<span className="text-xs font-medium text-black/40">/mo</span></p>
+                      <p className="text-xs text-black/60 leading-relaxed mt-2">{displayCreator.memberships[0].description}</p>
+                      <button className="flex h-10 w-full items-center justify-center rounded-full bg-black text-xs font-bold text-white transition-transform hover:scale-105 active:scale-95 mt-4">
+                        Join
+                      </button>
                     </div>
-                  </section>
-                )}
-
-                {/* Share Section */}
-                <section className="flex gap-2">
-                  <button
-                    onClick={copyLink}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white py-3 font-bold text-black text-sm transition-all hover:bg-black/5"
-                  >
-                    {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
-                    {copied ? "Copied!" : "Copy"}
-                  </button>
-                  <button
-                    onClick={sharePage}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white py-3 font-bold text-black text-sm transition-all hover:bg-black/5"
-                  >
-                    <Share2 size={16} />
-                    Share
-                  </button>
+                  </div>
                 </section>
-              </div>
-            )}
+              )}
+
+              {/* Share Section */}
+              <section className="flex gap-2">
+                <button
+                  onClick={copyLink}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white py-3 font-bold text-black text-sm transition-all hover:bg-black/5"
+                >
+                  {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+                <button
+                  onClick={sharePage}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white py-3 font-bold text-black text-sm transition-all hover:bg-black/5"
+                >
+                  <Share2 size={16} />
+                  Share
+                </button>
+              </section>
+            </div>
           </div>
         </div>
       </div>
