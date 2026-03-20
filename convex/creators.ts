@@ -157,3 +157,244 @@ export const listCreators = query({
     }));
   },
 });
+
+// Creator profile update mutation
+export const updateCreator = mutation({
+  args: {
+    creatorId: v.id("creators"),
+    username: v.optional(v.string()),
+    name: v.optional(v.string()),
+    bio: v.optional(v.string()),
+    avatar: v.optional(v.string()),
+    coverImage: v.optional(v.string()),
+    pageStyle: v.optional(v.union(v.literal("support"), v.literal("shop"), v.literal("goal"), v.literal("hybrid"))),
+  },
+  handler: async (ctx, args) => {
+    const { creatorId, ...updates } = args;
+    
+    // Check username uniqueness if updating username
+    if (updates.username) {
+      const existing = await ctx.db
+        .query("creators")
+        .withIndex("by_username", (q) => q.eq("username", updates.username!))
+        .unique();
+      
+      if (existing && existing._id !== creatorId) {
+        throw new Error("Username already taken");
+      }
+    }
+    
+    return await ctx.db.patch(creatorId, updates);
+  },
+});
+
+// Links CRUD mutations
+export const addLink = mutation({
+  args: {
+    creatorId: v.id("creators"),
+    title: v.string(),
+    url: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("links", args);
+  },
+});
+
+export const updateLink = mutation({
+  args: {
+    linkId: v.id("links"),
+    title: v.optional(v.string()),
+    url: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { linkId, ...updates } = args;
+    return await ctx.db.patch(linkId, updates);
+  },
+});
+
+export const deleteLink = mutation({
+  args: { linkId: v.id("links") },
+  handler: async (ctx, args) => {
+    return await ctx.db.delete(args.linkId);
+  },
+});
+
+// Memberships CRUD mutations
+export const createMembership = mutation({
+  args: {
+    creatorId: v.id("creators"),
+    title: v.string(),
+    price: v.number(),
+    description: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("memberships", args);
+  },
+});
+
+export const updateMembership = mutation({
+  args: {
+    membershipId: v.id("memberships"),
+    title: v.optional(v.string()),
+    price: v.optional(v.number()),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { membershipId, ...updates } = args;
+    return await ctx.db.patch(membershipId, updates);
+  },
+});
+
+export const deleteMembership = mutation({
+  args: { membershipId: v.id("memberships") },
+  handler: async (ctx, args) => {
+    return await ctx.db.delete(args.membershipId);
+  },
+});
+
+// Goals CRUD mutations
+export const createGoal = mutation({
+  args: {
+    creatorId: v.id("creators"),
+    title: v.string(),
+    targetAmount: v.number(),
+    currentAmount: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("goals", {
+      ...args,
+      currentAmount: args.currentAmount ?? 0,
+    });
+  },
+});
+
+export const updateGoal = mutation({
+  args: {
+    goalId: v.id("goals"),
+    title: v.optional(v.string()),
+    targetAmount: v.optional(v.number()),
+    currentAmount: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { goalId, ...updates } = args;
+    return await ctx.db.patch(goalId, updates);
+  },
+});
+
+export const deleteGoal = mutation({
+  args: { goalId: v.id("goals") },
+  handler: async (ctx, args) => {
+    return await ctx.db.delete(args.goalId);
+  },
+});
+
+// Products CRUD mutations
+export const createProduct = mutation({
+  args: {
+    creatorId: v.id("creators"),
+    title: v.string(),
+    description: v.string(),
+    price: v.number(),
+    type: v.union(v.literal("digital"), v.literal("physical")),
+    image: v.optional(v.string()),
+    fileUrl: v.optional(v.string()),
+    stock: v.optional(v.number()),
+    deliveryInfo: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("products", args);
+  },
+});
+
+export const updateProduct = mutation({
+  args: {
+    productId: v.id("products"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    price: v.optional(v.number()),
+    type: v.optional(v.union(v.literal("digital"), v.literal("physical"))),
+    image: v.optional(v.string()),
+    fileUrl: v.optional(v.string()),
+    stock: v.optional(v.number()),
+    deliveryInfo: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { productId, ...updates } = args;
+    return await ctx.db.patch(productId, updates);
+  },
+});
+
+export const deleteProduct = mutation({
+  args: { productId: v.id("products") },
+  handler: async (ctx, args) => {
+    return await ctx.db.delete(args.productId);
+  },
+});
+
+// Follow mutations
+export const followCreator = mutation({
+  args: {
+    followerId: v.id("users"),
+    followingId: v.id("creators"),
+  },
+  handler: async (ctx, args) => {
+    // Check if already following
+    const existing = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.followerId))
+      .filter((q) => q.eq(q.field("followingId"), args.followingId))
+      .first();
+    
+    if (existing) {
+      return existing._id;
+    }
+    
+    return await ctx.db.insert("follows", args);
+  },
+});
+
+export const unfollowCreator = mutation({
+  args: {
+    followerId: v.id("users"),
+    followingId: v.id("creators"),
+  },
+  handler: async (ctx, args) => {
+    const follow = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.followerId))
+      .filter((q) => q.eq(q.field("followingId"), args.followingId))
+      .first();
+    
+    if (follow) {
+      await ctx.db.delete(follow._id);
+    }
+  },
+});
+
+// Query to check if user is following a creator
+export const isFollowing = query({
+  args: {
+    followerId: v.id("users"),
+    followingId: v.id("creators"),
+  },
+  handler: async (ctx, args) => {
+    const follow = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.followerId))
+      .filter((q) => q.eq(q.field("followingId"), args.followingId))
+      .first();
+    
+    return !!follow;
+  },
+});
+
+// Query to get follows for a user
+export const getFollows = query({
+  args: { followerId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.followerId))
+      .collect();
+  },
+});

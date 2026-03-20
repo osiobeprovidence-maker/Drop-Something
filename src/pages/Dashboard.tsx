@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  LayoutDashboard, User, Heart, Users, Target, ShoppingBag, Link as LinkIcon, 
-  LogOut, Plus, Edit2, Trash2, Check, 
+import {
+  LayoutDashboard, User, Heart, Users, Target, ShoppingBag, Link as LinkIcon,
+  LogOut, Plus, Edit2, Trash2, Check,
   TrendingUp, DollarSign, Image as ImageIcon, ExternalLink, Copy, Share2,
   Globe, Package, FileText, X, Menu
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
-import { useData } from "@/src/context/DataContext";
 import { useAuth } from "@/src/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -22,19 +22,26 @@ export default function Dashboard() {
     navigate("/login");
   };
 
-  const { 
-    creator: localProfile, updateProfile,
-    links: localLinks, addLink, updateLink, deleteLink,
-    memberships: localMemberships, addMembership, updateMembership, deleteMembership,
-    goals: localGoals, addGoal, updateGoal, deleteGoal,
-    products: localProducts, addProduct, updateProduct, deleteProduct,
-    tips: localTips, totalRevenue: localRevenue, supporterCount: localSupporters
-  } = useData();
-
   // Fetch live data from Convex
-  const convexCreator = useQuery(api.creators.getCreatorByUserId, { 
-    userId: convexUserId || undefined
+  const convexCreator = useQuery(api.creators.getCreatorByUserId, {
+    userId: convexUserId as Id<"users"> | undefined
   });
+
+  // Convex mutations
+  const updateCreator = useMutation(api.creators.updateCreator);
+  const addLink = useMutation(api.creators.addLink);
+  const updateLink = useMutation(api.creators.updateLink);
+  const deleteLink = useMutation(api.creators.deleteLink);
+  const addMembership = useMutation(api.creators.createMembership);
+  const updateMembership = useMutation(api.creators.updateMembership);
+  const deleteMembership = useMutation(api.creators.deleteMembership);
+  const addGoal = useMutation(api.creators.createGoal);
+  const updateGoal = useMutation(api.creators.updateGoal);
+  const deleteGoal = useMutation(api.creators.deleteGoal);
+  const addProduct = useMutation(api.creators.createProduct);
+  const updateProduct = useMutation(api.creators.updateProduct);
+  const deleteProduct = useMutation(api.creators.deleteProduct);
+  const generateUploadUrl = useMutation(api.creators.generateUploadUrl);
 
   useEffect(() => {
     // If auth is done loading and we definitely don't have a creator profile in Convex
@@ -43,23 +50,21 @@ export default function Dashboard() {
     }
   }, [isAuthLoading, user, convexCreator, navigate]);
 
-  // Consolidate profile data
-  const profile = useMemo(() => convexCreator || localProfile, [convexCreator, localProfile]);
-  
+  // Use Convex data, fallback to defaults while loading
+  const profile = useMemo(() => convexCreator, [convexCreator]);
+  const links = useMemo(() => convexCreator?.links || [], [convexCreator]);
+  const memberships = useMemo(() => convexCreator?.memberships || [], [convexCreator]);
+  const goals = useMemo(() => convexCreator?.goals || [], [convexCreator]);
+  const products = useMemo(() => convexCreator?.products || [], [convexCreator]);
+  const tips = useMemo(() => convexCreator?.tips || [], [convexCreator]);
+  const totalRevenue = convexCreator?.totalRevenue ?? 0;
+  const supporterCount = convexCreator?.supporterCount ?? 0;
+
   // Resolve avatar URL
   const avatarUrl = useMemo(() => {
-    const rawAvatar = profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.displayName}`;
-    if (rawAvatar.includes("api/storage")) return rawAvatar;
-    return rawAvatar;
+    if (!profile) return `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.displayName}`;
+    return profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.displayName}`;
   }, [profile, user]);
-
-  const links = useMemo(() => convexCreator?.links || localLinks, [convexCreator, localLinks]);
-  const memberships = useMemo(() => convexCreator?.memberships || localMemberships, [convexCreator, localMemberships]);
-  const goals = useMemo(() => convexCreator?.goals || localGoals, [convexCreator, localGoals]);
-  const products = useMemo(() => convexCreator?.products || localProducts, [convexCreator, localProducts]);
-  const tips = useMemo(() => convexCreator?.tips || localTips, [convexCreator, localTips]);
-  const totalRevenue = convexCreator?.totalRevenue ?? localRevenue;
-  const supporterCount = convexCreator?.supporterCount ?? localSupporters;
 
   const [activeTab, setActiveTab] = useState("overview");
   const [isSaving, setIsSaving] = useState(false);
@@ -77,13 +82,14 @@ export default function Dashboard() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfig, setDeleteConfig] = useState<{ type: string, id: string, title: string } | null>(null);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
+    // Data is saved directly to Convex via mutations, just show feedback
     setTimeout(() => {
       setIsSaving(false);
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 3000);
-    }, 1000);
+    }, 500);
   };
 
   const copyToClipboard = () => {
@@ -139,17 +145,124 @@ export default function Dashboard() {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (!deleteConfig) return;
+  const confirmDelete = async () => {
+    if (!deleteConfig || !convexCreator) return;
     const { type, id } = deleteConfig;
-    if (type === "link") deleteLink(id);
-    else if (type === "membership") deleteMembership(id);
-    else if (type === "goal") deleteGoal(id);
-    else if (type === "product") deleteProduct(id);
     
+    try {
+      if (type === "link") {
+        await deleteLink({ linkId: id as Id<"links"> });
+      } else if (type === "membership") {
+        await deleteMembership({ membershipId: id as Id<"memberships"> });
+      } else if (type === "goal") {
+        await deleteGoal({ goalId: id as Id<"goals"> });
+      } else if (type === "product") {
+        await deleteProduct({ productId: id as Id<"products"> });
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
+
     setIsDeleteModalOpen(false);
     setDeleteConfig(null);
-    handleSave();
+  };
+
+  // Handle profile image upload
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'avatar' | 'coverImage') => {
+    const file = e.target.files?.[0];
+    if (!file || !convexCreator) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB.");
+      return;
+    }
+
+    try {
+      // 1. Get upload URL from Convex
+      const postUrl = await generateUploadUrl();
+
+      // 2. Upload file to Convex storage
+      const result = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!result.ok) throw new Error("Upload failed");
+
+      const { storageId } = await result.json();
+
+      // 3. Update creator with storageId
+      await updateCreator({
+        creatorId: convexCreator._id,
+        [field]: storageId,
+      });
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Failed to upload image. Please try again.");
+    }
+  };
+
+  // Handle profile update
+  const handleProfileUpdate = async (field: string, value: string) => {
+    if (!convexCreator) return;
+    try {
+      await updateCreator({
+        creatorId: convexCreator._id,
+        [field]: value,
+      });
+    } catch (err) {
+      console.error("Update error:", err);
+    }
+  };
+
+  // Handle CRUD operations with Convex
+  const handleAddLink = async (data: { title: string; url: string }) => {
+    if (!convexCreator) return;
+    await addLink({ creatorId: convexCreator._id, ...data });
+  };
+
+  const handleUpdateLink = async (id: string, data: { title?: string; url?: string }) => {
+    await updateLink({ linkId: id as Id<"links">, ...data });
+  };
+
+  const handleAddMembership = async (data: { title: string; price: number; description: string }) => {
+    if (!convexCreator) return;
+    await addMembership({ creatorId: convexCreator._id, ...data });
+  };
+
+  const handleUpdateMembership = async (id: string, data: { title?: string; price?: number; description?: string }) => {
+    await updateMembership({ membershipId: id as Id<"memberships">, ...data });
+  };
+
+  const handleAddGoal = async (data: { title: string; targetAmount: number }) => {
+    if (!convexCreator) return;
+    await addGoal({ creatorId: convexCreator._id, ...data });
+  };
+
+  const handleUpdateGoal = async (id: string, data: { title?: string; targetAmount?: number; currentAmount?: number }) => {
+    await updateGoal({ goalId: id as Id<"goals">, ...data });
+  };
+
+  const handleAddProduct = async (data: { 
+    title: string; 
+    description: string; 
+    price: number; 
+    type: "digital" | "physical";
+    stock?: number;
+  }) => {
+    if (!convexCreator) return;
+    await addProduct({ creatorId: convexCreator._id, ...data });
+  };
+
+  const handleUpdateProduct = async (id: string, data: { 
+    title?: string; 
+    description?: string; 
+    price?: number; 
+    type?: "digital" | "physical";
+    stock?: number;
+  }) => {
+    await updateProduct({ productId: id as Id<"products">, ...data });
   };
 
   useEffect(() => {
@@ -179,6 +292,7 @@ export default function Dashboard() {
   }
 
   if (!user) return null;
+  if (!convexCreator) return null;
 
   return (
     <div className="flex min-h-screen bg-black/5 transition-colors duration-300">
@@ -196,7 +310,7 @@ export default function Dashboard() {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <aside 
+      <aside
         ref={sidebarRef}
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 border-r border-black/5 bg-white transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
@@ -211,7 +325,7 @@ export default function Dashboard() {
               </div>
               <span className="text-lg font-bold text-black">DropSomething</span>
             </Link>
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(false)}
               className="rounded-full p-2 text-black/40 hover:bg-black/5 md:hidden"
             >
@@ -241,7 +355,7 @@ export default function Dashboard() {
           </nav>
 
           <div className="mt-auto pt-4 border-t border-black/5">
-            <button 
+            <button
               onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
             >
@@ -257,7 +371,7 @@ export default function Dashboard() {
         <header className="sticky top-0 z-30 border-b border-black/5 bg-white/80 px-4 py-4 backdrop-blur-md sm:px-8">
           <div className="mx-auto flex max-w-5xl items-center justify-between">
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="rounded-xl p-2 text-black/60 hover:bg-black/5 md:hidden"
               >
@@ -275,17 +389,10 @@ export default function Dashboard() {
                     className="flex items-center gap-2 text-sm font-medium text-emerald-600"
                   >
                     <Check size={16} />
-                    Changes saved
+                    Saved
                   </motion.div>
                 )}
               </AnimatePresence>
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex h-10 items-center justify-center rounded-full bg-black px-6 text-sm font-bold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
-              >
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
             </div>
           </div>
         </header>
@@ -303,7 +410,7 @@ export default function Dashboard() {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {[
                     { label: "Total Support", value: `₦${totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-emerald-600" },
-                    { label: "Total Supporters", value: supporterCount || 0, icon: Heart, color: "text-rose-500" },
+                    { label: "Total Supporters", value: supporterCount, icon: Heart, color: "text-rose-500" },
                     { label: "Active Members", value: memberships.length, icon: Users, color: "text-blue-500" },
                     { label: "Goal Progress", value: goals.length > 0 ? `${Math.round((goals[0].currentAmount / goals[0].targetAmount) * 100)}%` : "0%", icon: TrendingUp, color: "text-amber-500" },
                   ].map((stat, i) => (
@@ -324,7 +431,7 @@ export default function Dashboard() {
                       {tips.length === 0 ? (
                         <p className="text-sm text-black/40 text-center py-8">No activity yet</p>
                       ) : (
-                        tips.slice(0, 5).map((item, i) => {
+                        tips.slice(0, 5).map((item) => {
                           const timeAgo = (date: string) => {
                             const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
                             if (seconds < 60) return "just now";
@@ -335,7 +442,7 @@ export default function Dashboard() {
                             return `${Math.floor(hours / 24)}d ago`;
                           };
                           return (
-                            <div key={item.id} className="flex items-center justify-between rounded-2xl bg-black/5 p-4">
+                            <div key={item._id} className="flex items-center justify-between rounded-2xl bg-black/5 p-4">
                               <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 overflow-hidden rounded-full bg-white">
                                   <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.supporterName}`} alt="" referrerPolicy="no-referrer" />
@@ -347,7 +454,7 @@ export default function Dashboard() {
                               </div>
                               <div className="text-right">
                                 <p className="text-sm font-bold text-black">₦{item.amount.toLocaleString()}</p>
-                                <p className="text-xs text-black/40">{timeAgo(item.createdAt)}</p>
+                                <p className="text-xs text-black/40">{timeAgo(item._creationTime)}</p>
                               </div>
                             </div>
                           );
@@ -359,14 +466,14 @@ export default function Dashboard() {
                   <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
                     <h2 className="text-lg font-bold text-black">Quick Actions</h2>
                     <div className="mt-6 grid grid-cols-2 gap-4">
-                      <Link 
+                      <Link
                         to={`/${profile.username}`}
                         className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-black/5 bg-black/5 p-6 transition-colors hover:bg-black hover:text-white"
                       >
                         <ExternalLink size={24} />
                         <span className="text-xs font-bold">View Public Page</span>
                       </Link>
-                      <button 
+                      <button
                         onClick={() => openModal("goal")}
                         className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-black/5 bg-black/5 p-6 transition-colors hover:bg-black hover:text-white"
                       >
@@ -390,20 +497,20 @@ export default function Dashboard() {
                 <div className="rounded-3xl border border-black/5 bg-white p-8 shadow-sm">
                   <div className="flex flex-col items-center text-center">
                     <div className="h-20 w-20 overflow-hidden rounded-3xl bg-black/5 ring-4 ring-white shadow-sm">
-                        <img src={avatarUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-                      </div>
-                    <h2 className="mt-4 text-2xl font-black text-black">@{profile?.username || user?.displayName}</h2>
+                      <img src={avatarUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                    </div>
+                    <h2 className="mt-4 text-2xl font-black text-black">@{profile.username}</h2>
                     <Link
-                      to={`/${profile?.username || user?.displayName}`}
+                      to={`/${profile.username}`}
                       className="inline-flex items-center gap-2 text-sm font-bold text-black/40 hover:text-black transition-colors"
                     >
                       <ExternalLink size={14} />
                       View live page
                     </Link>
-                    <p className="mt-2 text-black/60">{profile?.bio || "No bio yet"}</p>
-                    
+                    <p className="mt-2 text-black/60">{profile.bio || "No bio yet"}</p>
+
                     <div className="mt-8 flex w-full flex-col gap-3">
-                      <Link 
+                      <Link
                         to={`/${profile.username}`}
                         className="flex w-full items-center justify-center gap-2 rounded-2xl bg-black py-4 font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98]"
                       >
@@ -411,14 +518,14 @@ export default function Dashboard() {
                         View Public Page
                       </Link>
                       <div className="grid grid-cols-2 gap-3">
-                        <button 
+                        <button
                           onClick={copyToClipboard}
                           className="flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white py-4 font-bold text-black transition-all hover:bg-black/5"
                         >
                           {isCopied ? <Check size={20} className="text-emerald-500" /> : <Copy size={20} />}
                           {isCopied ? "Copied!" : "Copy Link"}
                         </button>
-                        <button 
+                        <button
                           onClick={sharePage}
                           className="flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white py-4 font-bold text-black transition-all hover:bg-black/5"
                         >
@@ -447,10 +554,16 @@ export default function Dashboard() {
                       <label className="text-xs font-bold uppercase tracking-wider text-black/40">Cover Image</label>
                       <div className="group relative mt-2 h-40 w-full overflow-hidden rounded-2xl bg-black/5">
                         <img src={profile.coverImage} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-                        <button className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
                           <ImageIcon size={32} />
                           <span className="mt-2 text-xs font-bold">Change Cover</span>
-                        </button>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleImageUpload(e, 'coverImage')}
+                          />
+                        </label>
                       </div>
                     </div>
 
@@ -458,9 +571,15 @@ export default function Dashboard() {
                     <div className="flex items-center gap-6">
                       <div className="group relative h-24 w-24 overflow-hidden rounded-3xl bg-black/5">
                         <img src={profile.avatar} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-                        <button className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
                           <ImageIcon size={24} />
-                        </button>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleImageUpload(e, 'avatar')}
+                          />
+                        </label>
                       </div>
                       <div>
                         <h3 className="font-bold text-black">Profile Picture</h3>
@@ -476,7 +595,7 @@ export default function Dashboard() {
                           <input
                             type="text"
                             value={profile.username}
-                            onChange={(e) => updateProfile({ username: e.target.value })}
+                            onChange={(e) => handleProfileUpdate('username', e.target.value)}
                             className="h-12 flex-1 bg-transparent text-sm font-medium text-black focus:outline-none"
                           />
                         </div>
@@ -485,7 +604,7 @@ export default function Dashboard() {
                         <label className="text-xs font-bold uppercase tracking-wider text-black/40">Bio</label>
                         <textarea
                           value={profile.bio}
-                          onChange={(e) => updateProfile({ bio: e.target.value })}
+                          onChange={(e) => handleProfileUpdate('bio', e.target.value)}
                           rows={4}
                           className="mt-2 w-full rounded-xl border border-black/10 bg-black/5 p-4 text-sm font-medium text-black focus:border-black/30 focus:outline-none"
                         />
@@ -509,7 +628,7 @@ export default function Dashboard() {
                     <h2 className="text-xl font-bold text-black">External Links</h2>
                     <p className="text-sm text-black/40">Add links to your social media or portfolio.</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => openModal("link")}
                     className="flex h-10 items-center gap-2 rounded-full bg-black px-6 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95"
                   >
@@ -526,7 +645,7 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     links.map((link) => (
-                      <div key={link.id} className="flex items-center gap-4 rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
+                      <div key={link._id} className="flex items-center gap-4 rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black/5 text-black">
                           <LinkIcon size={20} />
                         </div>
@@ -535,14 +654,14 @@ export default function Dashboard() {
                           <p className="truncate text-xs text-black/40">{link.url}</p>
                         </div>
                         <div className="flex gap-2">
-                          <button 
+                          <button
                             onClick={() => openModal("link", link)}
                             className="rounded-lg bg-black/5 p-2 text-black/40 hover:text-black"
                           >
                             <Edit2 size={16} />
                           </button>
-                          <button 
-                            onClick={() => openDeleteModal("link", link.id, link.title)}
+                          <button
+                            onClick={() => openDeleteModal("link", link._id, link.title)}
                             className="rounded-lg bg-red-50 p-2 text-red-400 hover:text-red-500"
                           >
                             <Trash2 size={16} />
@@ -568,7 +687,7 @@ export default function Dashboard() {
                     <h2 className="text-xl font-bold text-black">Membership Tiers</h2>
                     <p className="text-sm text-black/40">Create recurring support plans for your fans.</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => openModal("membership")}
                     className="flex h-10 items-center gap-2 rounded-full bg-black px-6 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95"
                   >
@@ -585,18 +704,18 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     memberships.map((tier) => (
-                      <div key={tier.id} className="group relative rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
+                      <div key={tier._id} className="group relative rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
                         <div className="flex items-center justify-between">
                           <h4 className="text-lg font-bold text-black">{tier.title}</h4>
                           <div className="flex gap-2">
-                            <button 
+                            <button
                               onClick={() => openModal("membership", tier)}
                               className="rounded-lg bg-black/5 p-2 text-black/40 hover:text-black"
                             >
                               <Edit2 size={16} />
                             </button>
-                            <button 
-                              onClick={() => openDeleteModal("membership", tier.id, tier.title)}
+                            <button
+                              onClick={() => openDeleteModal("membership", tier._id, tier.title)}
                               className="rounded-lg bg-red-50 p-2 text-red-400 hover:text-red-500"
                             >
                               <Trash2 size={16} />
@@ -627,7 +746,7 @@ export default function Dashboard() {
                     <h2 className="text-xl font-bold text-black">Funding Goals</h2>
                     <p className="text-sm text-black/40">Track progress towards specific targets.</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => openModal("goal")}
                     className="flex h-10 items-center gap-2 rounded-full bg-black px-6 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95"
                   >
@@ -646,32 +765,32 @@ export default function Dashboard() {
                     goals.map((goal) => {
                       const progress = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
                       return (
-                        <div key={goal.id} className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
+                        <div key={goal._id} className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
                           <div className="flex items-center justify-between">
                             <h4 className="text-lg font-bold text-black">{goal.title}</h4>
                             <div className="flex gap-2">
-                              <button 
+                              <button
                                 onClick={() => openModal("goal", goal)}
                                 className="rounded-lg bg-black/5 p-2 text-black/40 hover:text-black"
                               >
                                 <Edit2 size={16} />
                               </button>
-                              <button 
-                                onClick={() => openDeleteModal("goal", goal.id, goal.title)}
+                              <button
+                                onClick={() => openDeleteModal("goal", goal._id, goal.title)}
                                 className="rounded-lg bg-red-50 p-2 text-red-400 hover:text-red-500"
                               >
                                 <Trash2 size={16} />
                               </button>
                             </div>
                           </div>
-                          
+
                           <div className="mt-6 space-y-2">
                             <div className="flex justify-between text-sm font-bold">
                               <span className="text-black">₦{goal.currentAmount.toLocaleString()}</span>
                               <span className="text-black/40">₦{goal.targetAmount.toLocaleString()}</span>
                             </div>
                             <div className="h-3 w-full overflow-hidden rounded-full bg-black/5">
-                              <motion.div 
+                              <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${progress}%` }}
                                 className="h-full bg-black"
@@ -700,7 +819,7 @@ export default function Dashboard() {
                     <h2 className="text-xl font-bold text-black">Products</h2>
                     <p className="text-sm text-black/40">Manage your digital and physical offerings.</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => openModal("product")}
                     className="flex h-10 items-center gap-2 rounded-full bg-black px-6 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95"
                   >
@@ -717,7 +836,7 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     products.map((product) => (
-                      <div key={product.id} className="group relative overflow-hidden rounded-3xl border border-black/5 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+                      <div key={product._id} className="group relative overflow-hidden rounded-3xl border border-black/5 bg-white p-6 shadow-sm transition-all hover:shadow-md">
                         <div className="flex items-center justify-between">
                           <span className={cn(
                             "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
@@ -726,26 +845,26 @@ export default function Dashboard() {
                             {product.type}
                           </span>
                           <div className="flex gap-2">
-                            <button 
+                            <button
                               onClick={() => openModal("product", product)}
                               className="rounded-lg bg-black/5 p-2 text-black/40 hover:text-black"
                             >
                               <Edit2 size={16} />
                             </button>
-                            <button 
-                              onClick={() => openDeleteModal("product", product.id, product.name)}
+                            <button
+                              onClick={() => openDeleteModal("product", product._id, product.title)}
                               className="rounded-lg bg-red-50 p-2 text-red-400 hover:text-red-500"
                             >
                               <Trash2 size={16} />
                             </button>
                           </div>
                         </div>
-                        <h4 className="mt-4 text-lg font-bold text-black">{product.name}</h4>
+                        <h4 className="mt-4 text-lg font-bold text-black">{product.title}</h4>
                         <p className="mt-1 text-sm text-black/60 line-clamp-2">{product.description}</p>
                         <div className="mt-6 flex items-center justify-between border-t border-black/5 pt-4">
                           <span className="text-lg font-black text-black">₦{product.price.toLocaleString()}</span>
                           <span className="text-xs font-medium text-black/40">
-                            {product.type === "physical" ? `${product.stock} in stock` : "Digital"}
+                            {product.type === "physical" ? `${product.stock || 0} in stock` : "Digital"}
                           </span>
                         </div>
                       </div>
@@ -784,29 +903,51 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              <form 
-                onSubmit={(e) => {
+              <form
+                onSubmit={async (e) => {
                   e.preventDefault();
                   const formData = new FormData(e.currentTarget);
                   const data: any = Object.fromEntries(formData.entries());
-                  
+
                   // Convert numeric fields
                   if (data.price) data.price = parseInt(data.price);
                   if (data.targetAmount) data.targetAmount = parseInt(data.targetAmount);
                   if (data.stock) data.stock = parseInt(data.stock);
 
-                  if (modalType === "link") {
-                    editingItem ? updateLink(editingItem.id, data) : addLink(data);
-                  } else if (modalType === "membership") {
-                    editingItem ? updateMembership(editingItem.id, data) : addMembership(data);
-                  } else if (modalType === "goal") {
-                    editingItem ? updateGoal(editingItem.id, data) : addGoal(data);
-                  } else if (modalType === "product") {
-                    editingItem ? updateProduct(editingItem.id, data) : addProduct(data);
+                  try {
+                    if (modalType === "link") {
+                      if (editingItem) {
+                        await handleUpdateLink(editingItem._id, data);
+                      } else {
+                        await handleAddLink(data);
+                      }
+                    } else if (modalType === "membership") {
+                      if (editingItem) {
+                        await handleUpdateMembership(editingItem._id, data);
+                      } else {
+                        await handleAddMembership(data);
+                      }
+                    } else if (modalType === "goal") {
+                      if (editingItem) {
+                        await handleUpdateGoal(editingItem._id, data);
+                      } else {
+                        await handleAddGoal(data);
+                      }
+                    } else if (modalType === "product") {
+                      if (editingItem) {
+                        await handleUpdateProduct(editingItem._id, data);
+                      } else {
+                        await handleAddProduct(data);
+                      }
+                    }
+
+                    closeModal();
+                    setShowSaved(true);
+                    setTimeout(() => setShowSaved(false), 3000);
+                  } catch (err) {
+                    console.error("Save error:", err);
+                    alert("Failed to save. Please try again.");
                   }
-                  
-                  closeModal();
-                  handleSave();
                 }}
                 className="p-6 space-y-4"
               >
@@ -857,7 +998,7 @@ export default function Dashboard() {
                   <>
                     <div>
                       <label className="text-xs font-bold uppercase text-black/40">Product Name</label>
-                      <input name="name" defaultValue={editingItem?.name} required className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
+                      <input name="title" defaultValue={editingItem?.title} required className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -877,8 +1018,8 @@ export default function Dashboard() {
                       <textarea name="description" defaultValue={editingItem?.description} required rows={2} className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
                     </div>
                     <div>
-                      <label className="text-xs font-bold uppercase text-black/40">Stock / File Info</label>
-                      <input name="stock" type="number" defaultValue={editingItem?.stock || 0} className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" placeholder="Stock count or file details" />
+                      <label className="text-xs font-bold uppercase text-black/40">Stock</label>
+                      <input name="stock" type="number" defaultValue={editingItem?.stock || 0} className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" placeholder="Stock count (for physical products)" />
                     </div>
                   </>
                 )}
@@ -921,13 +1062,13 @@ export default function Dashboard() {
                   Are you sure you want to delete <span className="font-bold text-black">"{deleteConfig?.title}"</span>? This action cannot be undone.
                 </p>
                 <div className="mt-8 flex gap-3">
-                  <button 
+                  <button
                     onClick={() => setIsDeleteModalOpen(false)}
                     className="flex-1 rounded-xl border border-black/10 py-3 text-sm font-bold text-black"
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     onClick={confirmDelete}
                     className="flex-1 rounded-xl bg-red-500 py-3 text-sm font-bold text-white transition-colors hover:bg-red-600"
                   >

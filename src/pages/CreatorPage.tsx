@@ -6,11 +6,14 @@ import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useData } from "@/src/context/DataContext";
+import { Id } from "@/convex/_generated/dataModel";
+import { useFollow } from "@/src/context/FollowContext";
+import { useAuth } from "@/src/context/AuthContext";
 
 export default function CreatorPage() {
   const { username } = useParams();
-  const { creator: localCreator, addTip } = useData();
+  const { convexUserId } = useAuth();
+  const { follow, unfollow, isFollowing } = useFollow();
 
   // Fetch specific creator from Convex
   const convexCreator = useQuery(api.creators.getCreatorByUsername, {
@@ -25,49 +28,44 @@ export default function CreatorPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Find the creator to display - Convex first, then local fallback
-  const displayCreator = useMemo(() => {
-    if (convexCreator) return convexCreator;
-    // Fallback to local data for demo/prototype
-    return localCreator;
-  }, [convexCreator, localCreator]);
+  // Use Convex data
+  const displayCreator = convexCreator;
 
   const isLoading = convexCreator === undefined;
-  const isOwnPage = !username || username === localCreator.username;
+  const isOwnPage = !username || convexCreator?.userId === (convexUserId as string);
   const addConvexTip = useMutation(api.creators.addTip);
 
   const resolvedAvatar = useMemo(() => {
-    if (displayCreator.avatar.includes("api/storage")) return displayCreator.avatar;
+    if (!displayCreator) return "";
     return displayCreator.avatar;
-  }, [displayCreator.avatar]);
+  }, [displayCreator]);
+
+  const handleFollow = async () => {
+    if (!convexCreator) return;
+    const creatorId = convexCreator._id as Id<"creators">;
+    if (isFollowing(creatorId)) {
+      await unfollow(creatorId);
+    } else {
+      await follow(creatorId);
+    }
+  };
 
   const handleDropSomething = async () => {
     const amount = tipAmount || (customAmount ? parseInt(customAmount) : 0);
-    if (amount <= 0) return;
+    if (amount <= 0 || !displayCreator) return;
 
     setIsSubmitting(true);
-    
+
     try {
-      // 1. If the creator is in Convex, use the real mutation
-      if (convexCreator && (convexCreator as any)._id) {
-        await addConvexTip({
-          creatorId: (convexCreator as any)._id,
-          supporterName: supporterName || "Anonymous Supporter",
-          amount: amount,
-          message: message,
-          type: "tip"
-        });
-      } 
-      // 2. Fallback to local context for the logged-in user (legacy/prototype)
-      else if (isOwnPage) {
-        addTip({
-          supporterName: supporterName || "Anonymous Supporter",
-          amount: amount,
-          message: message,
-          type: "tip"
-        });
-      }
-      
+      // Use the real mutation with Convex
+      await addConvexTip({
+        creatorId: displayCreator._id,
+        supporterName: supporterName || "Anonymous Supporter",
+        amount: amount,
+        message: message,
+        type: "tip"
+      });
+
       setShowSuccess(true);
       setTipAmount(null);
       setCustomAmount("");
@@ -100,6 +98,28 @@ export default function CreatorPage() {
   };
 
   const finalAmount = tipAmount || (customAmount ? parseInt(customAmount) : 0);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-black border-t-transparent" />
+      </div>
+    );
+  }
+
+  // Show not found if creator doesn't exist
+  if (!displayCreator) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-white p-4 text-center">
+        <h1 className="text-2xl font-black text-black">Creator not found</h1>
+        <p className="mt-2 text-black/60">This creator page doesn't exist.</p>
+        <Link to="/explore" className="mt-6 rounded-full bg-black px-6 py-3 text-sm font-bold text-white">
+          Browse Creators
+        </Link>
+      </div>
+    );
+  }
 
   const showHome = true;
   const showMembership = (displayCreator.pageStyle === "hybrid" || displayCreator.pageStyle === "support") && displayCreator.memberships.length > 0;
@@ -136,12 +156,27 @@ export default function CreatorPage() {
         <div className="relative -mt-12 mb-12 flex flex-col items-center text-center">
           <div className="relative mx-auto h-24 w-24 sm:h-32 sm:w-32">
             <div className="h-full w-full overflow-hidden rounded-[2.5rem] border-4 border-white bg-zinc-100 shadow-xl shadow-black/5">
-              <img src={resolvedAvatar} alt={displayCreator.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+              <img src={resolvedAvatar} alt={displayCreator?.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
             </div>
           </div>
           <div className="mt-4">
-            <h1 className="text-2xl font-black text-black sm:text-3xl">@{displayCreator.username}</h1>
-            <p className="mt-2 text-base font-medium text-black/60 max-w-lg">{displayCreator.bio}</p>
+            <h1 className="text-2xl font-black text-black sm:text-3xl">@{displayCreator?.username}</h1>
+            <p className="mt-2 text-base font-medium text-black/60 max-w-lg">{displayCreator?.bio}</p>
+            
+            {/* Follow Button - Only show if not own page and user is logged in */}
+            {!isOwnPage && convexUserId && displayCreator && (
+              <button
+                onClick={handleFollow}
+                className={cn(
+                  "mt-4 flex h-12 items-center justify-center rounded-full px-8 text-sm font-bold transition-all hover:scale-105 active:scale-95",
+                  isFollowing(displayCreator._id as Id<"creators">)
+                    ? "bg-black/5 text-black hover:bg-black/10"
+                    : "bg-black text-white hover:bg-black/90"
+                )}
+              >
+                {isFollowing(displayCreator._id as Id<"creators">) ? "Following" : "Follow"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -239,8 +274,8 @@ export default function CreatorPage() {
                 <h2 className="font-bold uppercase tracking-widest text-[10px]">Memberships</h2>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                {displayCreator.memberships.map((tier: any) => (
-                  <div key={tier.id || tier._id} className="flex flex-col rounded-[2rem] bg-white p-6 shadow-sm border border-black/5">
+                {displayCreator.memberships.map((tier) => (
+                  <div key={tier._id} className="flex flex-col rounded-[2rem] bg-white p-6 shadow-sm border border-black/5">
                     <div className="mb-4">
                       <h3 className="text-xs font-bold uppercase tracking-widest text-black/30">{tier.title}</h3>
                       <p className="mt-1 text-2xl font-black text-black">₦{tier.price.toLocaleString()}<span className="text-xs font-medium text-black/40">/mo</span></p>
@@ -263,8 +298,8 @@ export default function CreatorPage() {
                 <h2 className="font-bold uppercase tracking-widest text-[10px]">Active Goals</h2>
               </div>
               <div className="space-y-4">
-                {displayCreator.goals.map((goal: any) => (
-                  <div key={goal.id || goal._id} className="rounded-[2rem] bg-white p-8 shadow-sm border border-black/5">
+                {displayCreator.goals.map((goal) => (
+                  <div key={goal._id} className="rounded-[2rem] bg-white p-8 shadow-sm border border-black/5">
                     <h3 className="text-lg font-bold text-black text-center">{goal.title}</h3>
                     <div className="mt-6">
                       <div className="flex items-end justify-between text-xs mb-2">
@@ -298,12 +333,12 @@ export default function CreatorPage() {
                 <h2 className="font-bold uppercase tracking-widest text-[10px]">Shop</h2>
               </div>
               <div className="grid gap-6 sm:grid-cols-2">
-                {displayCreator.products.map((product: any) => (
-                  <div key={product.id || product._id} className="group flex flex-col rounded-[2rem] bg-white overflow-hidden shadow-sm border border-black/5">
+                {displayCreator.products.map((product) => (
+                  <div key={product._id} className="group flex flex-col rounded-[2rem] bg-white overflow-hidden shadow-sm border border-black/5">
                     <div className="aspect-square w-full bg-zinc-100 overflow-hidden">
-                      <img 
-                        src={`https://picsum.photos/seed/${product.id || product._id}/600/600`} 
-                        alt="" 
+                      <img
+                        src={product.image || `https://picsum.photos/seed/${product._id}/600/600`}
+                        alt=""
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                         referrerPolicy="no-referrer"
                       />
@@ -339,9 +374,9 @@ export default function CreatorPage() {
                 <h2 className="font-bold uppercase tracking-widest text-[10px]">Links</h2>
               </div>
               <div className="flex flex-col gap-3">
-                {displayCreator.links.map((link: any) => (
+                {displayCreator.links.map((link) => (
                   <a
-                    key={link.id || link._id}
+                    key={link._id}
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
