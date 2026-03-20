@@ -109,6 +109,7 @@ export const createCreator = mutation({
     username: v.string(),
     name: v.string(),
     bio: v.string(),
+    about: v.optional(v.string()),
     avatar: v.string(),
     coverImage: v.string(),
     pageStyle: v.union(v.literal("support"), v.literal("shop"), v.literal("goal"), v.literal("hybrid")),
@@ -126,6 +127,7 @@ export const createCreator = mutation({
 
     return await ctx.db.insert("creators", {
       ...args,
+      about: args.about ?? args.bio,
       totalRevenue: 0,
       supporterCount: 0,
     });
@@ -179,6 +181,7 @@ export const updateCreator = mutation({
     username: v.optional(v.string()),
     name: v.optional(v.string()),
     bio: v.optional(v.string()),
+    about: v.optional(v.string()),
     avatar: v.optional(v.string()),
     coverImage: v.optional(v.string()),
     pageStyle: v.optional(v.union(v.literal("support"), v.literal("shop"), v.literal("goal"), v.literal("hybrid"))),
@@ -441,6 +444,7 @@ export const ensureCreatorProfile = mutation({
       username,
       name: user.name || "Unnamed Creator",
       bio: "Welcome to my support page!",
+      about: "Welcome to my support page!",
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
       coverImage: "https://picsum.photos/seed/cover/1200/400",
       pageStyle: "hybrid",

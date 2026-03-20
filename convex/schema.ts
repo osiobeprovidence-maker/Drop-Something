@@ -14,6 +14,7 @@ export default defineSchema({
     username: v.string(),
     name: v.string(),
     bio: v.string(),
+    about: v.optional(v.string()),
     avatar: v.string(),
     coverImage: v.string(),
     pageStyle: v.union(v.literal("support"), v.literal("shop"), v.literal("goal"), v.literal("hybrid")),
