@@ -1,63 +1,36 @@
-import React, { createContext, useContext } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
-import { useAuth } from "./AuthContext";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface FollowContextType {
-  follow: (creatorId: Id<"creators">) => Promise<void>;
-  unfollow: (creatorId: Id<"creators">) => Promise<void>;
-  isFollowing: (creatorId: Id<"creators">) => boolean;
-  isLoading: boolean;
+  following: string[];
+  follow: (id: string) => void;
+  unfollow: (id: string) => void;
+  isFollowing: (id: string) => boolean;
 }
 
 const FollowContext = createContext<FollowContextType | undefined>(undefined);
 
 export function FollowProvider({ children }: { children: React.ReactNode }) {
-  const { convexUserId } = useAuth();
+  const [following, setFollowing] = useState<string[]>(() => {
+    const saved = localStorage.getItem("following_creators");
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  // Fetch following list from Convex when user is authenticated
-  const following = useQuery(
-    convexUserId ? api.creators.getFollowing : undefined,
-    convexUserId ? { userId: convexUserId } : undefined
-  );
+  useEffect(() => {
+    localStorage.setItem("following_creators", JSON.stringify(following));
+  }, [following]);
 
-  const followMutation = useMutation(api.creators.follow);
-  const unfollowMutation = useMutation(api.creators.unfollow);
-
-  const follow = async (creatorId: Id<"creators">) => {
-    if (!convexUserId) {
-      console.warn("User not authenticated, cannot follow");
-      return;
-    }
-    try {
-      await followMutation({ userId: convexUserId, creatorId });
-    } catch (error) {
-      console.error("Error following creator:", error);
-    }
+  const follow = (id: string) => {
+    setFollowing((prev) => (prev.includes(id) ? prev : [...prev, id]));
   };
 
-  const unfollow = async (creatorId: Id<"creators">) => {
-    if (!convexUserId) {
-      console.warn("User not authenticated, cannot unfollow");
-      return;
-    }
-    try {
-      await unfollowMutation({ userId: convexUserId, creatorId });
-    } catch (error) {
-      console.error("Error unfollowing creator:", error);
-    }
+  const unfollow = (id: string) => {
+    setFollowing((prev) => prev.filter((favId) => favId !== id));
   };
 
-  const isFollowing = (creatorId: Id<"creators">): boolean => {
-    if (!following || !convexUserId) return false;
-    return following.some((creator) => creator._id === creatorId);
-  };
-
-  const isLoading = following === undefined;
+  const isFollowing = (id: string) => following.includes(id);
 
   return (
-    <FollowContext.Provider value={{ follow, unfollow, isFollowing, isLoading }}>
+    <FollowContext.Provider value={{ following, follow, unfollow, isFollowing }}>
       {children}
     </FollowContext.Provider>
   );
