@@ -128,9 +128,9 @@ export default function CreatorPage() {
 
   // Get recent supporters (last 5)
   const recentSupporters = useMemo(() => {
-    if (!displayCreator.tips) return [];
+    if (!displayCreator || !Array.isArray(displayCreator.tips)) return [];
     return displayCreator.tips.slice(0, 5);
-  }, [displayCreator.tips]);
+  }, [displayCreator]);
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-20">
