@@ -36,9 +36,10 @@ export default function CreatorPage() {
   const addConvexTip = useMutation(api.creators.addTip);
 
   const resolvedAvatar = useMemo(() => {
-    if (!displayCreator) return "";
+    if (!displayCreator?.avatar) return `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
+    if (displayCreator.avatar.includes("api/storage")) return displayCreator.avatar;
     return displayCreator.avatar;
-  }, [displayCreator]);
+  }, [displayCreator, username]);
 
   const handleFollow = async () => {
     if (!convexCreator) return;
@@ -51,13 +52,15 @@ export default function CreatorPage() {
   };
 
   const handleDropSomething = async () => {
-    const amount = tipAmount || (customAmount ? parseInt(customAmount) : 0);
-    if (amount <= 0 || !displayCreator) return;
-
+    if (!displayCreator) return;
     setIsSubmitting(true);
-
     try {
-      // Use the real mutation with Convex
+      const amount = tipAmount || parseFloat(customAmount);
+      if (isNaN(amount) || amount <= 0) {
+        alert("Please select or enter a valid amount.");
+        return;
+      }
+
       await addConvexTip({
         creatorId: displayCreator._id,
         supporterName: supporterName || "Anonymous Supporter",
@@ -72,9 +75,9 @@ export default function CreatorPage() {
       setSupporterName("");
       setMessage("");
       setTimeout(() => setShowSuccess(false), 3000);
-    } catch (error) {
-      console.error("Tip error:", error);
-      alert("Failed to drop tip. Check console for details.");
+    } catch (err) {
+      console.error("Tip error:", err);
+      alert("Failed to send tip. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

@@ -195,6 +195,7 @@ function ProfileTab({ convexUserId }: { convexUserId?: string }) {
     username: creator?.username || "",
     name: creator?.name || "",
     bio: creator?.bio || "",
+    about: (creator as any)?.about || "",
   });
 
   // Sync form data when creator data arrives from Convex
@@ -204,6 +205,7 @@ function ProfileTab({ convexUserId }: { convexUserId?: string }) {
         username: creator.username || "",
         name: creator.name || "",
         bio: creator.bio || "",
+        about: (creator as any).about || "",
       });
     }
   }, [creator]);
@@ -249,6 +251,7 @@ function ProfileTab({ convexUserId }: { convexUserId?: string }) {
         username: formData.username,
         name: formData.name,
         bio: formData.bio,
+        about: formData.about,
       });
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 3000);
@@ -361,8 +364,20 @@ function ProfileTab({ convexUserId }: { convexUserId?: string }) {
             <textarea
               value={formData.bio}
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              rows={4}
+              rows={2}
               className="mt-2 w-full rounded-xl border border-black/10 bg-black/5 p-4 text-sm focus:outline-none focus:border-black/30"
+              placeholder="Short profile summary..."
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-black/40">About Us / Detailed Bio</label>
+            <textarea
+              value={formData.about}
+              onChange={(e) => setFormData({ ...formData, about: e.target.value })}
+              rows={6}
+              className="mt-2 w-full rounded-xl border border-black/10 bg-black/5 p-4 text-sm focus:outline-none focus:border-black/30"
+              placeholder="Detailed information about you or your mission..."
             />
           </div>
 
