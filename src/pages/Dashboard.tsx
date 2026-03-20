@@ -73,6 +73,46 @@ export default function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
+  // Profile form local state
+  const [profileForm, setProfileForm] = useState({
+    username: "",
+    bio: "",
+    avatar: "",
+    coverImage: ""
+  });
+
+  // Update local form when convex data arrives
+  useEffect(() => {
+    if (convexCreator) {
+      setProfileForm({
+        username: convexCreator.username || "",
+        bio: convexCreator.bio || "",
+        avatar: convexCreator.avatar || "",
+        coverImage: convexCreator.coverImage || ""
+      });
+    }
+  }, [convexCreator]);
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!convexCreator) return;
+    setIsSaving(true);
+    try {
+      await updateCreator({
+        creatorId: convexCreator._id,
+        username: profileForm.username,
+        bio: profileForm.bio,
+      });
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 3000);
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("Failed to save changes. Username might be taken.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Modal states for CRUD
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"link" | "membership" | "goal" | "product" | null>(null);
@@ -178,6 +218,14 @@ export default function Dashboard() {
       return;
     }
 
+    // Immediate local feedback
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileForm(prev => ({ ...prev, [field]: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+
+    setIsSaving(true);
     try {
       // 1. Get upload URL from Convex
       const postUrl = await generateUploadUrl();
@@ -198,9 +246,18 @@ export default function Dashboard() {
         creatorId: convexCreator._id,
         [field]: storageId,
       });
+      
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 3000);
     } catch (err) {
       console.error("Upload error:", err);
       alert("Failed to upload image. Please try again.");
+      // Reset to current profile value on failure
+      if (convexCreator) {
+        setProfileForm(prev => ({ ...prev, [field]: (convexCreator as any)[field] || "" }));
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -558,13 +615,18 @@ export default function Dashboard() {
                 exit={{ opacity: 0, y: -10 }}
                 className="max-w-2xl space-y-8"
               >
-                <div className="rounded-3xl border border-black/5 bg-white p-8 shadow-sm">
+                <form onSubmit={handleProfileSubmit} className="rounded-3xl border border-black/5 bg-white p-8 shadow-sm">
                   <div className="space-y-8">
                     {/* Cover Image */}
                     <div>
                       <label className="text-xs font-bold uppercase tracking-wider text-black/40">Cover Image</label>
-                      <div className="group relative mt-2 h-40 w-full overflow-hidden rounded-2xl bg-black/5">
-                        <img src={profile.coverImage} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                      <div className="group relative mt-2 h-40 w-full overflow-hidden rounded-2xl bg-black/5 border border-black/5">
+                        <img 
+                          src={profileForm.coverImage || "https://picsum.photos/seed/cover/1200/400"} 
+                          alt="" 
+                          className="h-full w-full object-cover" 
+                          referrerPolicy="no-referrer" 
+                        />
                         <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
                           <ImageIcon size={32} />
                           <span className="mt-2 text-xs font-bold">Change Cover</span>
@@ -580,8 +642,13 @@ export default function Dashboard() {
 
                     {/* Avatar */}
                     <div className="flex items-center gap-6">
-                      <div className="group relative h-24 w-24 overflow-hidden rounded-3xl bg-black/5">
-                        <img src={profile.avatar} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                      <div className="group relative h-24 w-24 overflow-hidden rounded-3xl bg-black/5 border border-black/5">
+                        <img 
+                          src={profileForm.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileForm.username}`} 
+                          alt="" 
+                          className="h-full w-full object-cover" 
+                          referrerPolicy="no-referrer" 
+                        />
                         <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
                           <ImageIcon size={24} />
                           <input 
@@ -605,24 +672,44 @@ export default function Dashboard() {
                           <span className="text-black/40">dropsomething.com/</span>
                           <input
                             type="text"
-                            value={profile.username}
-                            onChange={(e) => handleProfileUpdate('username', e.target.value)}
+                            value={profileForm.username}
+                            onChange={(e) => setProfileForm(prev => ({ ...prev, username: e.target.value }))}
                             className="h-12 flex-1 bg-transparent text-sm font-medium text-black focus:outline-none"
+                            placeholder="username"
+                            required
                           />
                         </div>
                       </div>
                       <div>
                         <label className="text-xs font-bold uppercase tracking-wider text-black/40">Bio</label>
                         <textarea
-                          value={profile.bio}
-                          onChange={(e) => handleProfileUpdate('bio', e.target.value)}
+                          value={profileForm.bio}
+                          onChange={(e) => setProfileForm(prev => ({ ...prev, bio: e.target.value }))}
                           rows={4}
                           className="mt-2 w-full rounded-xl border border-black/10 bg-black/5 p-4 text-sm font-medium text-black focus:border-black/30 focus:outline-none"
+                          placeholder="Tell your supporters about yourself..."
                         />
                       </div>
                     </div>
+
+                    <div className="pt-4">
+                      <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-black font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      >
+                        {isSaving ? (
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        ) : (
+                          <>
+                            <Check size={20} />
+                            Save Profile Changes
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                </form>
               </motion.div>
             )}
 
