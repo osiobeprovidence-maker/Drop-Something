@@ -71,6 +71,20 @@ async function getCreatorDetails(ctx: any, creator: any) {
     .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
     .collect();
 
+  // Resolve product images
+  const resolvedProducts = await Promise.all(products.map(async (p) => {
+    let image = p.image;
+    if (image && !image.startsWith("http") && !image.startsWith("data:")) {
+      try {
+        const url = await ctx.storage.getUrl(image);
+        if (url) image = url;
+      } catch (e) {
+        // Not a valid storageId, keep original
+      }
+    }
+    return { ...p, image };
+  }));
+
   const tips = await ctx.db
     .query("tips")
     .withIndex("by_creatorId", (q) => q.eq("creatorId", creator._id))
@@ -83,7 +97,7 @@ async function getCreatorDetails(ctx: any, creator: any) {
     links,
     memberships,
     goals,
-    products,
+    products: resolvedProducts,
     tips,
   };
 }

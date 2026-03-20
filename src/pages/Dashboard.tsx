@@ -123,6 +123,8 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"link" | "membership" | "goal" | "product" | null>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [productImage, setProductImage] = useState<string>("");
+  const [isProductUploading, setIsProductUploading] = useState(false);
 
   // Delete confirmation states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -178,6 +180,9 @@ export default function Dashboard() {
   const openModal = (type: any, item: any = null) => {
     setModalType(type);
     setEditingItem(item);
+    if (type === "product") {
+      setProductImage(item?.image || "");
+    }
     setIsModalOpen(true);
   };
 
@@ -185,6 +190,8 @@ export default function Dashboard() {
     setIsModalOpen(false);
     setModalType(null);
     setEditingItem(null);
+    setProductImage("");
+    setIsProductUploading(false);
   };
 
   const openDeleteModal = (type: string, id: string, title: string) => {
@@ -212,6 +219,45 @@ export default function Dashboard() {
 
     setIsDeleteModalOpen(false);
     setDeleteConfig(null);
+  };
+
+  // Handle product image upload
+  const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB.");
+      return;
+    }
+
+    // Immediate local feedback
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProductImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    setIsProductUploading(true);
+    try {
+      const postUrl = await generateUploadUrl();
+      const result = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!result.ok) throw new Error("Upload failed");
+
+      const { storageId } = await result.json();
+      setProductImage(storageId);
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Failed to upload image. Please try again.");
+      setProductImage(editingItem?.image || "");
+    } finally {
+      setIsProductUploading(false);
+    }
   };
 
   // Handle profile image upload
@@ -940,36 +986,43 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     products.map((product) => (
-                      <div key={product._id} className="group relative overflow-hidden rounded-3xl border border-black/5 bg-white p-6 shadow-sm transition-all hover:shadow-md">
-                        <div className="flex items-center justify-between">
-                          <span className={cn(
-                            "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                            product.type === "digital" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
-                          )}>
-                            {product.type}
-                          </span>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openModal("product", product)}
-                              className="rounded-lg bg-black/5 p-2 text-black/40 hover:text-black"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              onClick={() => openDeleteModal("product", product._id, product.title)}
-                              className="rounded-lg bg-red-50 p-2 text-red-400 hover:text-red-500"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                      <div key={product._id} className="group relative overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm transition-all hover:shadow-md">
+                        {product.image && (
+                          <div className="h-40 w-full overflow-hidden border-b border-black/5 bg-black/5">
+                            <img src={product.image} alt={product.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
                           </div>
-                        </div>
-                        <h4 className="mt-4 text-lg font-bold text-black">{product.title}</h4>
-                        <p className="mt-1 text-sm text-black/60 line-clamp-2">{product.description}</p>
-                        <div className="mt-6 flex items-center justify-between border-t border-black/5 pt-4">
-                          <span className="text-lg font-black text-black">₦{product.price.toLocaleString()}</span>
-                          <span className="text-xs font-medium text-black/40">
-                            {product.type === "physical" ? `${product.stock || 0} in stock` : "Digital"}
-                          </span>
+                        )}
+                        <div className="p-6">
+                          <div className="flex items-center justify-between">
+                            <span className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                              product.type === "digital" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
+                            )}>
+                              {product.type}
+                            </span>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => openModal("product", product)}
+                                className="rounded-lg bg-black/5 p-2 text-black/40 hover:text-black"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => openDeleteModal("product", product._id, product.title)}
+                                className="rounded-lg bg-red-50 p-2 text-red-400 hover:text-red-500"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </div>
+                          <h4 className="mt-4 text-lg font-bold text-black">{product.title}</h4>
+                          <p className="mt-1 text-sm text-black/60 line-clamp-2">{product.description}</p>
+                          <div className="mt-6 flex items-center justify-between border-t border-black/5 pt-4">
+                            <span className="text-lg font-black text-black">₦{product.price.toLocaleString()}</span>
+                            <span className="text-xs font-medium text-black/40">
+                              {product.type === "physical" ? `${product.stock || 0} in stock` : "Digital"}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -1038,10 +1091,11 @@ export default function Dashboard() {
                         await handleAddGoal(data);
                       }
                     } else if (modalType === "product") {
+                      const productData = { ...data, image: productImage };
                       if (editingItem) {
-                        await handleUpdateProduct(editingItem._id, data);
+                        await handleUpdateProduct(editingItem._id, productData);
                       } else {
-                        await handleAddProduct(data);
+                        await handleAddProduct(productData);
                       }
                     }
 
@@ -1100,6 +1154,39 @@ export default function Dashboard() {
 
                 {modalType === "product" && (
                   <>
+                    <div className="flex flex-col items-center">
+                      <div className="group relative h-40 w-full overflow-hidden rounded-2xl bg-black/5 border border-black/5">
+                        {productImage ? (
+                          <img 
+                            src={productImage.startsWith("data:") ? productImage : (products.find(p => p.image === productImage)?.image || productImage)} 
+                            alt="" 
+                            className="h-full w-full object-cover" 
+                          />
+                        ) : (
+                          <div className="flex h-full w-full flex-col items-center justify-center text-black/20">
+                            <ImageIcon size={48} />
+                            <span className="mt-2 text-xs font-bold uppercase tracking-wider">Product Image</span>
+                          </div>
+                        )}
+                        <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
+                          {isProductUploading ? (
+                            <Loader2 className="animate-spin" size={32} />
+                          ) : (
+                            <>
+                              <ImageIcon size={32} />
+                              <span className="mt-2 text-xs font-bold">Upload Image</span>
+                            </>
+                          )}
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={handleProductImageUpload}
+                            disabled={isProductUploading}
+                          />
+                        </label>
+                      </div>
+                    </div>
                     <div>
                       <label className="text-xs font-bold uppercase text-black/40">Product Name</label>
                       <input name="title" defaultValue={editingItem?.title} required className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
