@@ -197,6 +197,17 @@ function ProfileTab({ convexUserId }: { convexUserId?: string }) {
     bio: creator?.bio || "",
   });
 
+  // Sync form data when creator data arrives from Convex
+  useEffect(() => {
+    if (creator) {
+      setFormData({
+        username: creator.username || "",
+        name: creator.name || "",
+        bio: creator.bio || "",
+      });
+    }
+  }, [creator]);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'avatar' | 'coverImage') => {
     const file = e.target.files?.[0];
     if (!file || !convexUserId || !creator) return;
