@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useState, useMemo } from "react";
 import { Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, Share2, Copy, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
