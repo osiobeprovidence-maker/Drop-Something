@@ -84,6 +84,7 @@ export default function Dashboard() {
   // Update local form when convex data arrives
   useEffect(() => {
     if (convexCreator) {
+      console.log("Initializing profile form from Convex:", convexCreator);
       setProfileForm({
         username: convexCreator.username || "",
         bio: convexCreator.bio || "",
@@ -96,13 +97,18 @@ export default function Dashboard() {
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!convexCreator) return;
+    
+    console.log("Submitting profile changes:", profileForm);
     setIsSaving(true);
     try {
       await updateCreator({
         creatorId: convexCreator._id,
         username: profileForm.username,
         bio: profileForm.bio,
+        avatar: profileForm.avatar,
+        coverImage: profileForm.coverImage,
       });
+      console.log("Profile saved successfully");
       setShowSaved(true);
       setTimeout(() => setShowSaved(false), 3000);
     } catch (err) {
