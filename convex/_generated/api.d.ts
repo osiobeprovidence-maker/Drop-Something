@@ -11,6 +11,7 @@
 import type * as creators from "../creators.js";
 import type * as reset from "../reset.js";
 import type * as seed from "../seed.js";
+import type * as settings from "../settings.js";
 import type * as users from "../users.js";
 
 import type {
@@ -23,6 +24,7 @@ declare const fullApi: ApiFromModules<{
   creators: typeof creators;
   reset: typeof reset;
   seed: typeof seed;
+  settings: typeof settings;
   users: typeof users;
 }>;
 

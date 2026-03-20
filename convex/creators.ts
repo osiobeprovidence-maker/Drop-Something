@@ -302,6 +302,21 @@ export const createProduct = mutation({
     deliveryInfo: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Check if creator has active shop subscription
+    const creator = await ctx.db.get(args.creatorId);
+    if (!creator) {
+      throw new Error("Creator not found");
+    }
+
+    const hasSubscription = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_userId", (q) => q.eq("userId", creator.userId))
+      .unique();
+
+    if (!hasSubscription || hasSubscription.status !== "active" || hasSubscription.plan !== "shop") {
+      throw new Error("Shop requires active subscription (₦3000/month). Please subscribe to create products.");
+    }
+
     return await ctx.db.insert("products", args);
   },
 });

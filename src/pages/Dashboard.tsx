@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard, User, Heart, Users, Target, ShoppingBag, Link as LinkIcon,
-  LogOut, Plus, Edit2, Trash2, Check,
+  LogOut, Plus, Edit2, Trash2, Check, Settings,
   TrendingUp, DollarSign, Image as ImageIcon, ExternalLink, Copy, Share2,
   Globe, Package, FileText, X, Menu
 } from "lucide-react";
@@ -126,6 +126,7 @@ export default function Dashboard() {
     { id: "memberships", label: "Memberships", icon: Users },
     { id: "goals", label: "Goals", icon: Target },
     { id: "shop", label: "Shop", icon: ShoppingBag },
+    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   const openModal = (type: any, item: any = null) => {
@@ -338,6 +339,10 @@ export default function Dashboard() {
               <button
                 key={item.id}
                 onClick={() => {
+                  if (item.id === "settings") {
+                    navigate("/settings");
+                    return;
+                  }
                   setActiveTab(item.id);
                   setIsSidebarOpen(false);
                 }}
@@ -466,13 +471,15 @@ export default function Dashboard() {
                   <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
                     <h2 className="text-lg font-bold text-black">Quick Actions</h2>
                     <div className="mt-6 grid grid-cols-2 gap-4">
-                      <Link
-                        to={`/${profile.username}`}
+                      <a
+                        href={`/${profile.username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-black/5 bg-black/5 p-6 transition-colors hover:bg-black hover:text-white"
                       >
                         <ExternalLink size={24} />
                         <span className="text-xs font-bold">View Public Page</span>
-                      </Link>
+                      </a>
                       <button
                         onClick={() => openModal("goal")}
                         className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-black/5 bg-black/5 p-6 transition-colors hover:bg-black hover:text-white"
@@ -500,23 +507,27 @@ export default function Dashboard() {
                       <img src={avatarUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
                     </div>
                     <h2 className="mt-4 text-2xl font-black text-black">@{profile.username}</h2>
-                    <Link
-                      to={`/${profile.username}`}
+                    <a
+                      href={`/${profile.username}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-sm font-bold text-black/40 hover:text-black transition-colors"
                     >
                       <ExternalLink size={14} />
                       View live page
-                    </Link>
+                    </a>
                     <p className="mt-2 text-black/60">{profile.bio || "No bio yet"}</p>
 
                     <div className="mt-8 flex w-full flex-col gap-3">
-                      <Link
-                        to={`/${profile.username}`}
+                      <a
+                        href={`/${profile.username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex w-full items-center justify-center gap-2 rounded-2xl bg-black py-4 font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98]"
                       >
                         <ExternalLink size={20} />
                         View Public Page
-                      </Link>
+                      </a>
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           onClick={copyToClipboard}
