@@ -173,6 +173,7 @@ export default function Dashboard() {
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "my-page", label: "My Page", icon: Globe },
     { id: "profile", label: "Profile", icon: User },
+    { id: "about", label: "About Us", icon: FileText },
     { id: "links", label: "Links", icon: LinkIcon },
     { id: "memberships", label: "Memberships", icon: Users },
     { id: "goals", label: "Goals", icon: Target },
@@ -745,16 +746,6 @@ export default function Dashboard() {
                           placeholder="Short bio for your profile..."
                         />
                       </div>
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-wider text-black/40">About Us / Detailed Bio</label>
-                        <textarea
-                          value={profileForm.about}
-                          onChange={(e) => setProfileForm(prev => ({ ...prev, about: e.target.value }))}
-                          rows={6}
-                          className="mt-2 w-full rounded-xl border border-black/10 bg-black/5 p-4 text-sm font-medium text-black focus:border-black/30 focus:outline-none"
-                          placeholder="Tell your supporters more about what you do, your mission, and why they should support you..."
-                        />
-                      </div>
                     </div>
 
                     <div className="pt-4">
@@ -769,6 +760,50 @@ export default function Dashboard() {
                           <>
                             <Check size={20} />
                             Save Profile Changes
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+
+            {activeTab === "about" && (
+              <motion.div
+                key="about"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="max-w-2xl space-y-8"
+              >
+                <form onSubmit={handleProfileSubmit} className="rounded-3xl border border-black/5 bg-white p-8 shadow-sm">
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-bold text-black">About Us / Detailed Bio</h2>
+                      <p className="text-sm text-black/40">This information will be displayed on your profile's about page.</p>
+                    </div>
+                    <div>
+                      <textarea
+                        value={profileForm.about}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, about: e.target.value }))}
+                        rows={12}
+                        className="mt-2 w-full rounded-xl border border-black/10 bg-black/5 p-4 text-sm font-medium text-black focus:border-black/30 focus:outline-none"
+                        placeholder="Tell your supporters more about what you do, your mission, and why they should support you..."
+                      />
+                    </div>
+                    <div className="pt-4">
+                      <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-black font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      >
+                        {isSaving ? (
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        ) : (
+                          <>
+                            <Check size={20} />
+                            Save About Us Info
                           </>
                         )}
                       </button>

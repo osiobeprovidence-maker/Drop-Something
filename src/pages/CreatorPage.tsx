@@ -122,15 +122,26 @@ export default function CreatorPage() {
   }
 
   const showHome = true;
+  const showAbout = true;
   const showMembership = (displayCreator.pageStyle === "hybrid" || displayCreator.pageStyle === "support") && displayCreator.memberships.length > 0;
   const showGoals = (displayCreator.pageStyle === "hybrid" || displayCreator.pageStyle === "goal") && displayCreator.goals.length > 0;
   const showShop = (displayCreator.pageStyle === "hybrid" || displayCreator.pageStyle === "shop") && displayCreator.products.length > 0;
+
+  const [activeTab, setActiveTab] = useState("home");
 
   // Get recent supporters (last 5)
   const recentSupporters = useMemo(() => {
     if (!displayCreator || !Array.isArray(displayCreator.tips)) return [];
     return displayCreator.tips.slice(0, 5);
   }, [displayCreator]);
+
+  const tabs = [
+    { id: "home", label: "Home", icon: Heart, show: true },
+    { id: "about", label: "About", icon: Users, show: showAbout },
+    { id: "membership", label: "Memberships", icon: Users, show: showMembership },
+    { id: "shop", label: "Shop", icon: ShoppingBag, show: showShop },
+    { id: "goals", label: "Goals", icon: Target, show: showGoals },
+  ].filter(tab => tab.show);
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-20">
@@ -186,167 +197,230 @@ export default function CreatorPage() {
           </div>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="mb-8 flex justify-center border-b border-black/5">
+          <div className="flex gap-8 overflow-x-auto pb-px no-scrollbar">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "relative flex items-center gap-2 pb-4 text-sm font-bold transition-colors whitespace-nowrap",
+                  activeTab === tab.id ? "text-black" : "text-black/40 hover:text-black/60"
+                )}
+              >
+                <tab.icon size={16} />
+                {tab.label}
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Main Content Grid - 2 Column Desktop / Stacked Mobile */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - About & Recent Supporters (Always visible) */}
+          {/* Left Column - Dynamic Content based on Tab */}
           <div className="lg:col-span-2 space-y-6">
-            {/* About Section */}
-            <section>
-              <div className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5 sm:p-8">
-                <h2 className="text-xl font-black text-black mb-4">About</h2>
-                <p className="text-base text-black/70 leading-relaxed">
-                  {displayCreator?.bio || "This creator hasn't added a detailed bio yet."}
-                </p>
-              </div>
-            </section>
-
-            {/* Links Section */}
-            {displayCreator.links.length > 0 && (
-              <section>
-                <div className="flex items-center justify-start gap-2 mb-4">
-                  <ExternalLink size={18} />
-                  <h2 className="font-bold text-black">Links & Socials</h2>
-                </div>
-                <div className="flex flex-col gap-3">
-                  {displayCreator.links.map((link) => (
-                    <a
-                      key={link._id}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between rounded-2xl bg-white border border-black/5 p-4 transition-all hover:scale-[1.02] hover:shadow-md"
-                    >
-                      <span className="font-bold text-black text-sm">{link.title}</span>
-                      <ExternalLink size={16} className="text-black/40" />
-                    </a>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Recent Supporters Section */}
-            {recentSupporters.length > 0 && (
-              <section>
-                <div className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5 sm:p-8">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Heart size={20} className="text-red-500" />
-                    <h2 className="text-xl font-black text-black">Recent supporters</h2>
-                  </div>
-                  <div className="space-y-3">
-                    {recentSupporters.map((supporter, idx) => (
-                      <div key={idx} className="flex flex-col py-3 border-b border-black/5 last:border-b-0">
-                        <p className="text-sm font-bold text-black">
-                          {supporter.supporterName} dropped ₦{supporter.amount}
-                        </p>
-                        {supporter.message && (
-                          <p className="text-xs text-black/60 mt-1">"{supporter.message}"</p>
-                        )}
+            <AnimatePresence mode="wait">
+              {activeTab === "home" && (
+                <motion.div
+                  key="home"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-6"
+                >
+                  {/* Links Section */}
+                  {displayCreator.links.length > 0 && (
+                    <section>
+                      <div className="flex items-center justify-start gap-2 mb-4">
+                        <ExternalLink size={18} />
+                        <h2 className="font-bold text-black">Links & Socials</h2>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {/* Membership Section */}
-            {showMembership && (
-              <section>
-                <div className="flex items-center justify-start gap-2 mb-4">
-                  <Users size={18} />
-                  <h2 className="font-bold text-black">Membership Plans</h2>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {displayCreator.memberships.map((tier) => (
-                    <div key={tier._id} className="flex flex-col rounded-[2rem] bg-white p-6 shadow-sm border border-black/5">
-                      <div className="mb-4">
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-black/30">{tier.title}</h3>
-                        <p className="mt-1 text-2xl font-black text-black">₦{tier.price.toLocaleString()}<span className="text-xs font-medium text-black/40">/mo</span></p>
+                      <div className="flex flex-col gap-3">
+                        {displayCreator.links.map((link) => (
+                          <a
+                            key={link._id}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between rounded-2xl bg-white border border-black/5 p-4 transition-all hover:scale-[1.02] hover:shadow-md"
+                          >
+                            <span className="font-bold text-black text-sm">{link.title}</span>
+                            <ExternalLink size={16} className="text-black/40" />
+                          </a>
+                        ))}
                       </div>
-                      <p className="flex-1 text-sm text-black/60 leading-relaxed mb-6">{tier.description}</p>
-                      <button className="flex h-12 w-full items-center justify-center rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95">
-                        Join
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+                    </section>
+                  )}
 
-            {/* Shop Section */}
-            {showShop && (
-              <section>
-                <div className="flex items-center justify-start gap-2 mb-4">
-                  <ShoppingBag size={18} />
-                  <h2 className="font-bold text-black">Shop</h2>
-                </div>
-                <div className="grid gap-6 sm:grid-cols-2">
-                  {displayCreator.products.map((product) => (
-                    <div key={product._id} className="group flex flex-col rounded-[2rem] bg-white overflow-hidden shadow-sm border border-black/5">
-                      <div className="aspect-square w-full bg-zinc-100 overflow-hidden">
-                        <img
-                          src={product.image || `https://picsum.photos/seed/${product._id}/600/600`}
-                          alt=""
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                      <div className="p-6 flex flex-col flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className={cn(
-                            "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                            product.type === "digital" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
-                          )}>
-                            {product.type}
-                          </span>
-                          <span className="font-bold text-black">₦{product.price.toLocaleString()}</span>
+                  {/* Recent Supporters Section */}
+                  {recentSupporters.length > 0 && (
+                    <section>
+                      <div className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5 sm:p-8">
+                        <div className="flex items-center gap-2 mb-6">
+                          <Heart size={20} className="text-red-500" />
+                          <h2 className="text-xl font-black text-black">Recent supporters</h2>
                         </div>
-                        <h4 className="text-lg font-bold text-black mb-2">{product.title}</h4>
-                        <p className="text-sm text-black/60 line-clamp-2 flex-1 mb-6">{product.description}</p>
-                        <button className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95">
-                          Buy Now
-                          <ChevronRight size={16} />
-                        </button>
+                        <div className="space-y-3">
+                          {recentSupporters.map((supporter, idx) => (
+                            <div key={idx} className="flex flex-col py-3 border-b border-black/5 last:border-b-0">
+                              <p className="text-sm font-bold text-black">
+                                {supporter.supporterName} dropped ₦{supporter.amount}
+                              </p>
+                              {supporter.message && (
+                                <p className="text-xs text-black/60 mt-1">"{supporter.message}"</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+                  )}
+                </motion.div>
+              )}
+
+              {activeTab === "about" && (
+                <motion.div
+                  key="about"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <section>
+                    <div className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5 sm:p-8">
+                      <h2 className="text-xl font-black text-black mb-4">About Us</h2>
+                      <div className="text-base text-black/70 leading-relaxed whitespace-pre-wrap">
+                        {(displayCreator as any).about || displayCreator?.bio || "This creator hasn't added a detailed bio yet."}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
+                  </section>
+                </motion.div>
+              )}
 
-            {/* Goals Section */}
-            {showGoals && (
-              <section>
-                <div className="flex items-center justify-start gap-2 mb-4">
-                  <Target size={18} />
-                  <h2 className="font-bold text-black">Active Goals</h2>
-                </div>
-                <div className="space-y-4">
-                  {displayCreator.goals.map((goal) => (
-                    <div key={goal._id} className="rounded-[2rem] bg-white p-8 shadow-sm border border-black/5">
-                      <h3 className="text-lg font-bold text-black text-center">{goal.title}</h3>
-                      <div className="mt-6">
-                        <div className="flex items-end justify-between text-xs mb-2">
-                          <span className="font-bold text-black">₦{goal.currentAmount.toLocaleString()}</span>
-                          <span className="text-black/40">₦{goal.targetAmount.toLocaleString()}</span>
-                        </div>
-                        <div className="h-4 w-full overflow-hidden rounded-full bg-zinc-100">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            whileInView={{ width: `${Math.min(100, (goal.currentAmount / goal.targetAmount) * 100)}%` }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 1, ease: "easeOut" }}
-                            className="h-full bg-black"
-                          />
-                        </div>
-                        <p className="mt-3 text-center text-xs font-bold text-black/40">
-                          {Math.round((goal.currentAmount / goal.targetAmount) * 100)}% reached
-                        </p>
-                      </div>
+              {activeTab === "membership" && (
+                <motion.div
+                  key="membership"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <section>
+                    <div className="flex items-center justify-start gap-2 mb-4">
+                      <Users size={18} />
+                      <h2 className="font-bold text-black">Membership Plans</h2>
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {displayCreator.memberships.map((tier) => (
+                        <div key={tier._id} className="flex flex-col rounded-[2rem] bg-white p-6 shadow-sm border border-black/5">
+                          <div className="mb-4">
+                            <h3 className="text-xs font-bold uppercase tracking-widest text-black/30">{tier.title}</h3>
+                            <p className="mt-1 text-2xl font-black text-black">₦{tier.price.toLocaleString()}<span className="text-xs font-medium text-black/40">/mo</span></p>
+                          </div>
+                          <p className="flex-1 text-sm text-black/60 leading-relaxed mb-6">{tier.description}</p>
+                          <button className="flex h-12 w-full items-center justify-center rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95">
+                            Join
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </motion.div>
+              )}
+
+              {activeTab === "shop" && (
+                <motion.div
+                  key="shop"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <section>
+                    <div className="flex items-center justify-start gap-2 mb-4">
+                      <ShoppingBag size={18} />
+                      <h2 className="font-bold text-black">Shop</h2>
+                    </div>
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {displayCreator.products.map((product) => (
+                        <div key={product._id} className="group flex flex-col rounded-[2rem] bg-white overflow-hidden shadow-sm border border-black/5">
+                          <div className="aspect-square w-full bg-zinc-100 overflow-hidden">
+                            <img
+                              src={product.image || `https://picsum.photos/seed/${product._id}/600/600`}
+                              alt=""
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                          <div className="p-6 flex flex-col flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className={cn(
+                                "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                                product.type === "digital" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
+                              )}>
+                                {product.type}
+                              </span>
+                              <span className="font-bold text-black">₦{product.price.toLocaleString()}</span>
+                            </div>
+                            <h4 className="text-lg font-bold text-black mb-2">{product.title}</h4>
+                            <p className="text-sm text-black/60 line-clamp-2 flex-1 mb-6">{product.description}</p>
+                            <button className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95">
+                              Buy Now
+                              <ChevronRight size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </motion.div>
+              )}
+
+              {activeTab === "goals" && (
+                <motion.div
+                  key="goals"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <section>
+                    <div className="flex items-center justify-start gap-2 mb-4">
+                      <Target size={18} />
+                      <h2 className="font-bold text-black">Active Goals</h2>
+                    </div>
+                    <div className="space-y-4">
+                      {displayCreator.goals.map((goal) => (
+                        <div key={goal._id} className="rounded-[2rem] bg-white p-8 shadow-sm border border-black/5">
+                          <h3 className="text-lg font-bold text-black text-center">{goal.title}</h3>
+                          <div className="mt-6">
+                            <div className="flex items-end justify-between text-xs mb-2">
+                              <span className="font-bold text-black">₦{goal.currentAmount.toLocaleString()}</span>
+                              <span className="text-black/40">₦{goal.targetAmount.toLocaleString()}</span>
+                            </div>
+                            <div className="h-4 w-full overflow-hidden rounded-full bg-zinc-100">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                whileInView={{ width: `${Math.min(100, (goal.currentAmount / goal.targetAmount) * 100)}%` }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                                className="h-full bg-black"
+                              />
+                            </div>
+                            <p className="mt-3 text-center text-xs font-bold text-black/40">
+                              {Math.round((goal.currentAmount / goal.targetAmount) * 100)}% reached
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Right Column - Support Card (Sticky on desktop) */}
