@@ -11,14 +11,14 @@ import { useFollow } from "@/src/context/FollowContext";
 import { useAuth } from "@/src/context/AuthContext";
 
 export default function CreatorPage() {
+  // === ALL HOOKS AT TOP - DO NOT ADD CONDITIONS BEFORE HOOKS ===
   const { username } = useParams();
   const { convexUserId } = useAuth();
   const { follow, unfollow, isFollowing } = useFollow();
-
-  // Fetch specific creator from Convex
   const convexCreator = useQuery(api.creators.getCreatorByUsername, {
     username: username || ""
   });
+  const addConvexTip = useMutation(api.creators.addTip);
 
   const [tipAmount, setTipAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
@@ -29,18 +29,22 @@ export default function CreatorPage() {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
 
-  // Use Convex data
+  // Derived values from hooks (still part of hook section)
   const displayCreator = convexCreator;
-
   const isLoading = convexCreator === undefined;
   const isOwnPage = !username || convexCreator?.userId === (convexUserId as string);
-  const addConvexTip = useMutation(api.creators.addTip);
 
   const resolvedAvatar = useMemo(() => {
     if (!displayCreator?.avatar) return `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
-    if (displayCreator.avatar.includes("api/storage")) return displayCreator.avatar;
-    return displayCreator.avatar;
+    if (displayCreator?.avatar?.includes("api/storage")) return displayCreator.avatar;
+    return displayCreator?.avatar;
   }, [displayCreator, username]);
+
+  const recentSupporters = useMemo(() => {
+    if (!displayCreator || !Array.isArray(displayCreator.tips)) return [];
+    return displayCreator.tips.slice(0, 5);
+  }, [displayCreator]);
+  // === END OF HOOKS SECTION ===
 
   const handleFollow = async () => {
     if (!convexCreator) return;
@@ -130,12 +134,6 @@ export default function CreatorPage() {
   const showMembership = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "support") && displayCreator.memberships.length > 0;
   const showGoals = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "goal") && displayCreator.goals.length > 0;
   const showShop = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "shop") && displayCreator.products.length > 0;
-
-  // Get recent supporters (last 5)
-  const recentSupporters = useMemo(() => {
-    if (!displayCreator || !Array.isArray(displayCreator.tips)) return [];
-    return displayCreator.tips.slice(0, 5);
-  }, [displayCreator]);
 
   const tabs = [
     { id: "home", label: "Home", icon: Heart, show: true },
