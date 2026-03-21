@@ -4,7 +4,7 @@ import {
   LayoutDashboard, User, Heart, Users, Target, ShoppingBag, Link as LinkIcon,
   LogOut, Plus, Edit2, Trash2, Check, Settings,
   TrendingUp, DollarSign, Image as ImageIcon, ExternalLink, Copy, Share2,
-  Globe, Package, FileText, X, Menu
+  Globe, Package, FileText, X, Menu, Square
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
@@ -12,6 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import SlateTab from "./SlateTab";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -26,6 +27,12 @@ export default function Dashboard() {
   const convexCreator = useQuery(api.creators.getCreatorByUserId, {
     userId: convexUserId as Id<"users"> | undefined
   });
+
+  // Check for Pro/Shop subscription
+  const subscription = useQuery(api.settings.getSubscription, {
+    userId: convexUserId as Id<"users"> | undefined
+  });
+  const hasProFeatures = subscription?.plan === "premium" || subscription?.plan === "shop";
 
   // Convex mutations
   const updateCreator = useMutation(api.creators.updateCreator);
@@ -42,6 +49,13 @@ export default function Dashboard() {
   const updateProduct = useMutation(api.creators.updateProduct);
   const deleteProduct = useMutation(api.creators.deleteProduct);
   const generateUploadUrl = useMutation(api.creators.generateUploadUrl);
+
+  // Slate mutations
+  const createSlate = useMutation(api.slates.createSlate);
+  const deleteSlate = useMutation(api.slates.deleteSlate);
+  const slates = useQuery(api.slates.getSlatesByCreator, {
+    creatorId: convexCreator?._id as Id<"creators"> | undefined
+  });
 
   useEffect(() => {
     // If auth is done loading and we definitely don't have a creator profile in Convex
@@ -187,6 +201,7 @@ export default function Dashboard() {
     { id: "memberships", label: "Memberships", icon: Users },
     { id: "goals", label: "Goals", icon: Target },
     { id: "shop", label: "Shop", icon: ShoppingBag },
+    { id: "slate", label: "Slate", icon: Square },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
@@ -458,23 +473,25 @@ export default function Dashboard() {
     await updateGoal({ goalId: id as Id<"goals">, ...data });
   };
 
-  const handleAddProduct = async (data: { 
-    title: string; 
-    description: string; 
-    price: number; 
+  const handleAddProduct = async (data: {
+    title: string;
+    description: string;
+    price: number;
     type: "digital" | "physical";
     stock?: number;
+    image?: string;
   }) => {
     if (!convexCreator) return;
     await addProduct({ creatorId: convexCreator._id, ...data });
   };
 
-  const handleUpdateProduct = async (id: string, data: { 
-    title?: string; 
-    description?: string; 
-    price?: number; 
+  const handleUpdateProduct = async (id: string, data: {
+    title?: string;
+    description?: string;
+    price?: number;
     type?: "digital" | "physical";
     stock?: number;
+    image?: string;
   }) => {
     await updateProduct({ productId: id as Id<"products">, ...data });
   };
@@ -1186,6 +1203,17 @@ export default function Dashboard() {
                   )}
                 </div>
               </motion.div>
+            )}
+
+            {activeTab === "slate" && (
+              <SlateTab
+                convexCreator={convexCreator}
+                createSlate={createSlate}
+                deleteSlate={deleteSlate}
+                slates={slates || []}
+                generateUploadUrl={generateUploadUrl}
+                hasProFeatures={!!hasProFeatures}
+              />
             )}
           </AnimatePresence>
         </div>

@@ -112,4 +112,14 @@ export default defineSchema({
     state: v.string(),
     isDefault: v.boolean(),
   }).index("by_userId", ["userId"]),
+
+  // Slate content posts
+  slates: defineTable({
+    creatorId: v.id("creators"),
+    type: v.union(v.literal("text"), v.literal("image"), v.literal("video"), v.literal("audio")),
+    content: v.optional(v.string()), // text content
+    mediaUrl: v.optional(v.string()), // for images/audio (storageId or URL)
+    playbackId: v.optional(v.string()), // for Mux video/audio playback
+    visibility: v.union(v.literal("public"), v.literal("followers"), v.literal("supporters"), v.literal("members")),
+  }).index("by_creatorId", ["creatorId"]),
 });

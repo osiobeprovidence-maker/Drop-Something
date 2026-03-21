@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useMemo } from "react";
-import { Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, Share2, Copy, ArrowLeft } from "lucide-react";
+import { Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, Share2, Copy, ArrowLeft, FileText, Lock, Music } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
 import { useQuery, useMutation } from "convex/react";
@@ -19,6 +19,11 @@ export default function CreatorPage() {
     username: username || ""
   });
   const addConvexTip = useMutation(api.creators.addTip);
+
+  // Get slates for this creator
+  const slates = useQuery(api.slates.getPublicSlatesByCreator, {
+    creatorId: convexCreator?._id as Id<"creators"> | undefined
+  });
 
   const [tipAmount, setTipAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
@@ -340,6 +345,106 @@ export default function CreatorPage() {
                           <ExternalLink size={16} className="text-black/40" />
                         </a>
                       ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Slate Section */}
+                {slates && slates.length > 0 && (
+                  <section>
+                    <div className="flex items-center justify-start gap-2 mb-4">
+                      <FileText size={18} />
+                      <h2 className="font-bold text-black">Slate</h2>
+                    </div>
+                    <div className="space-y-4">
+                      {slates.map((slate) => {
+                        // Check if content is locked for this viewer
+                        const isLocked = slate.visibility !== "public";
+                        const lockMessage = slate.visibility === "followers" 
+                          ? "Follow to unlock this content"
+                          : slate.visibility === "supporters"
+                          ? "Support to unlock this content"
+                          : "Become a member to unlock this content";
+
+                        return (
+                          <div
+                            key={slate._id}
+                            className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5"
+                          >
+                            {/* Slate header with type and visibility badges */}
+                            <div className="flex items-center gap-2 mb-4">
+                              <span className={cn(
+                                "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider",
+                                slate.type === "text" ? "bg-blue-50 text-blue-600" :
+                                slate.type === "image" ? "bg-purple-50 text-purple-600" :
+                                slate.type === "video" ? "bg-pink-50 text-pink-600" :
+                                "bg-emerald-50 text-emerald-600"
+                              )}>
+                                {slate.type}
+                              </span>
+                              {slate.visibility !== "public" && (
+                                <span className={cn(
+                                  "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1",
+                                  slate.visibility === "followers" ? "bg-purple-50 text-purple-600" :
+                                  slate.visibility === "supporters" ? "bg-pink-50 text-pink-600" :
+                                  "bg-amber-50 text-amber-600"
+                                )}>
+                                  <Lock size={10} />
+                                  {slate.visibility}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Slate content based on type - show locked state if needed */}
+                            {isLocked ? (
+                              <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/5 text-black/40 mb-4">
+                                  <Lock size={32} />
+                                </div>
+                                <p className="text-sm font-bold text-black">{lockMessage}</p>
+                                <p className="text-xs text-black/40 mt-1">Support or join to unlock this content</p>
+                              </div>
+                            ) : (
+                              <>
+                                {slate.type === "text" && slate.content && (
+                                  <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
+                                    {slate.content}
+                                  </p>
+                                )}
+
+                                {slate.type === "image" && slate.mediaUrl && (
+                                  <img
+                                    src={slate.mediaUrl}
+                                    alt="Slate image"
+                                    className="w-full rounded-2xl object-cover max-h-96"
+                                  />
+                                )}
+
+                                {slate.type === "video" && slate.playbackId && (
+                                  <div className="relative rounded-2xl overflow-hidden bg-black">
+                                    <video
+                                      controls
+                                      className="w-full max-h-96 object-cover"
+                                    >
+                                      <source src={`https://stream.mux.com/${slate.playbackId}.m3u8`} type="application/x-mpegURL" />
+                                      Your browser does not support the video tag.
+                                    </video>
+                                  </div>
+                                )}
+
+                                {slate.type === "audio" && slate.playbackId && (
+                                  <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
+                                    <audio controls className="w-full">
+                                      <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />
+                                      Your browser does not support the audio tag.
+                                    </audio>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </section>
                 )}
