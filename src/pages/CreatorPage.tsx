@@ -1,7 +1,11 @@
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useMemo } from "react";
-import { Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, ArrowLeft, FileText, Lock, Music, Twitter, Facebook, Instagram, Linkedin, Youtube, Globe } from "lucide-react";
+import { 
+  Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, ArrowLeft, 
+  FileText, Lock, Music, Twitter, Facebook, Instagram, Linkedin, Youtube, Globe, 
+  Mail, Link as LinkIcon, Twitch, Disc, Send, BookOpen, Gamepad2, Radio, Smartphone
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
 import { useQuery, useMutation } from "convex/react";
@@ -57,47 +61,112 @@ export default function CreatorPage() {
     
     return displayCreator.links.map((link) => {
       const url = link.url.toLowerCase();
-      let platform: 'twitter' | 'facebook' | 'instagram' | 'linkedin' | 'youtube' | 'website' | 'other' = 'other';
-      let Icon = ExternalLink;
+      let platform: string = 'website';
+      let Icon = Globe;
+      let color = 'text-black/60';
+      let hoverColor = 'hover:bg-black hover:text-white';
       
-      if (url.includes('twitter.com') || url.includes('x.com')) {
+      // Platform detection
+      if (url.includes('instagram.com')) {
+        platform = 'instagram';
+        Icon = Instagram;
+        color = 'text-pink-600';
+        hoverColor = 'hover:bg-pink-50 hover:text-pink-600';
+      } else if (url.includes('twitter.com') || url.includes('x.com')) {
         platform = 'twitter';
         Icon = Twitter;
+        color = 'text-blue-500';
+        hoverColor = 'hover:bg-blue-50 hover:text-blue-500';
       } else if (url.includes('facebook.com') || url.includes('fb.com')) {
         platform = 'facebook';
         Icon = Facebook;
-      } else if (url.includes('instagram.com')) {
-        platform = 'instagram';
-        Icon = Instagram;
-      } else if (url.includes('linkedin.com')) {
-        platform = 'linkedin';
-        Icon = Linkedin;
+        color = 'text-blue-600';
+        hoverColor = 'hover:bg-blue-50 hover:text-blue-600';
       } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
         platform = 'youtube';
         Icon = Youtube;
-      } else if (platform === 'other' && !url.includes('twitter') && !url.includes('facebook') && !url.includes('instagram') && !url.includes('linkedin') && !url.includes('youtube')) {
-        // Check if it's a general website
-        if (url.startsWith('http') || url.includes('.')) {
-          platform = 'website';
-          Icon = Globe;
-        }
+        color = 'text-red-600';
+        hoverColor = 'hover:bg-red-50 hover:text-red-600';
+      } else if (url.includes('linkedin.com')) {
+        platform = 'linkedin';
+        Icon = Linkedin;
+        color = 'text-blue-700';
+        hoverColor = 'hover:bg-blue-50 hover:text-blue-700';
+      } else if (url.includes('tiktok.com')) {
+        platform = 'tiktok';
+        Icon = Disc; // Using Disc as TikTok alternative
+        color = 'text-black';
+        hoverColor = 'hover:bg-black hover:text-white';
+      } else if (url.includes('twitch.tv')) {
+        platform = 'twitch';
+        Icon = Twitch;
+        color = 'text-purple-600';
+        hoverColor = 'hover:bg-purple-50 hover:text-purple-600';
+      } else if (url.includes('substack.com')) {
+        platform = 'substack';
+        Icon = BookOpen;
+        color = 'text-orange-600';
+        hoverColor = 'hover:bg-orange-50 hover:text-orange-600';
+      } else if (url.includes('kick.com')) {
+        platform = 'kick';
+        Icon = Gamepad2;
+        color = 'text-green-600';
+        hoverColor = 'hover:bg-green-50 hover:text-green-600';
+      } else if (url.includes('telegram.org') || url.includes('t.me')) {
+        platform = 'telegram';
+        Icon = Send;
+        color = 'text-blue-400';
+        hoverColor = 'hover:bg-blue-50 hover:text-blue-400';
+      } else if (url.includes('discord.com')) {
+        platform = 'discord';
+        Icon = Radio; // Using Radio as Discord alternative
+        color = 'text-indigo-600';
+        hoverColor = 'hover:bg-indigo-50 hover:text-indigo-600';
+      } else if (url.includes('snapchat.com')) {
+        platform = 'snapchat';
+        Icon = Smartphone;
+        color = 'text-yellow-500';
+        hoverColor = 'hover:bg-yellow-50 hover:text-yellow-500';
+      } else if (url.includes('pinterest.com')) {
+        platform = 'pinterest';
+        Icon = Disc;
+        color = 'text-red-500';
+        hoverColor = 'hover:bg-red-50 hover:text-red-500';
+      } else if (url.includes('github.com')) {
+        platform = 'github';
+        Icon = LinkIcon;
+        color = 'text-gray-700';
+        hoverColor = 'hover:bg-gray-100 hover:text-gray-700';
+      } else if (url.includes('mailto:')) {
+        platform = 'email';
+        Icon = Mail;
+        color = 'text-red-500';
+        hoverColor = 'hover:bg-red-50 hover:text-red-500';
       }
       
-      return { ...link, platform, Icon };
-    }).filter(link => link.platform !== 'other');
+      return { ...link, platform, Icon, color, hoverColor };
+    });
   }, [displayCreator]);
 
   // Get non-social links (regular links)
   const regularLinks = useMemo(() => {
     if (!displayCreator || !Array.isArray(displayCreator.links)) return [];
     
+    const socialPlatforms = [
+      'instagram.com', 'x.com', 'twitter.com', 'facebook.com', 'fb.com',
+      'youtube.com', 'youtu.be', 'linkedin.com', 'tiktok.com', 'twitch.tv',
+      'substack.com', 'kick.com', 'telegram.org', 't.me', 'discord.com',
+      'snapchat.com', 'pinterest.com', 'github.com'
+    ];
+    
     return displayCreator.links.filter((link) => {
       const url = link.url.toLowerCase();
-      return !url.includes('twitter.com') && !url.includes('x.com') && 
-             !url.includes('facebook.com') && !url.includes('fb.com') &&
-             !url.includes('instagram.com') && 
-             !url.includes('linkedin.com') && 
-             !url.includes('youtube.com') && !url.includes('youtu.be');
+      // Check if it's a social platform link
+      const isSocial = socialPlatforms.some(platform => url.includes(platform));
+      // Check if it's an email link
+      const isEmail = url.includes('mailto:');
+      // Return only non-social, non-email links
+      return !isSocial && !isEmail;
     });
   }, [displayCreator]);
   // === END OF HOOKS SECTION ===
@@ -237,10 +306,13 @@ export default function CreatorPage() {
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-black/5 text-black/60 hover:bg-black hover:text-white transition-all hover:scale-110"
-                    title={link.title}
+                    className={cn(
+                      "flex items-center justify-center w-10 h-10 rounded-full bg-black/5 transition-all hover:scale-110",
+                      link.hoverColor
+                    )}
+                    title={link.platform.charAt(0).toUpperCase() + link.platform.slice(1)}
                   >
-                    <link.Icon size={18} />
+                    <link.Icon size={18} className={link.platform !== 'website' ? link.color : ''} />
                   </a>
                 ))}
               </div>
