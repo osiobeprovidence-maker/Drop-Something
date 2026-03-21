@@ -88,6 +88,66 @@ export const getPublicSlates = query({
   },
 });
 
+// Get all slates for a creator (for dashboard)
+export const getSlatesByCreator = query({
+  args: { creatorId: v.id("creators") },
+  handler: async (ctx, args) => {
+    const slates = await ctx.db
+      .query("slates")
+      .withIndex("by_creatorId", (q) => q.eq("creatorId", args.creatorId))
+      .order("desc")
+      .collect();
+
+    // Resolve mediaUrl if it's a storageId
+    const resolvedSlates = await Promise.all(
+      slates.map(async (slate) => {
+        let mediaUrl = slate.mediaUrl;
+        if (mediaUrl && !mediaUrl.startsWith("http") && !mediaUrl.startsWith("data:")) {
+          try {
+            const url = await ctx.storage.getUrl(mediaUrl);
+            if (url) mediaUrl = url;
+          } catch (e) {
+            // Not a valid storageId, keep original
+          }
+        }
+        return { ...slate, mediaUrl };
+      })
+    );
+
+    return resolvedSlates;
+  },
+});
+
+// Get slates for a creator (for public page) - includes all slates with visibility info
+export const getPublicSlatesByCreator = query({
+  args: { creatorId: v.id("creators") },
+  handler: async (ctx, args) => {
+    const slates = await ctx.db
+      .query("slates")
+      .withIndex("by_creatorId", (q) => q.eq("creatorId", args.creatorId))
+      .order("desc")
+      .collect();
+
+    // Resolve mediaUrl if it's a storageId
+    const resolvedSlates = await Promise.all(
+      slates.map(async (slate) => {
+        let mediaUrl = slate.mediaUrl;
+        if (mediaUrl && !mediaUrl.startsWith("http") && !mediaUrl.startsWith("data:")) {
+          try {
+            const url = await ctx.storage.getUrl(mediaUrl);
+            if (url) mediaUrl = url;
+          } catch (e) {
+            // Not a valid storageId, keep original
+          }
+        }
+        return { ...slate, mediaUrl };
+      })
+    );
+
+    return resolvedSlates;
+  },
+});
+
 // Get slates from creators user follows
 export const getFollowingSlates = query({
   args: { 
