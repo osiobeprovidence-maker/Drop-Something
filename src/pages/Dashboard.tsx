@@ -13,6 +13,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import SlateTab from "./SlateTab";
+import ShopTab from "./ShopTab";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -1131,78 +1132,12 @@ export default function Dashboard() {
             )}
 
             {activeTab === "shop" && (
-              <motion.div
-                key="shop"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-8"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-black">Products</h2>
-                    <p className="text-sm text-black/40">Manage your digital and physical offerings.</p>
-                  </div>
-                  <button
-                    onClick={() => openModal("product")}
-                    className="flex h-10 items-center gap-2 rounded-full bg-black px-6 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95"
-                  >
-                    <Plus size={16} />
-                    Add Product
-                  </button>
-                </div>
-
-                <div className="grid gap-6 sm:grid-cols-2">
-                  {products.length === 0 ? (
-                    <div className="col-span-full flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-black/10 p-12 text-center">
-                      <ShoppingBag size={40} className="text-black/20" />
-                      <p className="mt-4 font-bold text-black/40">No products in your shop</p>
-                    </div>
-                  ) : (
-                    products.map((product) => (
-                      <div key={product._id} className="group relative overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm transition-all hover:shadow-md">
-                        {product.image && (
-                          <div className="h-40 w-full overflow-hidden border-b border-black/5 bg-black/5">
-                            <img src={product.image} alt={product.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                          </div>
-                        )}
-                        <div className="p-6">
-                          <div className="flex items-center justify-between">
-                            <span className={cn(
-                              "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                              product.type === "digital" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
-                            )}>
-                              {product.type}
-                            </span>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => openModal("product", product)}
-                                className="rounded-lg bg-black/5 p-2 text-black/40 hover:text-black"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                onClick={() => openDeleteModal("product", product._id, product.title)}
-                                className="rounded-lg bg-red-50 p-2 text-red-400 hover:text-red-500"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </div>
-                          <h4 className="mt-4 text-lg font-bold text-black">{product.title}</h4>
-                          <p className="mt-1 text-sm text-black/60 line-clamp-2">{product.description}</p>
-                          <div className="mt-6 flex items-center justify-between border-t border-black/5 pt-4">
-                            <span className="text-lg font-black text-black">₦{product.price.toLocaleString()}</span>
-                            <span className="text-xs font-medium text-black/40">
-                              {product.type === "physical" ? `${product.stock || 0} in stock` : "Digital"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </motion.div>
+              <ShopTab
+                products={products}
+                openModal={openModal}
+                openDeleteModal={openDeleteModal}
+                hasProFeatures={!!hasProFeatures}
+              />
             )}
 
             {activeTab === "slate" && (

@@ -32,6 +32,8 @@ export default function CreatorPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   // Derived values from hooks (still part of hook section)
   const displayCreator = convexCreator;
@@ -140,6 +142,19 @@ export default function CreatorPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handlePurchase = async (product: any) => {
+    // Placeholder for payment flow integration
+    // TODO: Integrate with Paystack for payment processing
+    setSelectedProduct(product);
+    setIsPurchasing(true);
+    
+    // For now, show a placeholder message
+    alert(`Purchase flow for "${product.title}" - Paystack integration coming soon`);
+    
+    setIsPurchasing(false);
+    setSelectedProduct(null);
   };
 
   const finalAmount = tipAmount || (customAmount ? parseInt(customAmount) : 0);
@@ -594,9 +609,22 @@ export default function CreatorPage() {
                           </div>
                           <h4 className="text-lg font-bold text-black mb-2">{product.title}</h4>
                           <p className="text-sm text-black/60 line-clamp-2 flex-1 mb-6">{product.description}</p>
-                          <button className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95">
-                            Buy Now
-                            <ChevronRight size={16} />
+                          <button
+                            onClick={() => handlePurchase(product)}
+                            disabled={isPurchasing}
+                            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                          >
+                            {isPurchasing ? (
+                              <>
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                Buy Now
+                                <ChevronRight size={16} />
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>
