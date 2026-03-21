@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { 
-  Menu, X, Share2, Copy, Check, 
-  Home, ShoppingBag, Target, Users, 
-  LayoutDashboard, LogOut 
+import {
+  Menu, X, Share2, Copy, Check,
+  Home, ShoppingBag, Target, Users,
+  LayoutDashboard, LogOut, Search
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/src/lib/utils";
@@ -137,12 +137,15 @@ export const CreatorNavbar: React.FC<CreatorNavbarProps> = ({ username }) => {
                 Dashboard
               </Link>
             ) : (
-              <Link
-                to="/explore"
+              <a
+                href="/explore"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-black/10 text-black text-sm font-bold transition-all hover:bg-black/5"
               >
+                <Search size={16} />
                 Explore
-              </Link>
+              </a>
             )}
             <button 
               onClick={copyLink}
@@ -231,13 +234,15 @@ export const CreatorNavbar: React.FC<CreatorNavbarProps> = ({ username }) => {
                       Dashboard
                     </Link>
                   ) : (
-                    <Link
-                      to="/explore"
+                    <a
+                      href="/explore"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 rounded-xl transition-all"
                     >
-                      <Home className="w-4 h-4" />
+                      <Search className="w-4 h-4" />
                       Explore
-                    </Link>
+                    </a>
                   )}
                   {tabs.map((tab) => (
                     <button
