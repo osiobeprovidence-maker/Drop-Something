@@ -146,10 +146,17 @@ export default function CreatorPage() {
     <div className="min-h-screen bg-[#F9FAFB] pb-20">
       {/* Cover Image */}
       <div className="relative h-40 w-full bg-zinc-200 sm:h-64 overflow-hidden">
-        <img 
-          src={displayCreator.coverImage} 
-          alt="" 
-          className="h-full w-full object-cover"
+        <img
+          src={displayCreator.coverImage}
+          alt=""
+          className="h-full w-full"
+          style={{
+            objectFit: 'cover',
+            transform: displayCreator.coverPosition 
+              ? `translate(${displayCreator.coverPosition.x}px, ${displayCreator.coverPosition.y}px) scale(${displayCreator.coverPosition.zoom})`
+              : undefined,
+            transformOrigin: 'center',
+          }}
           referrerPolicy="no-referrer"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />

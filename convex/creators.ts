@@ -184,29 +184,34 @@ export const updateCreator = mutation({
     about: v.optional(v.string()),
     avatar: v.optional(v.string()),
     coverImage: v.optional(v.string()),
+    coverPosition: v.optional(v.object({
+      x: v.number(),
+      y: v.number(),
+      zoom: v.number(),
+    })),
     pageStyle: v.optional(v.union(v.literal("support"), v.literal("shop"), v.literal("goal"), v.literal("hybrid"))),
   },
   handler: async (ctx, args) => {
     const { creatorId, ...updates } = args;
-    
+
     // Get current creator to check if username is actually changing
     const currentCreator = await ctx.db.get(creatorId);
     if (!currentCreator) {
       throw new Error("Creator not found");
     }
-    
+
     // Check username uniqueness ONLY if username is being changed
     if (updates.username && updates.username !== currentCreator.username) {
       const existing = await ctx.db
         .query("creators")
         .withIndex("by_username", (q) => q.eq("username", updates.username!))
         .unique();
-      
+
       if (existing) {
         throw new Error("Username already taken");
       }
     }
-    
+
     return await ctx.db.patch(creatorId, updates);
   },
 });

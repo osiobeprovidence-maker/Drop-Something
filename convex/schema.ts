@@ -17,6 +17,11 @@ export default defineSchema({
     about: v.optional(v.string()),
     avatar: v.string(),
     coverImage: v.string(),
+    coverPosition: v.optional(v.object({
+      x: v.number(),
+      y: v.number(),
+      zoom: v.number(),
+    })),
     pageStyle: v.union(v.literal("support"), v.literal("shop"), v.literal("goal"), v.literal("hybrid")),
     totalRevenue: v.number(),
     supporterCount: v.number(),

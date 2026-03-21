@@ -136,10 +136,11 @@ export default function Dashboard() {
 
   // Cover image adjuster states
   const [isCoverAdjustOpen, setIsCoverAdjustOpen] = useState(false);
-  const [coverImageAdjust, setCoverImageAdjust] = useState({ offsetX: 0, offsetY: 0, scale: 1 });
+  const [coverImageAdjust, setCoverImageAdjust] = useState({ x: 0, y: 0, zoom: 1 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const coverAdjustRef = useRef<{ offsetX: number; offsetY: number; scale: number }>({ offsetX: 0, offsetY: 0, scale: 1 });
+  const coverAdjustRef = useRef<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -327,24 +328,57 @@ export default function Dashboard() {
 
   // Cover image adjustment handlers
   const handleOpenCoverAdjust = () => {
-    setCoverImageAdjust({ offsetX: 0, offsetY: 0, scale: 1 });
-    coverAdjustRef.current = { offsetX: 0, offsetY: 0, scale: 1 };
+    // Initialize with saved position from profile if available
+    const savedPosition = convexCreator?.coverPosition;
+    if (savedPosition) {
+      setCoverImageAdjust({ x: savedPosition.x, y: savedPosition.y, zoom: savedPosition.zoom });
+      coverAdjustRef.current = { x: savedPosition.x, y: savedPosition.y, zoom: savedPosition.zoom };
+    } else {
+      setCoverImageAdjust({ x: 0, y: 0, zoom: 1 });
+      coverAdjustRef.current = { x: 0, y: 0, zoom: 1 };
+    }
     setIsCoverAdjustOpen(true);
   };
 
-  const handleCoverMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleCoverMouseDown = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    setDragStart({ x: clientX, y: clientY });
   };
 
-  const handleCoverMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    const deltaX = e.clientX - dragStart.x;
-    const deltaY = e.clientY - dragStart.y;
-    const newOffsetX = (coverAdjustRef.current.offsetX + deltaX) / 2;
-    const newOffsetY = (coverAdjustRef.current.offsetY + deltaY) / 2;
-    setCoverImageAdjust(prev => ({ ...prev, offsetX: newOffsetX, offsetY: newOffsetY }));
-    setDragStart({ x: e.clientX, y: e.clientY });
+  const handleCoverMouseMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    
+    const deltaX = clientX - dragStart.x;
+    const deltaY = clientY - dragStart.y;
+    
+    const container = containerRef.current;
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    
+    // Calculate image dimensions at current zoom
+    const baseWidth = 1200;
+    const baseHeight = 400;
+    const scaledWidth = baseWidth * coverImageAdjust.zoom;
+    const scaledHeight = baseHeight * coverImageAdjust.zoom;
+    
+    // Calculate max drag boundaries (prevent image from going completely out of frame)
+    const maxX = Math.max(0, (scaledWidth - containerWidth) / 2);
+    const maxY = Math.max(0, (scaledHeight - containerHeight) / 2);
+    
+    const newX = coverAdjustRef.current.x + deltaX;
+    const newY = coverAdjustRef.current.y + deltaY;
+    
+    // Clamp position within boundaries
+    const clampedX = Math.max(-maxX, Math.min(maxX, newX));
+    const clampedY = Math.max(-maxY, Math.min(maxY, newY));
+    
+    setCoverImageAdjust(prev => ({ ...prev, x: clampedX, y: clampedY }));
+    setDragStart({ x: clientX, y: clientY });
   };
 
   const handleCoverMouseUp = () => {
@@ -354,20 +388,33 @@ export default function Dashboard() {
 
   const handleCoverZoom = (direction: 'in' | 'out') => {
     setCoverImageAdjust(prev => {
-      const newScale = direction === 'in' ? Math.min(prev.scale + 0.1, 3) : Math.max(prev.scale - 0.1, 0.5);
-      return { ...prev, scale: newScale };
+      const newZoom = direction === 'in' ? Math.min(prev.zoom + 0.1, 3) : Math.max(prev.zoom - 0.1, 0.5);
+      return { ...prev, zoom: newZoom };
     });
   };
 
-  const handleSaveCoverAdjust = () => {
-    setIsCoverAdjustOpen(false);
-    // Store adjustment data - we could enhance this to save to backend if needed
-    console.log("Cover image adjusted:", coverImageAdjust);
+  const handleSaveCoverAdjust = async () => {
+    if (!convexCreator) return;
+    
+    try {
+      await updateCreator({
+        creatorId: convexCreator._id,
+        coverPosition: {
+          x: coverImageAdjust.x,
+          y: coverImageAdjust.y,
+          zoom: coverImageAdjust.zoom,
+        },
+      });
+      setIsCoverAdjustOpen(false);
+    } catch (err) {
+      console.error("Failed to save cover position:", err);
+      alert("Failed to save cover position. Please try again.");
+    }
   };
 
   const handleResetCoverAdjust = () => {
-    setCoverImageAdjust({ offsetX: 0, offsetY: 0, scale: 1 });
-    coverAdjustRef.current = { offsetX: 0, offsetY: 0, scale: 1 };
+    setCoverImageAdjust({ x: 0, y: 0, zoom: 1 });
+    coverAdjustRef.current = { x: 0, y: 0, zoom: 1 };
   };
 
   // Handle profile update
@@ -1402,24 +1449,29 @@ export default function Dashboard() {
               <div className="p-8">
                 <h3 className="text-xl font-bold text-black">Adjust Cover Image</h3>
                 <p className="mt-1 text-sm text-black/60">Drag to reposition, use buttons to zoom</p>
-                
+
                 <div className="mt-6 space-y-4">
                   {/* Preview with drag controls */}
-                  <div 
-                    className="relative h-64 w-full overflow-hidden rounded-2xl bg-black/5 border border-black/10 cursor-grab active:cursor-grabbing"
+                  <div
+                    ref={containerRef}
+                    className="relative h-64 w-full overflow-hidden rounded-2xl bg-black/5 border border-black/10 cursor-grab active:cursor-grabbing touch-none"
                     onMouseDown={handleCoverMouseDown}
                     onMouseMove={handleCoverMouseMove}
                     onMouseUp={handleCoverMouseUp}
                     onMouseLeave={handleCoverMouseUp}
+                    onTouchStart={handleCoverMouseDown}
+                    onTouchMove={handleCoverMouseMove}
+                    onTouchEnd={handleCoverMouseUp}
                   >
-                    <img 
-                      src={profileForm.coverImage || "https://picsum.photos/seed/cover/1200/400"} 
-                      alt="" 
-                      className="h-full w-full object-cover select-none pointer-events-none"
+                    <img
+                      src={profileForm.coverImage || "https://picsum.photos/seed/cover/1200/400"}
+                      alt=""
+                      className="h-full w-full select-none pointer-events-none"
                       style={{
-                        transform: `translate(${coverImageAdjust.offsetX}px, ${coverImageAdjust.offsetY}px) scale(${coverImageAdjust.scale})`,
+                        transform: `translate(${coverImageAdjust.x}px, ${coverImageAdjust.y}px) scale(${coverImageAdjust.zoom})`,
                         transformOrigin: 'center',
-                        transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+                        transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+                        objectFit: 'cover',
                       }}
                       referrerPolicy="no-referrer"
                       draggable={false}
@@ -1432,17 +1484,17 @@ export default function Dashboard() {
                     <button
                       onClick={() => handleCoverZoom('out')}
                       className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm font-bold text-black transition-all hover:bg-black/5 disabled:opacity-50"
-                      disabled={coverImageAdjust.scale <= 0.5}
+                      disabled={coverImageAdjust.zoom <= 0.5}
                     >
                       − Zoom Out
                     </button>
                     <span className="text-sm font-bold text-black/60 min-w-16 text-center">
-                      {Math.round(coverImageAdjust.scale * 100)}%
+                      {Math.round(coverImageAdjust.zoom * 100)}%
                     </span>
                     <button
                       onClick={() => handleCoverZoom('in')}
                       className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm font-bold text-black transition-all hover:bg-black/5 disabled:opacity-50"
-                      disabled={coverImageAdjust.scale >= 3}
+                      disabled={coverImageAdjust.zoom >= 3}
                     >
                       + Zoom In
                     </button>
