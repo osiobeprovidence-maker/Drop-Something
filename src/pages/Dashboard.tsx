@@ -4,7 +4,7 @@ import {
   LayoutDashboard, User, Heart, Users, Target, ShoppingBag, Link as LinkIcon,
   LogOut, Plus, Edit2, Trash2, Check, Settings,
   TrendingUp, DollarSign, Image as ImageIcon, ExternalLink, Copy, Share2,
-  Globe, Package, FileText, X, Menu, Square
+  Globe, Package, FileText, X, Menu, Square, Search
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
@@ -203,6 +203,7 @@ export default function Dashboard() {
     { id: "goals", label: "Goals", icon: Target },
     { id: "shop", label: "Shop", icon: ShoppingBag },
     { id: "slate", label: "Slate", icon: Square },
+    { id: "explore", label: "Explore", icon: Search },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
@@ -572,6 +573,10 @@ export default function Dashboard() {
                 onClick={() => {
                   if (item.id === "settings") {
                     navigate("/settings");
+                    return;
+                  }
+                  if (item.id === "explore") {
+                    window.open("/explore", "_blank", "noopener,noreferrer");
                     return;
                   }
                   setActiveTab(item.id);
