@@ -122,4 +122,20 @@ export default defineSchema({
     playbackId: v.optional(v.string()), // for Mux video/audio playback
     visibility: v.union(v.literal("public"), v.literal("followers"), v.literal("supporters"), v.literal("members")),
   }).index("by_creatorId", ["creatorId"]),
+
+  // Slate likes
+  slateLikes: defineTable({
+    userId: v.id("users"),
+    slateId: v.id("slates"),
+  }).index("by_userId", ["userId"])
+    .index("by_slateId", ["slateId"])
+    .index("by_userId_and_slateId", ["userId", "slateId"]),
+
+  // Slate comments
+  slateComments: defineTable({
+    userId: v.id("users"),
+    slateId: v.id("slates"),
+    content: v.string(),
+  }).index("by_slateId", ["slateId"])
+    .index("by_userId", ["userId"]),
 });

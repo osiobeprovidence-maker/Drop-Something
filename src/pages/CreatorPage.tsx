@@ -243,9 +243,14 @@ export default function CreatorPage() {
       <div className="flex min-h-screen flex-col items-center justify-center bg-white p-4 text-center">
         <h1 className="text-2xl font-black text-black">Creator not found</h1>
         <p className="mt-2 text-black/60">This creator page doesn't exist.</p>
-        <Link to="/explore" className="mt-6 rounded-full bg-black px-6 py-3 text-sm font-bold text-white">
+        <a
+          href="/explore"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-6 rounded-full bg-black px-6 py-3 text-sm font-bold text-white"
+        >
           Browse Creators
-        </Link>
+        </a>
       </div>
     );
   }

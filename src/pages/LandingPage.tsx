@@ -70,12 +70,14 @@ export default function LandingPage() {
               >
                 Create Your Page
               </Link>
-              <Link
-                to="/explore"
+              <a
+                href="/explore"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex h-14 items-center justify-center rounded-full border border-black/10 bg-white px-8 text-base font-semibold text-black transition-colors hover:bg-black/5"
               >
                 Explore Creators
-              </Link>
+              </a>
             </motion.div>
           </div>
         </div>

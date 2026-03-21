@@ -2,63 +2,180 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 
-// Get all slates for a creator (for dashboard)
-export const getSlatesByCreator = query({
-  args: { creatorId: v.id("creators") },
+// Get all public slates for explore feed (paginated)
+export const getPublicSlates = query({
+  args: { 
+    cursor: v.optional(v.id("slates")),
+    limit: v.optional(v.number())
+  },
   handler: async (ctx, args) => {
-    const slates = await ctx.db
-      .query("slates")
-      .withIndex("by_creatorId", (q) => q.eq("creatorId", args.creatorId))
-      .order("desc")
-      .collect();
+    const limit = args.limit || 20;
+    
+    let slates;
+    if (args.cursor) {
+      slates = await ctx.db
+        .query("slates")
+        .withIndex("by_creatorId")
+        .order("desc")
+        .filter((q) => q.eq(q.field("visibility"), "public"))
+        .skip(0)
+        .take(limit + 1);
+    } else {
+      slates = await ctx.db
+        .query("slates")
+        .withIndex("by_creatorId")
+        .order("desc")
+        .filter((q) => q.eq(q.field("visibility"), "public"))
+        .take(limit + 1);
+    }
 
-    // Resolve mediaUrl if it's a storageId
+    const hasMore = slates.length > limit;
+    const items = slates.slice(0, limit);
+
+    // Resolve mediaUrl and add creator info
     const resolvedSlates = await Promise.all(
-      slates.map(async (slate) => {
+      items.map(async (slate) => {
         let mediaUrl = slate.mediaUrl;
         if (mediaUrl && !mediaUrl.startsWith("http") && !mediaUrl.startsWith("data:")) {
           try {
             const url = await ctx.storage.getUrl(mediaUrl);
             if (url) mediaUrl = url;
           } catch (e) {
-            // Not a valid storageId, keep original
+            // Not a valid storageId
           }
         }
-        return { ...slate, mediaUrl };
+
+        const creator = await ctx.db.get(slate.creatorId);
+        let avatar = creator?.avatar;
+        if (avatar && !avatar.startsWith("http") && !avatar.startsWith("data:")) {
+          try {
+            const url = await ctx.storage.getUrl(avatar);
+            if (url) avatar = url;
+          } catch (e) {
+            // Not a valid storageId
+          }
+        }
+
+        // Get like count
+        const likeCount = (await ctx.db
+          .query("slateLikes")
+          .withIndex("by_slateId", (q) => q.eq("slateId", slate._id))
+          .collect()).length;
+
+        // Get comment count
+        const commentCount = (await ctx.db
+          .query("slateComments")
+          .withIndex("by_slateId", (q) => q.eq("slateId", slate._id))
+          .collect()).length;
+
+        return {
+          ...slate,
+          mediaUrl,
+          creatorName: creator?.name || "Unknown",
+          creatorUsername: creator?.username || "unknown",
+          creatorAvatar: avatar,
+          likeCount,
+          commentCount,
+        };
       })
     );
 
-    return resolvedSlates;
+    return {
+      items: resolvedSlates,
+      hasMore,
+      nextCursor: hasMore ? items[items.length - 1]._id : undefined,
+    };
   },
 });
 
-// Get slates for a creator (for public page) - includes all slates with visibility info
-export const getPublicSlatesByCreator = query({
-  args: { creatorId: v.id("creators") },
+// Get slates from creators user follows
+export const getFollowingSlates = query({
+  args: { 
+    userId: v.id("users"),
+    cursor: v.optional(v.id("slates")),
+    limit: v.optional(v.number())
+  },
   handler: async (ctx, args) => {
-    const slates = await ctx.db
-      .query("slates")
-      .withIndex("by_creatorId", (q) => q.eq("creatorId", args.creatorId))
-      .order("desc")
+    const limit = args.limit || 20;
+    
+    // Get all creators user follows
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.userId))
       .collect();
 
-    // Resolve mediaUrl if it's a storageId
+    if (follows.length === 0) {
+      return { items: [], hasMore: false, nextCursor: undefined };
+    }
+
+    // Get slates from followed creators
+    const allSlates: any[] = [];
+    for (const follow of follows) {
+      const creatorSlates = await ctx.db
+        .query("slates")
+        .withIndex("by_creatorId", (q) => q.eq("creatorId", follow.followingId))
+        .filter((q) => q.eq(q.field("visibility"), "public"))
+        .collect();
+      allSlates.push(...creatorSlates);
+    }
+
+    // Sort by creation time (newest first)
+    allSlates.sort((a, b) => b._creationTime - a._creationTime);
+
+    const hasMore = allSlates.length > limit;
+    const items = allSlates.slice(0, limit);
+
+    // Resolve mediaUrl and add creator info
     const resolvedSlates = await Promise.all(
-      slates.map(async (slate) => {
+      items.map(async (slate) => {
         let mediaUrl = slate.mediaUrl;
         if (mediaUrl && !mediaUrl.startsWith("http") && !mediaUrl.startsWith("data:")) {
           try {
             const url = await ctx.storage.getUrl(mediaUrl);
             if (url) mediaUrl = url;
           } catch (e) {
-            // Not a valid storageId, keep original
+            // Not a valid storageId
           }
         }
-        return { ...slate, mediaUrl };
+
+        const creator = await ctx.db.get(slate.creatorId);
+        let avatar = creator?.avatar;
+        if (avatar && !avatar.startsWith("http") && !avatar.startsWith("data:")) {
+          try {
+            const url = await ctx.storage.getUrl(avatar);
+            if (url) avatar = url;
+          } catch (e) {
+            // Not a valid storageId
+          }
+        }
+
+        const likeCount = (await ctx.db
+          .query("slateLikes")
+          .withIndex("by_slateId", (q) => q.eq("slateId", slate._id))
+          .collect()).length;
+
+        const commentCount = (await ctx.db
+          .query("slateComments")
+          .withIndex("by_slateId", (q) => q.eq("slateId", slate._id))
+          .collect()).length;
+
+        return {
+          ...slate,
+          mediaUrl,
+          creatorName: creator?.name || "Unknown",
+          creatorUsername: creator?.username || "unknown",
+          creatorAvatar: avatar,
+          likeCount,
+          commentCount,
+        };
       })
     );
 
-    return resolvedSlates;
+    return {
+      items: resolvedSlates,
+      hasMore,
+      nextCursor: hasMore ? items[items.length - 1]._id : undefined,
+    };
   },
 });
 
@@ -140,5 +257,82 @@ export const hasSupportedCreator = query({
       .filter((q) => q.eq(q.field("supporterName"), args.userId))
       .collect();
     return tips.length > 0;
+  },
+});
+
+// ==================== LIKES ====================
+
+export const toggleLike = mutation({
+  args: { slateId: v.id("slates"), userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("slateLikes")
+      .withIndex("by_userId_and_slateId", (q) => q.eq("userId", args.userId).eq("slateId", args.slateId))
+      .first();
+
+    if (existing) {
+      await ctx.db.delete(existing._id);
+      return { liked: false };
+    } else {
+      await ctx.db.insert("slateLikes", {
+        userId: args.userId,
+        slateId: args.slateId,
+      });
+      return { liked: true };
+    }
+  },
+});
+
+export const isLiked = query({
+  args: { slateId: v.id("slates"), userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const like = await ctx.db
+      .query("slateLikes")
+      .withIndex("by_userId_and_slateId", (q) => q.eq("userId", args.userId).eq("slateId", args.slateId))
+      .first();
+    return !!like;
+  },
+});
+
+// ==================== COMMENTS ====================
+
+export const getComments = query({
+  args: { slateId: v.id("slates") },
+  handler: async (ctx, args) => {
+    const comments = await ctx.db
+      .query("slateComments")
+      .withIndex("by_slateId", (q) => q.eq("slateId", args.slateId))
+      .collect();
+
+    const resolvedComments = await Promise.all(
+      comments.map(async (comment) => {
+        const user = await ctx.db.get(comment.userId);
+        return {
+          ...comment,
+          userName: user?.name || "Anonymous",
+          userAvatar: user?.image,
+        };
+      })
+    );
+
+    return resolvedComments;
+  },
+});
+
+export const addComment = mutation({
+  args: {
+    slateId: v.id("slates"),
+    userId: v.id("users"),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("slateComments", args);
+  },
+});
+
+export const deleteComment = mutation({
+  args: { commentId: v.id("slateComments") },
+  handler: async (ctx, args) => {
+    return await ctx.db.delete(args.commentId);
   },
 });
