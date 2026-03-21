@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useMemo } from "react";
-import { Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, Share2, Copy, ArrowLeft, FileText, Lock, Music } from "lucide-react";
+import { Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, ArrowLeft, FileText, Lock, Music, Twitter, Facebook, Instagram, Linkedin, Youtube, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
 import { useQuery, useMutation } from "convex/react";
@@ -31,7 +31,6 @@ export default function CreatorPage() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
 
   // Derived values from hooks (still part of hook section)
@@ -48,6 +47,56 @@ export default function CreatorPage() {
   const recentSupporters = useMemo(() => {
     if (!displayCreator || !Array.isArray(displayCreator.tips)) return [];
     return displayCreator.tips.slice(0, 5);
+  }, [displayCreator]);
+
+  // Get social links from creator's links
+  const socialLinks = useMemo(() => {
+    if (!displayCreator || !Array.isArray(displayCreator.links)) return [];
+    
+    return displayCreator.links.map((link) => {
+      const url = link.url.toLowerCase();
+      let platform: 'twitter' | 'facebook' | 'instagram' | 'linkedin' | 'youtube' | 'website' | 'other' = 'other';
+      let Icon = ExternalLink;
+      
+      if (url.includes('twitter.com') || url.includes('x.com')) {
+        platform = 'twitter';
+        Icon = Twitter;
+      } else if (url.includes('facebook.com') || url.includes('fb.com')) {
+        platform = 'facebook';
+        Icon = Facebook;
+      } else if (url.includes('instagram.com')) {
+        platform = 'instagram';
+        Icon = Instagram;
+      } else if (url.includes('linkedin.com')) {
+        platform = 'linkedin';
+        Icon = Linkedin;
+      } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        platform = 'youtube';
+        Icon = Youtube;
+      } else if (platform === 'other' && !url.includes('twitter') && !url.includes('facebook') && !url.includes('instagram') && !url.includes('linkedin') && !url.includes('youtube')) {
+        // Check if it's a general website
+        if (url.startsWith('http') || url.includes('.')) {
+          platform = 'website';
+          Icon = Globe;
+        }
+      }
+      
+      return { ...link, platform, Icon };
+    }).filter(link => link.platform !== 'other');
+  }, [displayCreator]);
+
+  // Get non-social links (regular links)
+  const regularLinks = useMemo(() => {
+    if (!displayCreator || !Array.isArray(displayCreator.links)) return [];
+    
+    return displayCreator.links.filter((link) => {
+      const url = link.url.toLowerCase();
+      return !url.includes('twitter.com') && !url.includes('x.com') && 
+             !url.includes('facebook.com') && !url.includes('fb.com') &&
+             !url.includes('instagram.com') && 
+             !url.includes('linkedin.com') && 
+             !url.includes('youtube.com') && !url.includes('youtu.be');
+    });
   }, [displayCreator]);
   // === END OF HOOKS SECTION ===
 
@@ -93,23 +142,6 @@ export default function CreatorPage() {
     }
   };
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const sharePage = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: `Support ${displayCreator.name} on DropSomething`,
-        url: window.location.href,
-      });
-    } else {
-      copyLink();
-    }
-  };
-
   const finalAmount = tipAmount || (customAmount ? parseInt(customAmount) : 0);
 
   // Show loading state
@@ -136,12 +168,14 @@ export default function CreatorPage() {
 
   const showHome = true;
   const showAbout = true;
+  const showSlate = slates && slates.length > 0;
   const showMembership = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "support") && displayCreator.memberships.length > 0;
   const showGoals = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "goal") && displayCreator.goals.length > 0;
   const showShop = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "shop") && displayCreator.products.length > 0;
 
   const tabs = [
-    { id: "home", label: "Support", icon: Heart, show: true },
+    { id: "home", label: "Home", icon: Heart, show: true },
+    { id: "slate", label: "Slate", icon: FileText, show: showSlate },
     { id: "membership", label: "Memberships", icon: Users, show: showMembership },
     { id: "shop", label: "Shop", icon: ShoppingBag, show: showShop },
     { id: "goals", label: "Goals", icon: Target, show: showGoals },
@@ -178,7 +212,25 @@ export default function CreatorPage() {
           <div className="mt-3">
             <h1 className="text-xl font-black text-black sm:text-2xl">@{displayCreator?.username}</h1>
             <p className="mt-1 text-sm font-medium text-black/60 max-w-lg">{displayCreator?.bio}</p>
-            
+
+            {/* Social Links - Platform Icons */}
+            {socialLinks.length > 0 && (
+              <div className="mt-3 flex items-center justify-center gap-3 flex-wrap">
+                {socialLinks.map((link) => (
+                  <a
+                    key={link._id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-black/5 text-black/60 hover:bg-black hover:text-white transition-all hover:scale-110"
+                    title={link.title}
+                  >
+                    <link.Icon size={18} />
+                  </a>
+                ))}
+              </div>
+            )}
+
             {/* Follow Button - Only show if not own page and user is logged in */}
             {!isOwnPage && convexUserId && displayCreator && (
               <button
@@ -325,15 +377,15 @@ export default function CreatorPage() {
                   </div>
                 </section>
 
-                {/* Links Section */}
-                {displayCreator.links.length > 0 && (
+                {/* Links Section - Regular Links Only */}
+                {regularLinks.length > 0 && (
                   <section>
                     <div className="flex items-center justify-start gap-2 mb-4">
                       <ExternalLink size={18} />
-                      <h2 className="font-bold text-black">Links & Socials</h2>
+                      <h2 className="font-bold text-black">Links</h2>
                     </div>
                     <div className="flex flex-col gap-3">
-                      {displayCreator.links.map((link) => (
+                      {regularLinks.map((link) => (
                         <a
                           key={link._id}
                           href={link.url}
@@ -345,106 +397,6 @@ export default function CreatorPage() {
                           <ExternalLink size={16} className="text-black/40" />
                         </a>
                       ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Slate Section */}
-                {slates && slates.length > 0 && (
-                  <section>
-                    <div className="flex items-center justify-start gap-2 mb-4">
-                      <FileText size={18} />
-                      <h2 className="font-bold text-black">Slate</h2>
-                    </div>
-                    <div className="space-y-4">
-                      {slates.map((slate) => {
-                        // Check if content is locked for this viewer
-                        const isLocked = slate.visibility !== "public";
-                        const lockMessage = slate.visibility === "followers" 
-                          ? "Follow to unlock this content"
-                          : slate.visibility === "supporters"
-                          ? "Support to unlock this content"
-                          : "Become a member to unlock this content";
-
-                        return (
-                          <div
-                            key={slate._id}
-                            className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5"
-                          >
-                            {/* Slate header with type and visibility badges */}
-                            <div className="flex items-center gap-2 mb-4">
-                              <span className={cn(
-                                "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider",
-                                slate.type === "text" ? "bg-blue-50 text-blue-600" :
-                                slate.type === "image" ? "bg-purple-50 text-purple-600" :
-                                slate.type === "video" ? "bg-pink-50 text-pink-600" :
-                                "bg-emerald-50 text-emerald-600"
-                              )}>
-                                {slate.type}
-                              </span>
-                              {slate.visibility !== "public" && (
-                                <span className={cn(
-                                  "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1",
-                                  slate.visibility === "followers" ? "bg-purple-50 text-purple-600" :
-                                  slate.visibility === "supporters" ? "bg-pink-50 text-pink-600" :
-                                  "bg-amber-50 text-amber-600"
-                                )}>
-                                  <Lock size={10} />
-                                  {slate.visibility}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Slate content based on type - show locked state if needed */}
-                            {isLocked ? (
-                              <div className="flex flex-col items-center justify-center py-12 text-center">
-                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/5 text-black/40 mb-4">
-                                  <Lock size={32} />
-                                </div>
-                                <p className="text-sm font-bold text-black">{lockMessage}</p>
-                                <p className="text-xs text-black/40 mt-1">Support or join to unlock this content</p>
-                              </div>
-                            ) : (
-                              <>
-                                {slate.type === "text" && slate.content && (
-                                  <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
-                                    {slate.content}
-                                  </p>
-                                )}
-
-                                {slate.type === "image" && slate.mediaUrl && (
-                                  <img
-                                    src={slate.mediaUrl}
-                                    alt="Slate image"
-                                    className="w-full rounded-2xl object-cover max-h-96"
-                                  />
-                                )}
-
-                                {slate.type === "video" && slate.playbackId && (
-                                  <div className="relative rounded-2xl overflow-hidden bg-black">
-                                    <video
-                                      controls
-                                      className="w-full max-h-96 object-cover"
-                                    >
-                                      <source src={`https://stream.mux.com/${slate.playbackId}.m3u8`} type="application/x-mpegURL" />
-                                      Your browser does not support the video tag.
-                                    </video>
-                                  </div>
-                                )}
-
-                                {slate.type === "audio" && slate.playbackId && (
-                                  <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
-                                    <audio controls className="w-full">
-                                      <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />
-                                      Your browser does not support the audio tag.
-                                    </audio>
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        );
-                      })}
                     </div>
                   </section>
                 )}
@@ -472,23 +424,107 @@ export default function CreatorPage() {
                     </div>
                   </section>
                 )}
+              </motion.div>
+            )}
 
-                {/* Share Section */}
-                <section className="flex gap-2">
-                  <button
-                    onClick={copyLink}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white py-3 font-bold text-black text-sm transition-all hover:bg-black/5"
-                  >
-                    {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
-                    {copied ? "Copied!" : "Copy"}
-                  </button>
-                  <button
-                    onClick={sharePage}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white py-3 font-bold text-black text-sm transition-all hover:bg-black/5"
-                  >
-                    <Share2 size={16} />
-                    Share
-                  </button>
+            {activeTab === "slate" && (
+              <motion.div
+                key="slate"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <section>
+                  <div className="space-y-4">
+                    {slates && slates.map((slate) => {
+                      // Check if content is locked for this viewer
+                      const isLocked = slate.visibility !== "public";
+                      const lockMessage = slate.visibility === "followers"
+                        ? "Follow to unlock this content"
+                        : slate.visibility === "supporters"
+                        ? "Support to unlock this content"
+                        : "Become a member to unlock this content";
+
+                      return (
+                        <div
+                          key={slate._id}
+                          className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5"
+                        >
+                          {/* Slate header with type and visibility badges */}
+                          <div className="flex items-center gap-2 mb-4">
+                            <span className={cn(
+                              "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider",
+                              slate.type === "text" ? "bg-blue-50 text-blue-600" :
+                              slate.type === "image" ? "bg-purple-50 text-purple-600" :
+                              slate.type === "video" ? "bg-pink-50 text-pink-600" :
+                              "bg-emerald-50 text-emerald-600"
+                            )}>
+                              {slate.type}
+                            </span>
+                            {slate.visibility !== "public" && (
+                              <span className={cn(
+                                "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1",
+                                slate.visibility === "followers" ? "bg-purple-50 text-purple-600" :
+                                slate.visibility === "supporters" ? "bg-pink-50 text-pink-600" :
+                                "bg-amber-50 text-amber-600"
+                              )}>
+                                <Lock size={10} />
+                                {slate.visibility}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Slate content based on type - show locked state if needed */}
+                          {isLocked ? (
+                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/5 text-black/40 mb-4">
+                                <Lock size={32} />
+                              </div>
+                              <p className="text-sm font-bold text-black">{lockMessage}</p>
+                              <p className="text-xs text-black/40 mt-1">Support or join to unlock this content</p>
+                            </div>
+                          ) : (
+                            <>
+                              {slate.type === "text" && slate.content && (
+                                <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
+                                  {slate.content}
+                                </p>
+                              )}
+
+                              {slate.type === "image" && slate.mediaUrl && (
+                                <img
+                                  src={slate.mediaUrl}
+                                  alt="Slate image"
+                                  className="w-full rounded-2xl object-cover max-h-96"
+                                />
+                              )}
+
+                              {slate.type === "video" && slate.playbackId && (
+                                <div className="relative rounded-2xl overflow-hidden bg-black">
+                                  <video
+                                    controls
+                                    className="w-full max-h-96 object-cover"
+                                  >
+                                    <source src={`https://stream.mux.com/${slate.playbackId}.m3u8`} type="application/x-mpegURL" />
+                                    Your browser does not support the video tag.
+                                  </video>
+                                </div>
+                              )}
+
+                              {slate.type === "audio" && slate.playbackId && (
+                                <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
+                                  <audio controls className="w-full">
+                                    <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />
+                                    Your browser does not support the audio tag.
+                                  </audio>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </section>
               </motion.div>
             )}
