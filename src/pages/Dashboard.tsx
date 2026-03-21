@@ -134,6 +134,13 @@ export default function Dashboard() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteConfig, setDeleteConfig] = useState<{ type: string, id: string, title: string } | null>(null);
 
+  // Cover image adjuster states
+  const [isCoverAdjustOpen, setIsCoverAdjustOpen] = useState(false);
+  const [coverImageAdjust, setCoverImageAdjust] = useState({ offsetX: 0, offsetY: 0, scale: 1 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const coverAdjustRef = useRef<{ offsetX: number; offsetY: number; scale: number }>({ offsetX: 0, offsetY: 0, scale: 1 });
+
   const handleSave = async () => {
     setIsSaving(true);
     // Data is saved directly to Convex via mutations, just show feedback
@@ -316,6 +323,51 @@ export default function Dashboard() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Cover image adjustment handlers
+  const handleOpenCoverAdjust = () => {
+    setCoverImageAdjust({ offsetX: 0, offsetY: 0, scale: 1 });
+    coverAdjustRef.current = { offsetX: 0, offsetY: 0, scale: 1 };
+    setIsCoverAdjustOpen(true);
+  };
+
+  const handleCoverMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleCoverMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    const deltaX = e.clientX - dragStart.x;
+    const deltaY = e.clientY - dragStart.y;
+    const newOffsetX = (coverAdjustRef.current.offsetX + deltaX) / 2;
+    const newOffsetY = (coverAdjustRef.current.offsetY + deltaY) / 2;
+    setCoverImageAdjust(prev => ({ ...prev, offsetX: newOffsetX, offsetY: newOffsetY }));
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleCoverMouseUp = () => {
+    setIsDragging(false);
+    coverAdjustRef.current = { ...coverImageAdjust };
+  };
+
+  const handleCoverZoom = (direction: 'in' | 'out') => {
+    setCoverImageAdjust(prev => {
+      const newScale = direction === 'in' ? Math.min(prev.scale + 0.1, 3) : Math.max(prev.scale - 0.1, 0.5);
+      return { ...prev, scale: newScale };
+    });
+  };
+
+  const handleSaveCoverAdjust = () => {
+    setIsCoverAdjustOpen(false);
+    // Store adjustment data - we could enhance this to save to backend if needed
+    console.log("Cover image adjusted:", coverImageAdjust);
+  };
+
+  const handleResetCoverAdjust = () => {
+    setCoverImageAdjust({ offsetX: 0, offsetY: 0, scale: 1 });
+    coverAdjustRef.current = { offsetX: 0, offsetY: 0, scale: 1 };
   };
 
   // Handle profile update
@@ -677,23 +729,32 @@ export default function Dashboard() {
                     {/* Cover Image */}
                     <div>
                       <label className="text-xs font-bold uppercase tracking-wider text-black/40">Cover Image</label>
-                      <div className="group relative mt-2 h-40 w-full overflow-hidden rounded-2xl bg-black/5 border border-black/5">
-                        <img 
-                          src={profileForm.coverImage || "https://picsum.photos/seed/cover/1200/400"} 
-                          alt="" 
-                          className="h-full w-full object-cover" 
-                          referrerPolicy="no-referrer" 
-                        />
-                        <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
-                          <ImageIcon size={32} />
-                          <span className="mt-2 text-xs font-bold">Change Cover</span>
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            className="hidden" 
-                            onChange={(e) => handleImageUpload(e, 'coverImage')}
+                      <div className="mt-2 space-y-3">
+                        <div className="group relative h-40 w-full overflow-hidden rounded-2xl bg-black/5 border border-black/5">
+                          <img 
+                            src={profileForm.coverImage || "https://picsum.photos/seed/cover/1200/400"} 
+                            alt="" 
+                            className="h-full w-full object-cover" 
+                            referrerPolicy="no-referrer" 
                           />
-                        </label>
+                          <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
+                            <ImageIcon size={32} />
+                            <span className="mt-2 text-xs font-bold">Change Cover</span>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={(e) => handleImageUpload(e, 'coverImage')}
+                            />
+                          </label>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleOpenCoverAdjust}
+                          className="w-full rounded-lg border border-black/10 bg-white px-4 py-2 text-sm font-bold text-black transition-all hover:bg-black/5"
+                        >
+                          Adjust Position & Zoom
+                        </button>
                       </div>
                     </div>
 
@@ -1313,6 +1374,105 @@ export default function Dashboard() {
                     className="flex-1 rounded-xl bg-red-500 py-3 text-sm font-bold text-white transition-colors hover:bg-red-600"
                   >
                     Delete
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Cover Image Adjuster Modal */}
+      <AnimatePresence>
+        {isCoverAdjustOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsCoverAdjustOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl"
+            >
+              <div className="p-8">
+                <h3 className="text-xl font-bold text-black">Adjust Cover Image</h3>
+                <p className="mt-1 text-sm text-black/60">Drag to reposition, use buttons to zoom</p>
+                
+                <div className="mt-6 space-y-4">
+                  {/* Preview with drag controls */}
+                  <div 
+                    className="relative h-64 w-full overflow-hidden rounded-2xl bg-black/5 border border-black/10 cursor-grab active:cursor-grabbing"
+                    onMouseDown={handleCoverMouseDown}
+                    onMouseMove={handleCoverMouseMove}
+                    onMouseUp={handleCoverMouseUp}
+                    onMouseLeave={handleCoverMouseUp}
+                  >
+                    <img 
+                      src={profileForm.coverImage || "https://picsum.photos/seed/cover/1200/400"} 
+                      alt="" 
+                      className="h-full w-full object-cover select-none pointer-events-none"
+                      style={{
+                        transform: `translate(${coverImageAdjust.offsetX}px, ${coverImageAdjust.offsetY}px) scale(${coverImageAdjust.scale})`,
+                        transformOrigin: 'center',
+                        transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+                      }}
+                      referrerPolicy="no-referrer"
+                      draggable={false}
+                    />
+                    <div className="absolute inset-0 pointer-events-none border-2 border-dashed border-black/20" />
+                  </div>
+
+                  {/* Zoom controls */}
+                  <div className="flex items-center justify-center gap-4">
+                    <button
+                      onClick={() => handleCoverZoom('out')}
+                      className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm font-bold text-black transition-all hover:bg-black/5 disabled:opacity-50"
+                      disabled={coverImageAdjust.scale <= 0.5}
+                    >
+                      − Zoom Out
+                    </button>
+                    <span className="text-sm font-bold text-black/60 min-w-16 text-center">
+                      {Math.round(coverImageAdjust.scale * 100)}%
+                    </span>
+                    <button
+                      onClick={() => handleCoverZoom('in')}
+                      className="rounded-lg border border-black/10 bg-white px-4 py-2 text-sm font-bold text-black transition-all hover:bg-black/5 disabled:opacity-50"
+                      disabled={coverImageAdjust.scale >= 3}
+                    >
+                      + Zoom In
+                    </button>
+                  </div>
+
+                  {/* Reset button */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleResetCoverAdjust}
+                      className="flex-1 rounded-lg border border-black/10 bg-white px-4 py-2 text-sm font-bold text-black transition-all hover:bg-black/5"
+                    >
+                      Reset Position
+                    </button>
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="mt-8 flex gap-3">
+                  <button
+                    onClick={() => setIsCoverAdjustOpen(false)}
+                    className="flex-1 rounded-xl border border-black/10 py-3 text-sm font-bold text-black transition-all hover:bg-black/5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveCoverAdjust}
+                    className="flex-1 rounded-xl bg-black py-3 text-sm font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Done
                   </button>
                 </div>
               </div>
