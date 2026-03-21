@@ -55,8 +55,8 @@ function AppContent() {
     // Admin, Auth, Dashboard, and Settings pages handle their own navigation or have no platform navbar
     navbar = null;
   } else if (isCreatorPage) {
-    navbar = <CreatorNavbar username={firstSegment} />;
-    // CreatorPage handles its own padding (pt-20)
+    // Creator pages have no header as requested
+    navbar = null;
   } else {
     // All other platform pages (Landing, Explore, etc.)
     navbar = <PlatformNavbar />;
