@@ -66,14 +66,18 @@ export const getPublicSlates = query({
           .withIndex("by_slateId", (q) => q.eq("slateId", slate._id))
           .collect()).length;
 
+        // Safely resolve creator name with priority: name → username → "Anonymous"
+        const creatorName = creator?.name || creator?.username || "Anonymous";
+        const creatorUsername = creator?.username || "anonymous";
+
         return {
           ...slate,
           mediaUrl,
-          creatorName: creator?.name || "Unknown",
-          creatorUsername: creator?.username || "unknown",
+          creatorName,
+          creatorUsername,
           creatorAvatar: avatar,
-          likeCount,
-          commentCount,
+          likeCount: likeCount || 0,
+          commentCount: commentCount || 0,
         };
       })
     );
@@ -123,11 +127,15 @@ export const getAllPublicSlates = query({
           }
         }
 
+        // Safely resolve creator name with priority: name → username → "Anonymous"
+        const creatorName = creator?.name || creator?.username || "Anonymous";
+        const creatorUsername = creator?.username || "anonymous";
+
         return {
           ...slate,
           mediaUrl,
-          creatorName: creator?.name || "Unknown",
-          creatorUsername: creator?.username || "unknown",
+          creatorName,
+          creatorUsername,
           creatorAvatar: avatar,
         };
       })

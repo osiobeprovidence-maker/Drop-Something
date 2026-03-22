@@ -26,6 +26,16 @@ interface SlatePost {
   _creationTime: number;
 }
 
+// Safe formatter for like/comment counts
+const formatCount = (count: number | undefined | null): number => {
+  return Number(count) || 0;
+};
+
+// Safe formatter for creator names
+const getDisplayName = (name?: string | null, username?: string | null): string => {
+  return name || username || "Anonymous";
+};
+
 export default function Explore() {
   const [activeTab, setActiveTab] = useState<"explore" | "following" | "creators">("explore");
   const [selectedPost, setSelectedPost] = useState<SlatePost | null>(null);
@@ -450,6 +460,12 @@ function PostCard({
   isFollowing: boolean;
   formatTimeAgo: (timestamp: number) => string;
 }) {
+  // Safe display values with defensive programming
+  const displayLikeCount = formatCount(post.likeCount);
+  const displayCommentCount = formatCount(post.commentCount);
+  const displayCreatorName = getDisplayName(post.creatorName, post.creatorUsername);
+  const displayUsername = post.creatorUsername || "anonymous";
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 10 }}
@@ -459,30 +475,30 @@ function PostCard({
       {/* Creator Header */}
       <div className="flex items-center justify-between mb-4">
         <a
-          href={`/${post.creatorUsername}`}
+          href={`/${displayUsername}`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3"
         >
-          <div className="h-10 w-10 rounded-full overflow-hidden bg-black/5">
+          <div className="h-10 w-10 rounded-xl overflow-hidden bg-gray-100">
             <img
-              src={post.creatorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.creatorUsername}`}
-              alt={post.creatorName}
+              src={post.creatorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayUsername}`}
+              alt={displayCreatorName}
               className="h-full w-full object-cover"
             />
           </div>
           <div>
-            <p className="text-sm font-bold text-black">{post.creatorName}</p>
-            <p className="text-xs text-black/40">@{post.creatorUsername} · {formatTimeAgo(post._creationTime)}</p>
+            <p className="text-sm font-bold text-black">{displayCreatorName}</p>
+            <p className="text-xs text-gray-500">@{displayUsername} · {formatTimeAgo(post._creationTime)}</p>
           </div>
         </a>
         <button
           onClick={() => onFollow(post.creatorId)}
           className={cn(
-            "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all",
+            "flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-xs font-bold transition-all",
             isFollowing
-              ? "bg-black/5 text-black hover:bg-black/10"
-              : "bg-black text-white hover:bg-black/90"
+              ? "border-2 border-gray-200 bg-white text-black hover:bg-gray-50"
+              : "bg-black text-white hover:bg-gray-800"
           )}
         >
           <UserPlus size={12} />
@@ -493,7 +509,7 @@ function PostCard({
       {/* Content */}
       <div className="mb-4">
         {post.type === "text" && post.content && (
-          <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
+          <p className="text-sm font-medium text-gray-800 whitespace-pre-wrap leading-relaxed">
             {post.content}
           </p>
         )}
@@ -502,12 +518,12 @@ function PostCard({
           <img
             src={post.mediaUrl}
             alt="Post"
-            className="w-full rounded-2xl object-cover max-h-96"
+            className="w-full rounded-xl object-cover max-h-96"
           />
         )}
 
         {post.type === "video" && post.playbackId && (
-          <div className="relative rounded-2xl overflow-hidden bg-black">
+          <div className="relative rounded-xl overflow-hidden bg-black">
             <video controls className="w-full max-h-96 object-cover">
               <source src={`https://stream.mux.com/${post.playbackId}.m3u8`} type="application/x-mpegURL" />
             </video>
@@ -515,7 +531,7 @@ function PostCard({
         )}
 
         {post.type === "audio" && post.playbackId && (
-          <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
             <audio controls className="w-full">
               <source src={post.mediaUrl || `https://stream.mux.com/${post.playbackId}.m3u8`} />
             </audio>
@@ -524,26 +540,26 @@ function PostCard({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-4 pt-4 border-t border-black/5">
+      <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
         <button
           onClick={() => onLike(post._id)}
-          className="flex items-center gap-2 text-black/60 hover:text-red-500 transition-colors"
+          className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
         >
           <Heart size={18} />
-          <span className="text-xs font-bold">{post.likeCount}</span>
+          <span className="text-xs font-bold">{displayLikeCount}</span>
         </button>
         <button
           onClick={onComment}
-          className="flex items-center gap-2 text-black/60 hover:text-black transition-colors"
+          className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors"
         >
           <MessageCircle size={18} />
-          <span className="text-xs font-bold">{post.commentCount}</span>
+          <span className="text-xs font-bold">{displayCommentCount}</span>
         </button>
         <a
-          href={`/${post.creatorUsername}`}
+          href={`/${displayUsername}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-black/60 hover:text-black transition-colors ml-auto"
+          className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors ml-auto"
         >
           <ExternalLink size={16} />
           <span className="text-xs font-bold">View Profile</span>
