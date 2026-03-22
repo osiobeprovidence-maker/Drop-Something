@@ -139,7 +139,10 @@ export default function LandingPage() {
 
               <div className="mt-8">
                 <p className="text-sm font-semibold uppercase tracking-wider text-black/40">Select amount</p>
-                <div className="mt-4 grid grid-cols-3 gap-3">
+                <p className="text-xs text-gray-400 mt-1">
+                  H = ₦100 · K = ₦1,000
+                </p>
+                <div className="mt-3 grid grid-cols-3 gap-3">
                   {[500, 1000, 2000].map((amount) => (
                     <button
                       key={amount}
@@ -151,7 +154,7 @@ export default function LandingPage() {
                           : "border-black/10 bg-white text-black hover:border-black/30"
                       )}
                     >
-                      ₦{amount}
+                      {amount >= 1000 ? `${amount / 1000}K` : `${amount / 100}H`}
                     </button>
                   ))}
                 </div>

@@ -94,21 +94,26 @@ export default function HowItWorks() {
               </div>
 
               <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-2">
-                  {[500, 1000, 2000].map((amount) => (
-                    <button
-                      key={amount}
-                      onClick={() => setTipAmount(amount)}
-                      className={cn(
-                        "flex h-12 items-center justify-center rounded-xl border-2 font-bold transition-all",
-                        tipAmount === amount
-                          ? "border-black bg-black text-white"
-                          : "border-black/5 bg-zinc-50 text-black hover:border-black/20"
-                      )}
-                    >
-                      ₦{amount}
-                    </button>
-                  ))}
+                <div>
+                  <p className="text-xs text-gray-400 mb-2">
+                    H = ₦100 · K = ₦1,000
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[500, 1000, 2000].map((amount) => (
+                      <button
+                        key={amount}
+                        onClick={() => setTipAmount(amount)}
+                        className={cn(
+                          "flex h-12 items-center justify-center rounded-xl border-2 font-bold transition-all",
+                          tipAmount === amount
+                            ? "border-black bg-black text-white"
+                            : "border-black/5 bg-zinc-50 text-black hover:border-black/20"
+                        )}
+                      >
+                        {amount >= 1000 ? `${amount / 1000}K` : `${amount / 100}H`}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <button className="flex h-14 w-full items-center justify-center rounded-full bg-black text-base font-black text-white shadow-lg shadow-black/10">
                   Drop ₦{tipAmount?.toLocaleString()}

@@ -86,6 +86,57 @@ export const getPublicSlates = query({
   },
 });
 
+// Get ALL slates for explore (including old posts, no pagination limit for small datasets)
+export const getAllPublicSlates = query({
+  handler: async (ctx) => {
+    // Collect all public slates
+    let allSlates = await ctx.db
+      .query("slates")
+      .withIndex("by_creatorId")
+      .filter((q) => q.eq(q.field("visibility"), "public"))
+      .collect();
+
+    // Sort by creation time (newest first)
+    allSlates.sort((a, b) => b._creationTime - a._creationTime);
+
+    // Resolve mediaUrl and add creator info
+    const resolvedSlates = await Promise.all(
+      allSlates.map(async (slate) => {
+        let mediaUrl = slate.mediaUrl;
+        if (mediaUrl && !mediaUrl.startsWith("http") && !mediaUrl.startsWith("data:")) {
+          try {
+            const url = await ctx.storage.getUrl(mediaUrl);
+            if (url) mediaUrl = url;
+          } catch (e) {
+            // Not a valid storageId
+          }
+        }
+
+        const creator = await ctx.db.get(slate.creatorId);
+        let avatar = creator?.avatar;
+        if (avatar && !avatar.startsWith("http") && !avatar.startsWith("data:")) {
+          try {
+            const url = await ctx.storage.getUrl(avatar);
+            if (url) avatar = url;
+          } catch (e) {
+            // Not a valid storageId
+          }
+        }
+
+        return {
+          ...slate,
+          mediaUrl,
+          creatorName: creator?.name || "Unknown",
+          creatorUsername: creator?.username || "unknown",
+          creatorAvatar: avatar,
+        };
+      })
+    );
+
+    return resolvedSlates;
+  },
+});
+
 // Get all slates for a creator (for dashboard)
 export const getSlatesByCreator = query({
   args: { creatorId: v.id("creators") },

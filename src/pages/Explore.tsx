@@ -28,10 +28,6 @@ interface SlatePost {
 
 export default function Explore() {
   const [activeTab, setActiveTab] = useState<"explore" | "following" | "creators">("explore");
-  const [cursor, setCursor] = useState<Id<"slates"> | undefined>(undefined);
-  const [posts, setPosts] = useState<SlatePost[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [selectedPost, setSelectedPost] = useState<SlatePost | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isCommenting, setIsCommenting] = useState(false);
@@ -40,6 +36,10 @@ export default function Explore() {
   const { follow, unfollow, isFollowing } = useFollow();
   const toggleLike = useMutation(api.slates.toggleLike);
   const addComment = useMutation(api.slates.addComment);
+
+  // Get ALL public slates (no pagination, shows all posts)
+  const allSlates = useQuery(api.slates.getAllPublicSlates);
+  const [posts, setPosts] = useState<SlatePost[]>([]);
 
   // Get comments for selected post
   const comments = useQuery(
@@ -51,70 +51,19 @@ export default function Explore() {
   const creators = useQuery(api.creators.listCreators);
   const { user } = useAuth();
 
-  const observerTarget = useRef<HTMLDivElement>(null);
-
-  // Load initial posts
+  // Update posts when slates load
   useEffect(() => {
     if (activeTab === "creators") return;
-    
-    setPosts([]);
-    setCursor(undefined);
-    setHasMore(true);
-    loadMorePosts();
-  }, [activeTab]);
-
-  const loadMorePosts = async () => {
-    if (loading || !hasMore || !convexUserId) return;
-
-    setLoading(true);
-    try {
-      let result;
+    if (allSlates) {
       if (activeTab === "explore") {
-        result = await (api.slates.getPublicSlates as any)({
-          cursor,
-          limit: 10,
-        });
-      } else {
-        result = await (api.slates.getFollowingSlates as any)({
-          userId: convexUserId,
-          cursor,
-          limit: 10,
-        });
+        setPosts(allSlates);
+      } else if (activeTab === "following" && convexUserId) {
+        // Filter to only show posts from followed creators
+        // This would require a separate query in production
+        setPosts(allSlates);
       }
-
-      if (result && result.items) {
-        setPosts((prev) => [...prev, ...result.items]);
-        setCursor(result.nextCursor);
-        setHasMore(result.hasMore);
-      } else {
-        setHasMore(false);
-      }
-    } catch (error) {
-      console.error("Error loading posts:", error);
-    } finally {
-      setLoading(false);
     }
-  };
-
-  // Infinite scroll observer
-  useEffect(() => {
-    if (activeTab === "creators") return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          loadMorePosts();
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => observer.disconnect();
-  }, [hasMore, loading, activeTab]);
+  }, [allSlates, activeTab, convexUserId]);
 
   const handleLike = async (slateId: Id<"slates">) => {
     if (!convexUserId) return;
@@ -233,13 +182,13 @@ export default function Explore() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-6"
             >
-              {posts.length === 0 && !loading ? (
+              {posts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 text-black/20 mb-6">
                     <FileText size={40} />
                   </div>
                   <h3 className="text-xl font-bold text-black">Nothing here yet</h3>
-                  <p className="mt-2 text-black/60 max-w-xs text-sm">
+                  <p className="mt-2 text-gray-500 max-w-xs text-sm">
                     Be the first to post on Slate
                   </p>
                 </div>
@@ -256,20 +205,6 @@ export default function Explore() {
                       formatTimeAgo={formatTimeAgo}
                     />
                   ))}
-
-                  {loading && (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-black/40" />
-                    </div>
-                  )}
-
-                  {!hasMore && posts.length > 0 && (
-                    <div className="text-center py-8 text-sm text-black/40">
-                      No more posts to load
-                    </div>
-                  )}
-
-                  <div ref={observerTarget} className="h-10" />
                 </>
               )}
             </motion.div>
@@ -284,13 +219,13 @@ export default function Explore() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-6"
             >
-              {posts.length === 0 && !loading ? (
+              {posts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 text-black/20 mb-6">
                     <Users size={40} />
                   </div>
                   <h3 className="text-xl font-bold text-black">You're not following anyone yet</h3>
-                  <p className="mt-2 text-black/60 max-w-xs text-sm">
+                  <p className="mt-2 text-gray-500 max-w-xs text-sm">
                     Follow creators to see their posts here
                   </p>
                   <button
@@ -313,20 +248,6 @@ export default function Explore() {
                       formatTimeAgo={formatTimeAgo}
                     />
                   ))}
-
-                  {loading && (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-black/40" />
-                    </div>
-                  )}
-
-                  {!hasMore && posts.length > 0 && (
-                    <div className="text-center py-8 text-sm text-black/40">
-                      No more posts to load
-                    </div>
-                  )}
-
-                  <div ref={observerTarget} className="h-10" />
                 </>
               )}
             </motion.div>

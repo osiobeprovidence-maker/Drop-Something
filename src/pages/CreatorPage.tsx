@@ -397,24 +397,30 @@ export default function CreatorPage() {
                     </div>
 
                     <div className="space-y-6">
-                      <div className="grid grid-cols-3 gap-2">
-                        {[500, 1000, 2000].map((amount) => (
-                          <button
-                            key={amount}
-                            onClick={() => {
-                              setTipAmount(amount);
-                              setCustomAmount("");
-                            }}
-                            className={cn(
-                              "flex h-12 items-center justify-center rounded-xl border-2 font-bold transition-all text-sm",
-                              tipAmount === amount
-                                ? "border-black bg-black text-white"
-                                : "border-gray-200 bg-white text-black hover:border-gray-300"
-                            )}
-                          >
-                            ₦{(amount / 1000).toFixed(0)}k
-                          </button>
-                        ))}
+                      <div>
+                        {/* Amount Helper Text */}
+                        <p className="text-xs text-gray-400 mb-2">
+                          H = ₦100 · K = ₦1,000
+                        </p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[500, 1000, 2000].map((amount) => (
+                            <button
+                              key={amount}
+                              onClick={() => {
+                                setTipAmount(amount);
+                                setCustomAmount("");
+                              }}
+                              className={cn(
+                                "flex h-12 items-center justify-center rounded-xl border-2 font-bold transition-all text-sm",
+                                tipAmount === amount
+                                  ? "border-black bg-black text-white"
+                                  : "border-gray-200 bg-white text-black hover:border-gray-300"
+                              )}
+                            >
+                              {amount >= 1000 ? `${amount / 1000}K` : `${amount / 100}H`}
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="relative">
