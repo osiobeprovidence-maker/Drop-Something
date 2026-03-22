@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Heart, MessageCircle, UserPlus, ExternalLink, Loader2,
-  Users, Database, X, Send, Image as ImageIcon, Music, Video, FileText, Lock
+  X, Send, Image as ImageIcon, Music, Video, FileText, Search
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
 import { useFollow } from "@/src/context/FollowContext";
 import { useAuth } from "@/src/context/AuthContext";
@@ -28,7 +27,7 @@ interface SlatePost {
 }
 
 export default function Explore() {
-  const [activeTab, setActiveTab] = useState<"explore" | "following">("explore");
+  const [activeTab, setActiveTab] = useState<"explore" | "following" | "creators">("explore");
   const [cursor, setCursor] = useState<Id<"slates"> | undefined>(undefined);
   const [posts, setPosts] = useState<SlatePost[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,8 +40,6 @@ export default function Explore() {
   const { follow, unfollow, isFollowing } = useFollow();
   const toggleLike = useMutation(api.slates.toggleLike);
   const addComment = useMutation(api.slates.addComment);
-  const seedMockData = useMutation(api.seed.seedMockData);
-  const [isSeeding, setIsSeeding] = useState(false);
 
   // Get comments for selected post
   const comments = useQuery(
@@ -50,10 +47,15 @@ export default function Explore() {
     selectedPost ? { slateId: selectedPost._id } : "skip"
   );
 
+  // Get all creators for Creators tab
+  const creators = useQuery(api.creators.listCreators);
+
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Load initial posts
   useEffect(() => {
+    if (activeTab === "creators") return;
+    
     setPosts([]);
     setCursor(undefined);
     setHasMore(true);
@@ -62,7 +64,7 @@ export default function Explore() {
 
   const loadMorePosts = async () => {
     if (loading || !hasMore || !convexUserId) return;
-    
+
     setLoading(true);
     try {
       let result;
@@ -95,6 +97,8 @@ export default function Explore() {
 
   // Infinite scroll observer
   useEffect(() => {
+    if (activeTab === "creators") return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
@@ -118,7 +122,6 @@ export default function Explore() {
         slateId,
         userId: convexUserId as Id<"users">,
       });
-      // Update local state
       setPosts((prev) =>
         prev.map((post) =>
           post._id === slateId
@@ -156,18 +159,6 @@ export default function Explore() {
     }
   };
 
-  const handleSeed = async () => {
-    setIsSeeding(true);
-    try {
-      await seedMockData();
-      alert("Dummy data seeded successfully!");
-    } catch (error) {
-      alert("Failed to seed data");
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
   const formatTimeAgo = (timestamp: number) => {
     const seconds = Math.floor((Date.now() - timestamp) / 1000);
     if (seconds < 60) return "just now";
@@ -183,20 +174,9 @@ export default function Explore() {
     <div className="min-h-screen bg-[#F9FAFB] pb-20">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-black/5">
-        <div className="mx-auto max-w-2xl px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-black text-black">Explore</h1>
-            {posts.length === 0 && !loading && (
-              <button
-                onClick={handleSeed}
-                disabled={isSeeding}
-                className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-2 text-xs font-bold text-amber-600 border border-amber-100"
-              >
-                <Database size={14} />
-                {isSeeding ? "Seeding..." : "Seed Data"}
-              </button>
-            )}
-          </div>
+        <div className="mx-auto max-w-2xl px-4 py-6">
+          <h1 className="text-2xl font-black text-black">Explore what creators are sharing</h1>
+          <p className="text-sm text-black/60 mt-1">Discover new creators, posts, and ideas</p>
 
           {/* Tabs */}
           <div className="mt-4 flex gap-6">
@@ -224,168 +204,217 @@ export default function Explore() {
                 <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-black" />
               )}
             </button>
+            <button
+              onClick={() => setActiveTab("creators")}
+              className={cn(
+                "pb-3 text-sm font-bold transition-all relative",
+                activeTab === "creators" ? "text-black" : "text-black/40 hover:text-black/60"
+              )}
+            >
+              Creators
+              {activeTab === "creators" && (
+                <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-black" />
+              )}
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Feed */}
+      {/* Content */}
       <div className="mx-auto max-w-2xl px-4 py-6">
         <AnimatePresence mode="wait">
-          {posts.length === 0 && !loading ? (
+          {/* EXPLORE TAB */}
+          {activeTab === "explore" && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              key="explore"
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center justify-center py-20 text-center"
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
             >
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 text-black/20 mb-6">
-                {activeTab === "following" ? <Users size={40} /> : <FileText size={40} />}
-              </div>
-              <h3 className="text-xl font-bold text-black">
-                {activeTab === "following"
-                  ? "Not following anyone yet"
-                  : "No posts yet"}
-              </h3>
-              <p className="mt-2 text-black/60 max-w-xs text-sm">
-                {activeTab === "following"
-                  ? "Follow creators to see their posts here"
-                  : "Check back later for new content"}
-              </p>
-              {activeTab === "following" && (
-                <Link
-                  to="/explore"
-                  className="mt-6 font-bold text-black underline underline-offset-4 text-sm"
-                >
-                  Explore creators
-                </Link>
+              {posts.length === 0 && !loading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 text-black/20 mb-6">
+                    <FileText size={40} />
+                  </div>
+                  <h3 className="text-xl font-bold text-black">Nothing here yet</h3>
+                  <p className="mt-2 text-black/60 max-w-xs text-sm">
+                    Be the first to post on Slate
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {posts.map((post) => (
+                    <PostCard
+                      key={post._id}
+                      post={post}
+                      onLike={handleLike}
+                      onComment={() => setSelectedPost(post)}
+                      onFollow={handleFollow}
+                      isFollowing={isFollowing(post.creatorId)}
+                      formatTimeAgo={formatTimeAgo}
+                    />
+                  ))}
+
+                  {loading && (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-black/40" />
+                    </div>
+                  )}
+
+                  {!hasMore && posts.length > 0 && (
+                    <div className="text-center py-8 text-sm text-black/40">
+                      No more posts to load
+                    </div>
+                  )}
+
+                  <div ref={observerTarget} className="h-10" />
+                </>
               )}
             </motion.div>
-          ) : (
-            <div className="space-y-6">
-              {posts.map((post) => (
-                <motion.article
-                  key={post._id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-3xl bg-white p-6 shadow-sm border border-black/5"
-                >
-                  {/* Creator Header */}
-                  <div className="flex items-center justify-between mb-4">
-                    <Link
-                      to={`/${post.creatorUsername}`}
-                      className="flex items-center gap-3"
-                    >
-                      <div className="h-10 w-10 rounded-full overflow-hidden bg-black/5">
-                        <img
-                          src={post.creatorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.creatorUsername}`}
-                          alt={post.creatorName}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-black">{post.creatorName}</p>
-                        <p className="text-xs text-black/40">@{post.creatorUsername} · {formatTimeAgo(post._creationTime)}</p>
-                      </div>
-                    </Link>
-                    <button
-                      onClick={() => handleFollow(post.creatorId)}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all",
-                        isFollowing(post.creatorId)
-                          ? "bg-black/5 text-black hover:bg-black/10"
-                          : "bg-black text-white hover:bg-black/90"
-                      )}
-                    >
-                      {isFollowing(post.creatorId) ? (
-                        <>
-                          <UserPlus size={12} />
-                          Following
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus size={12} />
-                          Follow
-                        </>
-                      )}
-                    </button>
+          )}
+
+          {/* FOLLOWING TAB */}
+          {activeTab === "following" && (
+            <motion.div
+              key="following"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              {posts.length === 0 && !loading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 text-black/20 mb-6">
+                    <Users size={40} />
                   </div>
+                  <h3 className="text-xl font-bold text-black">You're not following anyone yet</h3>
+                  <p className="mt-2 text-black/60 max-w-xs text-sm">
+                    Follow creators to see their posts here
+                  </p>
+                  <button
+                    onClick={() => setActiveTab("creators")}
+                    className="mt-6 font-bold text-black underline underline-offset-4 text-sm"
+                  >
+                    Explore creators
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {posts.map((post) => (
+                    <PostCard
+                      key={post._id}
+                      post={post}
+                      onLike={handleLike}
+                      onComment={() => setSelectedPost(post)}
+                      onFollow={handleFollow}
+                      isFollowing={isFollowing(post.creatorId)}
+                      formatTimeAgo={formatTimeAgo}
+                    />
+                  ))}
 
-                  {/* Content */}
-                  <div className="mb-4">
-                    {post.type === "text" && post.content && (
-                      <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
-                        {post.content}
-                      </p>
-                    )}
+                  {loading && (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-black/40" />
+                    </div>
+                  )}
 
-                    {post.type === "image" && post.mediaUrl && (
-                      <img
-                        src={post.mediaUrl}
-                        alt="Post"
-                        className="w-full rounded-2xl object-cover max-h-96"
-                      />
-                    )}
+                  {!hasMore && posts.length > 0 && (
+                    <div className="text-center py-8 text-sm text-black/40">
+                      No more posts to load
+                    </div>
+                  )}
 
-                    {post.type === "video" && post.playbackId && (
-                      <div className="relative rounded-2xl overflow-hidden bg-black">
-                        <video controls className="w-full max-h-96 object-cover">
-                          <source src={`https://stream.mux.com/${post.playbackId}.m3u8`} type="application/x-mpegURL" />
-                        </video>
-                      </div>
-                    )}
+                  <div ref={observerTarget} className="h-10" />
+                </>
+              )}
+            </motion.div>
+          )}
 
-                    {post.type === "audio" && post.playbackId && (
-                      <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
-                        <audio controls className="w-full">
-                          <source src={post.mediaUrl || `https://stream.mux.com/${post.playbackId}.m3u8`} />
-                        </audio>
-                      </div>
-                    )}
+          {/* CREATORS TAB */}
+          {activeTab === "creators" && (
+            <motion.div
+              key="creators"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-4"
+            >
+              {creators && creators.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 text-black/20 mb-6">
+                    <Search size={40} />
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-4 pt-4 border-t border-black/5">
-                    <button
-                      onClick={() => handleLike(post._id)}
-                      className="flex items-center gap-2 text-black/60 hover:text-red-500 transition-colors"
-                    >
-                      <Heart size={18} />
-                      <span className="text-xs font-bold">{post.likeCount}</span>
-                    </button>
-                    <button
-                      onClick={() => setSelectedPost(post)}
-                      className="flex items-center gap-2 text-black/60 hover:text-black transition-colors"
-                    >
-                      <MessageCircle size={18} />
-                      <span className="text-xs font-bold">{post.commentCount}</span>
-                    </button>
+                  <h3 className="text-xl font-bold text-black">No creators available yet</h3>
+                  <p className="mt-2 text-black/60 max-w-xs text-sm">
+                    Check back later for new creators
+                  </p>
+                </div>
+              ) : (
+                creators?.map((creator) => (
+                  <div
+                    key={creator._id}
+                    className="group relative flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-[2.5rem] border border-black/5 bg-white p-6 transition-all hover:shadow-xl hover:shadow-black/5"
+                  >
                     <a
-                      href={`/${post.creatorUsername}`}
+                      href={`/${creator.username}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-black/60 hover:text-black transition-colors ml-auto"
-                    >
-                      <ExternalLink size={16} />
-                      <span className="text-xs font-bold">View Profile</span>
-                    </a>
+                      className="absolute inset-0 z-0 rounded-[2.5rem]"
+                    />
+
+                    <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-4 z-10">
+                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white bg-black/5 shadow-sm">
+                        <img
+                          src={creator.avatar}
+                          alt={creator.name}
+                          className="h-full w-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleFollow(creator._id);
+                        }}
+                        className={cn(
+                          "sm:hidden flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-95",
+                          isFollowing(creator._id)
+                            ? "bg-black text-white"
+                            : "bg-black/5 text-black hover:bg-black/10"
+                        )}
+                      >
+                        <UserPlus size={18} />
+                      </button>
+                    </div>
+
+                    <div className="flex-1 min-w-0 z-10 w-full">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="text-lg font-black text-black">@{creator.username}</h3>
+                          <p className="line-clamp-1 text-sm text-black/60 mt-1">{creator.bio}</p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleFollow(creator._id);
+                          }}
+                          className={cn(
+                            "hidden sm:flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all active:scale-95",
+                            isFollowing(creator._id)
+                              ? "bg-black/5 text-black hover:bg-black/10"
+                              : "bg-black text-white hover:bg-black/90"
+                          )}
+                        >
+                          <UserPlus size={14} />
+                          {isFollowing(creator._id) ? "Following" : "Follow"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </motion.article>
-              ))}
-
-              {/* Loading & Infinite Scroll */}
-              {loading && (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-black/40" />
-                </div>
+                ))
               )}
-
-              {!hasMore && posts.length > 0 && (
-                <div className="text-center py-8 text-sm text-black/40">
-                  No more posts to load
-                </div>
-              )}
-
-              <div ref={observerTarget} className="h-10" />
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
@@ -407,7 +436,6 @@ export default function Explore() {
               exit={{ y: "100%" }}
               className="relative w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl max-h-[80vh] overflow-hidden flex flex-col"
             >
-              {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-black/5">
                 <h3 className="font-bold text-black">Comments</h3>
                 <button
@@ -418,7 +446,6 @@ export default function Explore() {
                 </button>
               </div>
 
-              {/* Comments List */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {comments && comments.length > 0 ? (
                   comments.map((comment: any) => (
@@ -443,7 +470,6 @@ export default function Explore() {
                 )}
               </div>
 
-              {/* Comment Input */}
               <div className="p-4 border-t border-black/5">
                 <div className="flex items-center gap-2">
                   <input
@@ -472,5 +498,124 @@ export default function Explore() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// Post Card Component
+function PostCard({
+  post,
+  onLike,
+  onComment,
+  onFollow,
+  isFollowing,
+  formatTimeAgo,
+}: {
+  post: SlatePost;
+  onLike: (id: Id<"slates">) => void;
+  onComment: () => void;
+  onFollow: (id: Id<"creators">) => void;
+  isFollowing: boolean;
+  formatTimeAgo: (timestamp: number) => string;
+}) {
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-3xl bg-white p-6 shadow-sm border border-black/5"
+    >
+      {/* Creator Header */}
+      <div className="flex items-center justify-between mb-4">
+        <a
+          href={`/${post.creatorUsername}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3"
+        >
+          <div className="h-10 w-10 rounded-full overflow-hidden bg-black/5">
+            <img
+              src={post.creatorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.creatorUsername}`}
+              alt={post.creatorName}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-black">{post.creatorName}</p>
+            <p className="text-xs text-black/40">@{post.creatorUsername} · {formatTimeAgo(post._creationTime)}</p>
+          </div>
+        </a>
+        <button
+          onClick={() => onFollow(post.creatorId)}
+          className={cn(
+            "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all",
+            isFollowing
+              ? "bg-black/5 text-black hover:bg-black/10"
+              : "bg-black text-white hover:bg-black/90"
+          )}
+        >
+          <UserPlus size={12} />
+          {isFollowing ? "Following" : "Follow"}
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="mb-4">
+        {post.type === "text" && post.content && (
+          <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
+            {post.content}
+          </p>
+        )}
+
+        {post.type === "image" && post.mediaUrl && (
+          <img
+            src={post.mediaUrl}
+            alt="Post"
+            className="w-full rounded-2xl object-cover max-h-96"
+          />
+        )}
+
+        {post.type === "video" && post.playbackId && (
+          <div className="relative rounded-2xl overflow-hidden bg-black">
+            <video controls className="w-full max-h-96 object-cover">
+              <source src={`https://stream.mux.com/${post.playbackId}.m3u8`} type="application/x-mpegURL" />
+            </video>
+          </div>
+        )}
+
+        {post.type === "audio" && post.playbackId && (
+          <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
+            <audio controls className="w-full">
+              <source src={post.mediaUrl || `https://stream.mux.com/${post.playbackId}.m3u8`} />
+            </audio>
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-4 pt-4 border-t border-black/5">
+        <button
+          onClick={() => onLike(post._id)}
+          className="flex items-center gap-2 text-black/60 hover:text-red-500 transition-colors"
+        >
+          <Heart size={18} />
+          <span className="text-xs font-bold">{post.likeCount}</span>
+        </button>
+        <button
+          onClick={onComment}
+          className="flex items-center gap-2 text-black/60 hover:text-black transition-colors"
+        >
+          <MessageCircle size={18} />
+          <span className="text-xs font-bold">{post.commentCount}</span>
+        </button>
+        <a
+          href={`/${post.creatorUsername}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-black/60 hover:text-black transition-colors ml-auto"
+        >
+          <ExternalLink size={16} />
+          <span className="text-xs font-bold">View Profile</span>
+        </a>
+      </div>
+    </motion.article>
   );
 }
