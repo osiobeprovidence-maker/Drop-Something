@@ -299,13 +299,15 @@ export default function CreatorPage() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Profile Section */}
-        <div className="relative -mt-12 mb-8 flex flex-col items-center text-center">
+        <div className="relative -mt-12 mb-8 flex flex-col items-center">
           <div className="relative mx-auto h-20 w-20 sm:h-28 sm:w-28">
             <div className="h-full w-full overflow-hidden rounded-[2rem] border-4 border-white bg-zinc-100 shadow-xl shadow-black/5">
               <img src={resolvedAvatar} alt={displayCreator?.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
             </div>
           </div>
-          <div className="mt-3">
+          
+          {/* Profile Info Container - Centered */}
+          <div className="mt-3 flex flex-col items-center text-center">
             <h1 className="text-xl font-black text-black sm:text-2xl">@{displayCreator?.username}</h1>
             <p className="mt-1 text-sm font-medium text-black/60 max-w-lg">{displayCreator?.bio}</p>
 
@@ -335,7 +337,7 @@ export default function CreatorPage() {
               <button
                 onClick={handleFollow}
                 className={cn(
-                  "mt-3 flex h-10 items-center justify-center rounded-full px-6 text-xs font-bold transition-all hover:scale-105 active:scale-95",
+                  "mt-4 flex h-10 items-center justify-center rounded-full px-6 text-xs font-bold transition-all hover:scale-105 active:scale-95",
                   isFollowing(displayCreator._id as Id<"creators">)
                     ? "bg-black/5 text-black hover:bg-black/10"
                     : "bg-black text-white hover:bg-black/90"
