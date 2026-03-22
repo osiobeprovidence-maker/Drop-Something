@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,8 +12,16 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = false }) => {
   const location = useLocation();
   const { user, isLoading, hasProfile } = useAuth();
+  const currentUser = useQuery(api.users.currentUser);
+  const [isAdminChecked, setIsAdminChecked] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (currentUser !== undefined) {
+      setIsAdminChecked(true);
+    }
+  }, [currentUser]);
+
+  if (isLoading || !isAdminChecked) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-black border-t-transparent" />
@@ -35,7 +45,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     return <Navigate to="/dashboard" replace />;
   }
 
-  // In a real app, you would check admin status from Convex/Firestore data
-  // For now, we allow the authenticated user
+  // Check admin access if required
+  if (requireAdmin && currentUser?.role !== "admin") {
+    return <Navigate to="/" replace />;
+  }
+
   return <>{children}</>;
 };

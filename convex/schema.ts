@@ -7,6 +7,7 @@ export default defineSchema({
     email: v.string(),
     image: v.optional(v.string()),
     tokenIdentifier: v.string(), // For Firebase/Clerk/etc
+    role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
   }).index("by_token", ["tokenIdentifier"]),
 
   creators: defineTable({
@@ -149,4 +150,14 @@ export default defineSchema({
     content: v.string(),
   }).index("by_slateId", ["slateId"])
     .index("by_userId", ["userId"]),
+
+  // Reports for moderation
+  reports: defineTable({
+    reporterId: v.id("users"),
+    targetId: v.union(v.id("slates"), v.id("slateComments")),
+    type: v.union(v.literal("slate"), v.literal("comment")),
+    reason: v.string(),
+    status: v.union(v.literal("pending"), v.literal("resolved"), v.literal("dismissed")),
+  }).index("by_status", ["status"])
+    .index("by_targetId", ["targetId"]),
 });
