@@ -4,37 +4,35 @@ import { Id } from "./_generated/dataModel";
 
 // Get all public slates for explore feed (paginated)
 export const getPublicSlates = query({
-  args: { 
+  args: {
     cursor: v.optional(v.id("slates")),
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
     const limit = args.limit || 20;
-    
-    let slates;
-    if (args.cursor) {
-      slates = await ctx.db
-        .query("slates")
-        .withIndex("by_creatorId")
-        .order("desc")
-        .filter((q) => q.eq(q.field("visibility"), "public"))
-        .skip(0)
-        .take(limit + 1);
-    } else {
-      slates = await ctx.db
-        .query("slates")
-        .withIndex("by_creatorId")
-        .order("desc")
-        .filter((q) => q.eq(q.field("visibility"), "public"))
-        .take(limit + 1);
-    }
 
-    const hasMore = slates.length > limit;
-    const items = slates.slice(0, limit);
+    // Collect all public slates
+    let allSlates = await ctx.db
+      .query("slates")
+      .withIndex("by_creatorId")
+      .filter((q) => q.eq(q.field("visibility"), "public"))
+      .collect();
+
+    // Sort by creation time (newest first)
+    allSlates.sort((a, b) => b._creationTime - a._creationTime);
+
+    // Handle pagination
+    const startIndex = args.cursor
+      ? allSlates.findIndex(s => s._id === args.cursor) + 1
+      : 0;
+
+    const items = allSlates.slice(startIndex, startIndex + limit + 1);
+    const hasMore = items.length > limit;
+    const paginatedItems = items.slice(0, limit);
 
     // Resolve mediaUrl and add creator info
     const resolvedSlates = await Promise.all(
-      items.map(async (slate) => {
+      paginatedItems.map(async (slate) => {
         let mediaUrl = slate.mediaUrl;
         if (mediaUrl && !mediaUrl.startsWith("http") && !mediaUrl.startsWith("data:")) {
           try {
@@ -83,7 +81,7 @@ export const getPublicSlates = query({
     return {
       items: resolvedSlates,
       hasMore,
-      nextCursor: hasMore ? items[items.length - 1]._id : undefined,
+      nextCursor: hasMore ? paginatedItems[paginatedItems.length - 1]._id : undefined,
     };
   },
 });
