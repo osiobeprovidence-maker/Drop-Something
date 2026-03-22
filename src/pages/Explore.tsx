@@ -78,16 +78,23 @@ export default function Explore() {
   const handleLike = async (slateId: Id<"slates">) => {
     if (!convexUserId) return;
     try {
-      await toggleLike({
+      const result = await toggleLike({
         slateId,
         userId: convexUserId as Id<"users">,
       });
+      
+      // Update local state based on like result
       setPosts((prev) =>
-        prev.map((post) =>
-          post._id === slateId
-            ? { ...post, likeCount: post.likeCount + 1 }
-            : post
-        )
+        prev.map((post) => {
+          if (post._id === slateId) {
+            // If liked, add 1; if unliked, subtract 1
+            const newLikeCount = result.liked 
+              ? post.likeCount + 1 
+              : Math.max(0, post.likeCount - 1);
+            return { ...post, likeCount: newLikeCount };
+          }
+          return post;
+        })
       );
     } catch (error) {
       console.error("Error toggling like:", error);
@@ -543,10 +550,10 @@ function PostCard({
       <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
         <button
           onClick={() => onLike(post._id)}
-          className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
+          className="flex items-center gap-2 hover:text-red-500 transition-colors"
         >
-          <Heart size={18} />
-          <span className="text-xs font-bold">{displayLikeCount}</span>
+          <Heart size={18} className="fill-red-500 text-red-500" />
+          <span className="text-xs font-bold text-gray-700">{displayLikeCount}</span>
         </button>
         <button
           onClick={onComment}
