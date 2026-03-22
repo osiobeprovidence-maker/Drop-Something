@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Heart, MessageCircle, UserPlus, ExternalLink, Loader2,
-  X, Send, Image as ImageIcon, Music, Video, FileText, Search
+  Users, X, Send, Image as ImageIcon, Music, Video, FileText, Search
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useFollow } from "@/src/context/FollowContext";
@@ -49,6 +49,7 @@ export default function Explore() {
 
   // Get all creators for Creators tab
   const creators = useQuery(api.creators.listCreators);
+  const { user } = useAuth();
 
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -351,68 +352,79 @@ export default function Explore() {
                   </p>
                 </div>
               ) : (
-                creators?.map((creator) => (
-                  <div
-                    key={creator._id}
-                    className="group relative flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-[2.5rem] border border-black/5 bg-white p-6 transition-all hover:shadow-xl hover:shadow-black/5"
-                  >
-                    <a
-                      href={`/${creator.username}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute inset-0 z-0 rounded-[2.5rem]"
-                    />
+                creators?.map((creator) => {
+                  // Check if this is the current user's profile
+                  const isOwnProfile = user?.username === creator.username;
 
-                    <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-4 z-10">
-                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white bg-black/5 shadow-sm">
-                        <img
-                          src={creator.avatar}
-                          alt={creator.name}
-                          className="h-full w-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleFollow(creator._id);
-                        }}
-                        className={cn(
-                          "sm:hidden flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-95",
-                          isFollowing(creator._id)
-                            ? "bg-black text-white"
-                            : "bg-black/5 text-black hover:bg-black/10"
-                        )}
-                      >
-                        <UserPlus size={18} />
-                      </button>
-                    </div>
+                  return (
+                    <div
+                      key={creator._id}
+                      className="group relative flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-[2.5rem] border border-black/5 bg-white p-6 transition-all hover:shadow-xl hover:shadow-black/5"
+                    >
+                      <a
+                        href={`/${creator.username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="absolute inset-0 z-0 rounded-[2.5rem]"
+                      />
 
-                    <div className="flex-1 min-w-0 z-10 w-full">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="text-lg font-black text-black">@{creator.username}</h3>
-                          <p className="line-clamp-1 text-sm text-black/60 mt-1">{creator.bio}</p>
+                      <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-4 z-10">
+                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white bg-black/5 shadow-sm">
+                          <img
+                            src={creator.avatar}
+                            alt={creator.name}
+                            className="h-full w-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleFollow(creator._id);
-                          }}
-                          className={cn(
-                            "hidden sm:flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all active:scale-95",
-                            isFollowing(creator._id)
-                              ? "bg-black/5 text-black hover:bg-black/10"
-                              : "bg-black text-white hover:bg-black/90"
+                        {/* Mobile Follow Button - Hide for own profile */}
+                        {!isOwnProfile && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleFollow(creator._id);
+                            }}
+                            className={cn(
+                              "sm:hidden flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-95",
+                              isFollowing(creator._id)
+                                ? "bg-black text-white"
+                                : "bg-black/5 text-black hover:bg-black/10"
+                            )}
+                          >
+                            <UserPlus size={18} />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0 z-10 w-full">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h3 className="text-lg font-black text-black">@{creator.username}</h3>
+                            <p className="line-clamp-1 text-sm text-black/60 mt-1">{creator.bio}</p>
+                          </div>
+                          {/* Desktop Follow Button - Hide for own profile */}
+                          {!isOwnProfile && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleFollow(creator._id);
+                              }}
+                              className={cn(
+                                "hidden sm:flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all active:scale-95",
+                                isFollowing(creator._id)
+                                  ? "bg-black/5 text-black hover:bg-black/10"
+                                  : "bg-black text-white hover:bg-black/90"
+                              )}
+                            >
+                              <UserPlus size={14} />
+                              {isFollowing(creator._id) ? "Following" : "Follow"}
+                            </button>
                           )}
-                        >
-                          <UserPlus size={14} />
-                          {isFollowing(creator._id) ? "Following" : "Follow"}
-                        </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </motion.div>
           )}
