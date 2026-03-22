@@ -29,6 +29,11 @@ export default function CreatorPage() {
     creatorId: convexCreator?._id as Id<"creators"> | undefined
   });
 
+  // Get wishlist for this creator
+  const wishlists = useQuery(api.wishlist.getWishlistsByCreator, {
+    creatorId: convexCreator?._id as Id<"creators"> | undefined
+  });
+
   const [tipAmount, setTipAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
   const [supporterName, setSupporterName] = useState("");
@@ -258,6 +263,7 @@ export default function CreatorPage() {
   const showHome = true;
   const showAbout = true;
   const showSlate = slates && slates.length > 0;
+  const showWishlist = wishlists && wishlists.length > 0;
   const showMembership = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "support") && displayCreator.memberships.length > 0;
   const showGoals = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "goal") && displayCreator.goals.length > 0;
   const showShop = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "shop") && displayCreator.products.length > 0;
@@ -265,6 +271,7 @@ export default function CreatorPage() {
   const tabs = [
     { id: "home", label: "Home", icon: Heart, show: true },
     { id: "slate", label: "Slate", icon: FileText, show: showSlate },
+    { id: "wishlist", label: "Wishlist", icon: Target, show: showWishlist },
     { id: "membership", label: "Memberships", icon: Users, show: showMembership },
     { id: "shop", label: "Shop", icon: ShoppingBag, show: showShop },
     { id: "goals", label: "Goals", icon: Target, show: showGoals },
@@ -706,6 +713,94 @@ export default function CreatorPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </section>
+              </motion.div>
+            )}
+
+            {activeTab === "wishlist" && (
+              <motion.div
+                key="wishlist"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <section>
+                  <div className="flex items-center justify-start gap-2 mb-4">
+                    <Target size={18} />
+                    <h2 className="font-bold text-black">Wishlist</h2>
+                  </div>
+                  <div className="space-y-4">
+                    {wishlists && wishlists.map((item) => {
+                      const progress = Math.min(100, (item.currentAmount / item.targetAmount) * 100);
+                      const isCompleted = item.status === "completed";
+
+                      return (
+                        <div
+                          key={item._id}
+                          className={cn(
+                            "rounded-[2.5rem] bg-white p-8 shadow-sm border",
+                            isCompleted
+                              ? "border-emerald-200 bg-emerald-50/50"
+                              : "border-black/5"
+                          )}
+                        >
+                          <div className="text-center mb-6">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              <h3 className="text-lg font-bold text-black">{item.title}</h3>
+                              {isCompleted && (
+                                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                                  Completed
+                                </span>
+                              )}
+                            </div>
+                            {item.description && (
+                              <p className="text-sm text-black/60">{item.description}</p>
+                            )}
+                          </div>
+
+                          <div className="mt-6">
+                            <div className="flex items-end justify-between text-xs mb-2">
+                              <span className={cn("font-bold", isCompleted ? "text-emerald-700" : "text-black")}>
+                                ₦{item.currentAmount.toLocaleString()}
+                              </span>
+                              <span className="text-black/40">₦{item.targetAmount.toLocaleString()}</span>
+                            </div>
+                            <div className="h-4 w-full overflow-hidden rounded-full bg-zinc-100">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                whileInView={{ width: `${progress}%` }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                                className={cn(
+                                  "h-full",
+                                  isCompleted ? "bg-emerald-500" : "bg-black"
+                                )}
+                              />
+                            </div>
+                            <p className="mt-3 text-center text-xs font-bold text-black/40">
+                              {Math.round(progress)}% reached
+                            </p>
+
+                            {/* Contribute Button */}
+                            {!isCompleted && (
+                              <button
+                                onClick={() => {
+                                  // Scroll to support section
+                                  const supportSection = document.getElementById('support-section');
+                                  if (supportSection) {
+                                    supportSection.scrollIntoView({ behavior: 'smooth' });
+                                  }
+                                }}
+                                className="mt-6 w-full h-12 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95"
+                              >
+                                Contribute to this goal
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </section>
               </motion.div>

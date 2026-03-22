@@ -54,6 +54,17 @@ export default defineSchema({
     currentAmount: v.number(),
   }).index("by_creatorId", ["creatorId"]),
 
+  // Wishlist (enhanced goals with renewable support)
+  wishlists: defineTable({
+    creatorId: v.id("creators"),
+    title: v.string(),
+    description: v.string(),
+    targetAmount: v.number(),
+    currentAmount: v.number(),
+    status: v.union(v.literal("active"), v.literal("completed")),
+    isRenewable: v.boolean(),
+  }).index("by_creatorId", ["creatorId"]),
+
   products: defineTable({
     creatorId: v.id("creators"),
     title: v.string(),

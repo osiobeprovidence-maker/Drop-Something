@@ -14,6 +14,7 @@ import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
 import type * as slates from "../slates.js";
 import type * as users from "../users.js";
+import type * as wishlist from "../wishlist.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   settings: typeof settings;
   slates: typeof slates;
   users: typeof users;
+  wishlist: typeof wishlist;
 }>;
 
 /**

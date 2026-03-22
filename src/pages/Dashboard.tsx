@@ -14,6 +14,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import SlateTab from "./SlateTab";
 import ShopTab from "./ShopTab";
+import WishlistTab from "./WishlistTab";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -46,6 +47,16 @@ export default function Dashboard() {
   const addGoal = useMutation(api.creators.createGoal);
   const updateGoal = useMutation(api.creators.updateGoal);
   const deleteGoal = useMutation(api.creators.deleteGoal);
+
+  // Wishlist mutations
+  const createWishlist = useMutation(api.wishlist.createWishlist);
+  const updateWishlist = useMutation(api.wishlist.updateWishlist);
+  const deleteWishlist = useMutation(api.wishlist.deleteWishlist);
+  const contributeToWishlist = useMutation(api.wishlist.contributeToWishlist);
+  const resetWishlist = useMutation(api.wishlist.resetWishlist);
+  const wishlists = useQuery(api.wishlist.getWishlistsByCreator, {
+    creatorId: convexCreator?._id as Id<"creators"> | undefined
+  });
   const addProduct = useMutation(api.creators.createProduct);
   const updateProduct = useMutation(api.creators.updateProduct);
   const deleteProduct = useMutation(api.creators.deleteProduct);
@@ -200,7 +211,7 @@ export default function Dashboard() {
     { id: "about", label: "About Us", icon: FileText },
     { id: "links", label: "Links", icon: LinkIcon },
     { id: "memberships", label: "Memberships", icon: Users },
-    { id: "goals", label: "Goals", icon: Target },
+    { id: "wishlist", label: "Wishlist", icon: Target },
     { id: "shop", label: "Shop", icon: ShoppingBag },
     { id: "slate", label: "Slate", icon: Square },
     { id: "explore", label: "Explore", icon: Search },
@@ -1063,77 +1074,15 @@ export default function Dashboard() {
               </motion.div>
             )}
 
-            {activeTab === "goals" && (
-              <motion.div
-                key="goals"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="max-w-2xl space-y-8"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-black">Funding Goals</h2>
-                    <p className="text-sm text-black/40">Track progress towards specific targets.</p>
-                  </div>
-                  <button
-                    onClick={() => openModal("goal")}
-                    className="flex h-10 items-center gap-2 rounded-full bg-black px-6 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95"
-                  >
-                    <Plus size={16} />
-                    New Goal
-                  </button>
-                </div>
-
-                <div className="space-y-6">
-                  {goals.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-black/10 p-12 text-center">
-                      <Target size={40} className="text-black/20" />
-                      <p className="mt-4 font-bold text-black/40">No goals set yet</p>
-                    </div>
-                  ) : (
-                    goals.map((goal) => {
-                      const progress = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
-                      return (
-                        <div key={goal._id} className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-lg font-bold text-black">{goal.title}</h4>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => openModal("goal", goal)}
-                                className="rounded-lg bg-black/5 p-2 text-black/40 hover:text-black"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                onClick={() => openDeleteModal("goal", goal._id, goal.title)}
-                                className="rounded-lg bg-red-50 p-2 text-red-400 hover:text-red-500"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="mt-6 space-y-2">
-                            <div className="flex justify-between text-sm font-bold">
-                              <span className="text-black">₦{goal.currentAmount.toLocaleString()}</span>
-                              <span className="text-black/40">₦{goal.targetAmount.toLocaleString()}</span>
-                            </div>
-                            <div className="h-3 w-full overflow-hidden rounded-full bg-black/5">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                className="h-full bg-black"
-                              />
-                            </div>
-                            <p className="text-right text-xs font-bold text-black">{Math.round(progress)}% reached</p>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </motion.div>
+            {activeTab === "wishlist" && (
+              <WishlistTab
+                wishlists={wishlists || []}
+                createWishlist={createWishlist}
+                updateWishlist={updateWishlist}
+                deleteWishlist={deleteWishlist}
+                resetWishlist={resetWishlist}
+                convexCreator={convexCreator}
+              />
             )}
 
             {activeTab === "shop" && (
