@@ -301,7 +301,7 @@ export default function CreatorPage() {
         {/* Profile Section */}
         <div className="relative -mt-12 mb-8 flex flex-col items-center">
           <div className="relative mx-auto h-20 w-20 sm:h-28 sm:w-28">
-            <div className="h-full w-full overflow-hidden rounded-[2rem] border-4 border-white bg-zinc-100 shadow-xl shadow-black/5">
+            <div className="h-full w-full overflow-hidden rounded-2xl border-2 border-white bg-gray-100">
               <img src={resolvedAvatar} alt={displayCreator?.name} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
             </div>
           </div>
@@ -321,7 +321,7 @@ export default function CreatorPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className={cn(
-                      "flex items-center justify-center w-10 h-10 rounded-full bg-black/5 transition-all hover:scale-110",
+                      "flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 bg-white transition-all hover:scale-105",
                       link.hoverColor
                     )}
                     title={link.platform.charAt(0).toUpperCase() + link.platform.slice(1)}
@@ -337,10 +337,10 @@ export default function CreatorPage() {
               <button
                 onClick={handleFollow}
                 className={cn(
-                  "mt-4 flex h-10 items-center justify-center rounded-full px-6 text-xs font-bold transition-all hover:scale-105 active:scale-95",
+                  "mt-4 flex h-10 items-center justify-center rounded-xl px-6 text-xs font-bold transition-all hover:scale-105 active:scale-95",
                   isFollowing(displayCreator._id as Id<"creators">)
-                    ? "bg-black/5 text-black hover:bg-black/10"
-                    : "bg-black text-white hover:bg-black/90"
+                    ? "border-2 border-gray-200 bg-white text-black hover:bg-gray-50"
+                    : "bg-black text-white hover:bg-gray-800"
                 )}
               >
                 {isFollowing(displayCreator._id as Id<"creators">) ? "Following" : "Follow"}
@@ -387,13 +387,13 @@ export default function CreatorPage() {
               >
                 {/* Support Card (PRIMARY FOCUS) */}
                 <section className="w-full">
-                  <div className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5 sm:p-10">
+                  <div className="rounded-2xl bg-white p-6 sm:p-10 border border-gray-200">
                     <div className="flex flex-col items-center text-center mb-8">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white mb-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black text-white mb-4">
                         <Heart size={24} fill="currentColor" />
                       </div>
                       <h2 className="text-2xl font-black text-black">Drop Something</h2>
-                      <p className="text-sm text-black/40 mt-1">Support my work</p>
+                      <p className="text-sm text-gray-500 mt-1">Support my work</p>
                     </div>
 
                     <div className="space-y-6">
@@ -406,19 +406,19 @@ export default function CreatorPage() {
                               setCustomAmount("");
                             }}
                             className={cn(
-                              "flex h-12 items-center justify-center rounded-2xl border-2 font-bold transition-all text-sm",
+                              "flex h-12 items-center justify-center rounded-xl border-2 font-bold transition-all text-sm",
                               tipAmount === amount
                                 ? "border-black bg-black text-white"
-                                : "border-black/5 bg-zinc-50 text-black hover:border-black/20"
+                                : "border-gray-200 bg-white text-black hover:border-gray-300"
                             )}
                           >
                             ₦{(amount / 1000).toFixed(0)}k
                           </button>
                         ))}
                       </div>
-                      
+
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-black/40">₦</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">₦</span>
                         <input
                           type="number"
                           placeholder="Custom amount"
@@ -427,7 +427,7 @@ export default function CreatorPage() {
                             setCustomAmount(e.target.value);
                             setTipAmount(null);
                           }}
-                          className="h-12 w-full rounded-2xl border-2 border-black/5 bg-zinc-50 pl-10 pr-4 font-bold text-black text-sm focus:border-black/20 focus:outline-none transition-colors"
+                          className="h-12 w-full rounded-xl border-2 border-gray-200 bg-white pl-10 pr-4 font-bold text-black text-sm focus:border-black focus:outline-none transition-colors"
                         />
                       </div>
 
@@ -437,13 +437,13 @@ export default function CreatorPage() {
                           placeholder="Your name (optional)"
                           value={supporterName}
                           onChange={(e) => setSupporterName(e.target.value)}
-                          className="h-11 w-full rounded-2xl border-2 border-black/5 bg-zinc-50 px-4 text-xs font-medium text-black focus:border-black/20 focus:outline-none transition-colors"
+                          className="h-11 w-full rounded-xl border-2 border-gray-200 bg-white px-4 text-xs font-medium text-black focus:border-gray-300 focus:outline-none transition-colors"
                         />
                         <textarea
                           placeholder="Say something nice..."
                           value={message}
                           onChange={(e) => setMessage(e.target.value)}
-                          className="w-full rounded-2xl border-2 border-black/5 bg-zinc-50 p-3 text-xs font-medium text-black focus:border-black/20 focus:outline-none transition-colors"
+                          className="w-full rounded-xl border-2 border-gray-200 bg-white p-3 text-xs font-medium text-black focus:border-gray-300 focus:outline-none transition-colors"
                           rows={2}
                         />
                       </div>
@@ -451,7 +451,7 @@ export default function CreatorPage() {
                       <button
                         onClick={handleDropSomething}
                         disabled={finalAmount <= 0 || isSubmitting}
-                        className="flex h-14 w-full items-center justify-center rounded-full bg-black text-sm font-black text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 shadow-lg shadow-black/10"
+                        className="flex h-14 w-full items-center justify-center rounded-xl bg-black text-sm font-black text-white transition-all hover:bg-gray-800 active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
                       >
                         {isSubmitting ? (
                           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -470,9 +470,9 @@ export default function CreatorPage() {
 
                 {/* About Section (Follows support card) */}
                 <section>
-                  <div className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5 sm:p-8">
+                  <div className="rounded-2xl bg-white p-6 sm:p-8 border border-gray-200">
                     <h2 className="text-xl font-black text-black mb-4">About Us</h2>
-                    <div className="text-base text-black/70 leading-relaxed whitespace-pre-wrap">
+                    <div className="text-base text-gray-600 leading-relaxed whitespace-pre-wrap">
                       {(displayCreator as any).about || displayCreator?.bio || "This creator hasn't added a detailed bio yet."}
                     </div>
                   </div>
@@ -505,19 +505,19 @@ export default function CreatorPage() {
                 {/* Recent Supporters Section (Follows About) */}
                 {recentSupporters.length > 0 && (
                   <section>
-                    <div className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5 sm:p-8">
+                    <div className="rounded-2xl bg-white p-6 sm:p-8 border border-gray-200">
                       <div className="flex items-center gap-2 mb-6">
                         <Heart size={20} className="text-red-500" />
                         <h2 className="text-xl font-black text-black">Recent supporters</h2>
                       </div>
                       <div className="space-y-3">
                         {recentSupporters.map((supporter, idx) => (
-                          <div key={idx} className="flex flex-col py-3 border-b border-black/5 last:border-b-0">
+                          <div key={idx} className="flex flex-col py-3 border-b border-gray-100 last:border-b-0">
                             <p className="text-sm font-bold text-black">
                               {supporter.supporterName} dropped ₦{supporter.amount}
                             </p>
                             {supporter.message && (
-                              <p className="text-xs text-black/60 mt-1">"{supporter.message}"</p>
+                              <p className="text-xs text-gray-500 mt-1">"{supporter.message}"</p>
                             )}
                           </div>
                         ))}
@@ -549,7 +549,7 @@ export default function CreatorPage() {
                       return (
                         <div
                           key={slate._id}
-                          className="rounded-[2.5rem] bg-white p-6 shadow-sm border border-black/5"
+                          className="rounded-2xl bg-white p-6 border border-gray-200"
                         >
                           {/* Slate header with type and visibility badges */}
                           <div className="flex items-center gap-2 mb-4">
@@ -741,10 +741,10 @@ export default function CreatorPage() {
                         <div
                           key={item._id}
                           className={cn(
-                            "rounded-[2.5rem] bg-white p-8 shadow-sm border",
+                            "rounded-2xl bg-white p-8 border",
                             isCompleted
-                              ? "border-emerald-200 bg-emerald-50/50"
-                              : "border-black/5"
+                              ? "border-emerald-200 bg-emerald-50/30"
+                              : "border-gray-200"
                           )}
                         >
                           <div className="text-center mb-6">

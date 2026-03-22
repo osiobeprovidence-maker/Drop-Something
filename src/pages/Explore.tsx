@@ -533,7 +533,7 @@ function PostCard({
     <motion.article
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-3xl bg-white p-6 shadow-sm border border-black/5"
+      className="rounded-2xl bg-white p-6 border border-gray-200"
     >
       {/* Creator Header */}
       <div className="flex items-center justify-between mb-4">
