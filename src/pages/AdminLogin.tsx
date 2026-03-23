@@ -16,12 +16,19 @@ export default function AdminLogin() {
     const trimmedPassword = password.trim();
 
     if (!trimmedEmail || !trimmedPassword) {
+      console.warn("⚠️ [AdminLogin] Form validation failed: email or password missing");
       return;
     }
 
-    await adminLogin(trimmedEmail, trimmedPassword);
-
-    // Navigation happens in AdminRoute component
+    console.log("🔐 [AdminLogin] Form submitted. Email:", trimmedEmail);
+    try {
+      await adminLogin(trimmedEmail, trimmedPassword);
+      console.log("🔐 [AdminLogin] adminLogin() returned");
+      // Navigation happens in AdminRoute component
+    } catch (err) {
+      console.error("❌ [AdminLogin] Unexpected error during login:", err);
+      // Error should be in context state, but log it just in case
+    }
   };
 
   return (

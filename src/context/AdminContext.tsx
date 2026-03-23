@@ -45,16 +45,20 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const adminLogin = async (email: string, password: string) => {
+    console.log("🔐 [AdminContext] Login attempt:", { email });
     setIsLoading(true);
     setLoginError(null);
 
     try {
+      console.log("🔐 [AdminContext] Calling backend adminAuth.login mutation...");
       const result = await adminLoginMutation({
         email,
         password,
       });
+      console.log("✅ [AdminContext] Backend returned result:", result);
 
       if (result.success) {
+        console.log("✅ [AdminContext] Login successful. Setting admin session...");
         // Store admin session in localStorage
         const session = {
           isAdmin: true,
@@ -63,9 +67,20 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         };
         localStorage.setItem("adminSession", JSON.stringify(session));
         setIsAdmin(true);
+        console.log("✅ [AdminContext] Admin session stored in localStorage");
+      } else {
+        console.warn("⚠️ [AdminContext] Login result success=false");
+        setLoginError("Login failed: Invalid response");
+        setIsAdmin(false);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Login failed";
+      console.error("❌ [AdminContext] Login error:", {
+        error,
+        errorMessage,
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       setLoginError(errorMessage);
       setIsAdmin(false);
     } finally {

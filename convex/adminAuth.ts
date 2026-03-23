@@ -29,28 +29,52 @@ export const login = mutation({
   },
   handler: async (ctx, args) => {
     try {
+      console.log("🔐 [adminAuth.login] Backend handler called. Email:", args.email);
+      
       // Get credentials from environment variables
       const adminEmail = process.env.ADMIN_EMAIL;
       const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+      
+      console.log("🔐 [adminAuth.login] Checking environment variables...");
+      console.log("  ADMIN_EMAIL configured:", !!adminEmail);
+      console.log("  ADMIN_PASSWORD_HASH configured:", !!adminPasswordHash);
 
       // Validate environment variables are configured
-      if (!adminEmail || !adminPasswordHash) {
-        throw new Error("Server Error: Admin credentials not configured");
+      if (!adminEmail) {
+        console.error("❌ [adminAuth.login] ADMIN_EMAIL is not set in Convex environment variables");
+        throw new Error("Server Error: ADMIN_EMAIL not configured in Convex environment");
+      }
+      
+      if (!adminPasswordHash) {
+        console.error("❌ [adminAuth.login] ADMIN_PASSWORD_HASH is not set in Convex environment variables");
+        throw new Error("Server Error: ADMIN_PASSWORD_HASH not configured in Convex environment");
       }
 
-      // Check email match
+      // Step 1: Check email match
+      console.log("🔐 [adminAuth.login] Step 1: Validating email...");
+      console.log("  Provided email:", args.email);
+      console.log("  Admin email (from env):", adminEmail);
+      console.log("  Case-insensitive match:", args.email.toLowerCase() === adminEmail.toLowerCase());
+      
       if (args.email.toLowerCase() !== adminEmail.toLowerCase()) {
+        console.warn("❌ [adminAuth.login] Email mismatch. Login attempt with:", args.email);
         throw new Error("Invalid credentials");
       }
+      console.log("✅ [adminAuth.login] Email matched");
 
-      // Verify password using bcryptjs
+      // Step 2: Verify password using bcryptjs
+      console.log("🔐 [adminAuth.login] Step 2: Validating password with bcryptjs.compare()...");
       const isPasswordValid = await bcryptjs.compare(args.password, adminPasswordHash);
+      console.log("  Password valid:", isPasswordValid);
 
       if (!isPasswordValid) {
+        console.warn("❌ [adminAuth.login] Password mismatch");
         throw new Error("Invalid credentials");
       }
+      console.log("✅ [adminAuth.login] Password matched");
 
       // Successful login
+      console.log("✅ [adminAuth.login] Login successful! Returning session data.");
       return {
         success: true,
         adminEmail: adminEmail,
@@ -58,6 +82,11 @@ export const login = mutation({
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Login failed";
+      console.error("❌ [adminAuth.login] Error during authentication:", {
+        message: errorMessage,
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        originalError: error,
+      });
       throw new Error(errorMessage);
     }
   },
