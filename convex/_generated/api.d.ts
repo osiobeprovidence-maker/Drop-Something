@@ -10,6 +10,7 @@
 
 import type * as admin from "../admin.js";
 import type * as creators from "../creators.js";
+import type * as paystack from "../paystack.js";
 import type * as reset from "../reset.js";
 import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
@@ -26,6 +27,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   creators: typeof creators;
+  paystack: typeof paystack;
   reset: typeof reset;
   seed: typeof seed;
   settings: typeof settings;

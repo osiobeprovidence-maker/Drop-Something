@@ -8,11 +8,12 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useFollow } from "@/src/context/FollowContext";
 import { useAuth } from "@/src/context/AuthContext";
+import { PaystackPayment } from "@/src/lib/PaystackPayment";
 
 export default function CreatorPage() {
   // === ALL HOOKS AT TOP - DO NOT ADD CONDITIONS BEFORE HOOKS ===
@@ -187,15 +188,26 @@ export default function CreatorPage() {
   };
 
   const handleDropSomething = async () => {
-    if (!displayCreator) return;
-    setIsSubmitting(true);
-    try {
-      const amount = tipAmount || parseFloat(customAmount);
-      if (isNaN(amount) || amount <= 0) {
-        alert("Please select or enter a valid amount.");
-        return;
-      }
+    if (!displayCreator || !convexUserId) return;
+    
+    const amount = tipAmount || parseFloat(customAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please select or enter a valid amount.");
+      return;
+    }
 
+    // Use Paystack for payment
+    const user = await (api.users.currentUser as any)();
+    const userEmail = user?.email || "";
+
+    if (!userEmail) {
+      alert("Please log in to make a payment.");
+      return;
+    }
+
+    // The PaystackPayment component will handle the actual payment
+    // This function is now just a fallback for direct tips
+    try {
       await addConvexTip({
         creatorId: displayCreator._id,
         supporterName: supporterName || "Anonymous Supporter",
@@ -213,8 +225,6 @@ export default function CreatorPage() {
     } catch (err) {
       console.error("Tip error:", err);
       alert("Failed to send tip. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

@@ -1,13 +1,6 @@
-import { query, mutation, action } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { Mux } from "@mux/mux-node";
-
-// Initialize Mux client
-const mux = new Mux({
-  tokenId: process.env.MUX_TOKEN_ID || "f3eecb08-16b6-426d-b9ba-906ab2193732",
-  tokenSecret: process.env.MUX_TOKEN_SECRET || "",
-});
 
 // Get all public slates for explore feed (paginated)
 export const getPublicSlates = query({
@@ -461,70 +454,5 @@ export const deleteComment = mutation({
   },
 });
 
-// ==================== MUX VIDEO UPLOAD ====================
-
-// Create Mux upload for video slate
-export const createVideoUpload = action({
-  args: {
-    fileName: v.string(),
-    fileSize: v.number(),
-  },
-  handler: async (ctx, args) => {
-    try {
-      const upload = await mux.video.uploads.create({
-        new_asset_settings: {
-          playback_policy: ["public"],
-        },
-        cors_origin: "*",
-        metadata: {
-          file_name: args.fileName,
-          file_size: args.fileSize.toString(),
-        },
-      });
-
-      return {
-        uploadId: upload.id,
-        uploadUrl: upload.url,
-      };
-    } catch (error) {
-      console.error("Error creating Mux upload:", error);
-      throw new Error("Failed to create Mux upload");
-    }
-  },
-});
-
-// Get Mux playback ID after upload completes
-export const getVideoPlaybackInfo = action({
-  args: {
-    uploadId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    try {
-      const upload = await mux.video.uploads.retrieve(args.uploadId);
-      
-      if (!upload.asset_id) {
-        return {
-          status: "uploading",
-          playbackId: null,
-          playbackUrl: null,
-        };
-      }
-
-      const asset = await mux.video.assets.retrieve(upload.asset_id);
-      const playbackId = asset.playback_ids?.[0]?.id || null;
-      
-      return {
-        status: asset.status,
-        playbackId,
-        playbackUrl: playbackId ? `https://stream.mux.com/${playbackId}.m3u8` : null,
-      };
-    } catch (error) {
-      console.error("Error getting Mux playback info:", error);
-      return {
-        status: "error",
-        playbackId: null,
-        playbackUrl: null,
-      };
-    }
-  },
-});
+// Mux video upload actions (using Node runtime)
+export { createVideoUpload, getVideoPlaybackInfo } from "./mux.node";
