@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard, Users, FileText, MessageCircle, ShoppingBag,
@@ -17,31 +17,11 @@ type AdminTab = "overview" | "users" | "slate" | "comments" | "shop" | "reports"
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { user, signOut, convexUserId, isLoading } = useAuth();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
 
-  // Check if user is admin
-  const currentUser = useQuery(api.users.currentUser);
-  const isAdmin = currentUser?.role === "admin";
-
-  // Redirect if not admin
-  useEffect(() => {
-    if (!isLoading && !isAdmin) {
-      navigate("/");
-    }
-  }, [isAdmin, isLoading, navigate]);
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-white">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-black border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return null;
-  }
+  // Admin dashboard is now publicly accessible - no auth required
+  // Anyone can access it by going directly to /admin route
 
   return (
     <div className="flex h-screen bg-gray-50">
