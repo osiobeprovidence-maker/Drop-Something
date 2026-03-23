@@ -9,18 +9,27 @@ export const PlatformNavbar = () => {
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<any>(null);
+  const [showAdminButton, setShowAdminButton] = useState(false);
 
   // Super admin email - only this user can access admin panel
   const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
-  const isAdmin = user?.email === SUPER_ADMIN_EMAIL;
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const userData = JSON.parse(storedUser);
       setUser(userData);
-      console.log('PlatformNavbar - User loaded:', userData);
-      console.log('PlatformNavbar - Is admin:', userData.email === SUPER_ADMIN_EMAIL);
+      
+      // Check if this is the super admin
+      const userEmail = userData?.email || userData?.user?.email || "";
+      const isAdmin = userEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+      setShowAdminButton(isAdmin);
+      
+      console.log('🔐 Admin Access Check:', {
+        email: userEmail,
+        isSuperAdmin: isAdmin,
+        userData
+      });
     }
   }, []);
 
@@ -90,10 +99,10 @@ export const PlatformNavbar = () => {
           ))}
           <div className="flex items-center gap-4">
             {/* Admin Button - Only for super admin */}
-            {isAdmin && (
+            {showAdminButton && (
               <Link
                 to="/admin"
-                className="flex items-center gap-1.5 rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-600 border border-red-100 transition-all hover:bg-red-100 hover:scale-105 active:scale-95"
+                className="flex items-center gap-1.5 rounded-full bg-red-500 px-4 py-2 text-sm font-bold text-white border border-red-600 transition-all hover:bg-red-600 hover:scale-105 active:scale-95 shadow-lg shadow-red-500/30"
                 title="Admin Panel"
               >
                 <Shield size={14} />
@@ -194,13 +203,13 @@ export const PlatformNavbar = () => {
                       </Link>
                     ))}
                     {/* Admin Link - Only for super admin */}
-                    {isAdmin && (
+                    {showAdminButton && (
                       <Link
                         to="/admin"
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-base font-semibold text-red-600 bg-red-50 hover:bg-red-100"
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-base font-bold text-white bg-red-500 hover:bg-red-600"
                         onClick={() => setIsOpen(false)}
                       >
-                        <Shield size={20} className="text-red-600" />
+                        <Shield size={20} className="text-white" />
                         Admin Panel
                       </Link>
                     )}

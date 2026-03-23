@@ -27,7 +27,17 @@ export default function Dashboard() {
 
   // Super admin email check
   const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
-  const isAdmin = user?.email === SUPER_ADMIN_EMAIL;
+  const [showAdminButton, setShowAdminButton] = useState(false);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const userData = JSON.parse(storedUser);
+      const userEmail = userData?.email || userData?.user?.email || "";
+      const isAdmin = userEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+      setShowAdminButton(isAdmin);
+    }
+  }, []);
 
   // Fetch live data from Convex
   const convexCreator = useQuery(api.creators.getCreatorByUserId, {
@@ -615,11 +625,11 @@ export default function Dashboard() {
           </nav>
 
           {/* Admin Button - Only for super admin */}
-          {isAdmin && (
+          {showAdminButton && (
             <div className="mt-4 pt-4 border-t border-black/5">
               <Link
                 to="/admin"
-                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-all"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-all shadow-lg shadow-red-500/30"
               >
                 <Shield size={20} />
                 Admin Panel
