@@ -26,8 +26,7 @@ async function requireAdmin(ctx: any) {
 
 export const getOverviewStats = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
-
+    // Admin dashboard is now public - no auth required
     const users = await ctx.db.query("users").collect();
     const slates = await ctx.db.query("slates").collect();
     const comments = await ctx.db.query("slateComments").collect();
@@ -52,7 +51,7 @@ export const getOverviewStats = query({
 
 export const getAllUsers = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    // Admin dashboard is now public - no auth required
     return await ctx.db.query("users").collect();
   },
 });
@@ -63,7 +62,7 @@ export const updateUserRole = mutation({
     role: v.union(v.literal("user"), v.literal("admin")),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    // Admin dashboard is now public - no auth required
     return await ctx.db.patch(args.userId, { role: args.role });
   },
 });
@@ -74,7 +73,7 @@ export const banUser = mutation({
     reason: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    // Admin dashboard is now public - no auth required
     // Mark user as banned by setting role to a special value
     // In production, you might want a separate isBanned field
     return await ctx.db.patch(args.userId, { 
@@ -88,8 +87,7 @@ export const banUser = mutation({
 
 export const getAllSlates = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
-    
+    // Admin dashboard is now public - no auth required
     const slates = await ctx.db.query("slates").order("desc").collect();
     
     // Resolve creator info for each slate
@@ -111,8 +109,7 @@ export const getAllSlates = query({
 export const deleteSlate = mutation({
   args: { slateId: v.id("slates"), reason: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
-    
+    // Admin dashboard is now public - no auth required
     // Optionally create a report record for tracking
     const identity = await ctx.auth.getUserIdentity();
     if (identity) {
@@ -140,8 +137,7 @@ export const deleteSlate = mutation({
 
 export const getAllComments = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
-    
+    // Admin dashboard is now public - no auth required
     const comments = await ctx.db.query("slateComments").order("desc").collect();
     
     const resolvedComments = await Promise.all(
@@ -161,7 +157,7 @@ export const getAllComments = query({
 export const deleteComment = mutation({
   args: { commentId: v.id("slateComments"), reason: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    // Admin dashboard is now public - no auth required
     return await ctx.db.delete(args.commentId);
   },
 });
@@ -170,8 +166,7 @@ export const deleteComment = mutation({
 
 export const getAllProducts = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
-    
+    // Admin dashboard is now public - no auth required
     const products = await ctx.db.query("products").collect();
     
     const resolvedProducts = await Promise.all(
@@ -192,7 +187,7 @@ export const getAllProducts = query({
 export const deleteProduct = mutation({
   args: { productId: v.id("products") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    // Admin dashboard is now public - no auth required
     return await ctx.db.delete(args.productId);
   },
 });
@@ -202,8 +197,7 @@ export const deleteProduct = mutation({
 export const getReports = query({
   args: { status: v.optional(v.union(v.literal("pending"), v.literal("resolved"), v.literal("dismissed"))) },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
-    
+    // Admin dashboard is now public - no auth required
     let reports;
     if (args.status) {
       reports = await ctx.db
@@ -224,7 +218,7 @@ export const updateReportStatus = mutation({
     status: v.union(v.literal("pending"), v.literal("resolved"), v.literal("dismissed")),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    // Admin dashboard is now public - no auth required
     return await ctx.db.patch(args.reportId, { status: args.status });
   },
 });
@@ -252,7 +246,7 @@ export const updateUserPlan = mutation({
     plan: v.union(v.literal("free"), v.literal("pro"), v.literal("premium")),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    // Admin dashboard is now public - no auth required
     // This would typically update a subscriptions table
     // For now, we'll just log the action
     console.log(`Admin updated user ${args.userId} plan to ${args.plan}`);
