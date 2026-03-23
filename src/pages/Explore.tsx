@@ -51,6 +51,9 @@ export default function Explore() {
   const allSlates = useQuery(api.slates.getAllPublicSlates);
   const [posts, setPosts] = useState<SlatePost[]>([]);
 
+  // Get some creators for "People to Follow" suggestions
+  const allCreators = useQuery(api.creators.listCreators);
+
   // Get comments for selected post
   const comments = useQuery(
     api.slates.getComments,
@@ -197,7 +200,7 @@ export default function Explore() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="space-y-6"
+              className="divide-y divide-gray-100"
             >
               {posts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -211,16 +214,27 @@ export default function Explore() {
                 </div>
               ) : (
                 <>
-                  {posts.map((post) => (
-                    <PostCard
-                      key={post._id}
-                      post={post}
-                      onLike={handleLike}
-                      onComment={() => setSelectedPost(post)}
-                      onFollow={handleFollow}
-                      isFollowing={isFollowing(post.creatorId)}
-                      formatTimeAgo={formatTimeAgo}
-                    />
+                  {posts.map((post, index) => (
+                    <>
+                      <PostCard
+                        key={post._id}
+                        post={post}
+                        onLike={handleLike}
+                        onComment={() => setSelectedPost(post)}
+                        onFollow={handleFollow}
+                        isFollowing={isFollowing(post.creatorId)}
+                        formatTimeAgo={formatTimeAgo}
+                      />
+                      {/* Show "People to Follow" after every 2 posts */}
+                      {(index + 1) % 2 === 0 && allCreators && allCreators.length > 0 && (
+                        <PeopleToFollow
+                          key={`people-${index}`}
+                          creators={allCreators.filter(c => c._id !== post.creatorId)}
+                          onFollow={handleFollow}
+                          isFollowing={isFollowing}
+                        />
+                      )}
+                    </>
                   ))}
                 </>
               )}
@@ -234,7 +248,7 @@ export default function Explore() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="space-y-6"
+              className="divide-y divide-gray-100"
             >
               {posts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -254,16 +268,27 @@ export default function Explore() {
                 </div>
               ) : (
                 <>
-                  {posts.map((post) => (
-                    <PostCard
-                      key={post._id}
-                      post={post}
-                      onLike={handleLike}
-                      onComment={() => setSelectedPost(post)}
-                      onFollow={handleFollow}
-                      isFollowing={isFollowing(post.creatorId)}
-                      formatTimeAgo={formatTimeAgo}
-                    />
+                  {posts.map((post, index) => (
+                    <>
+                      <PostCard
+                        key={post._id}
+                        post={post}
+                        onLike={handleLike}
+                        onComment={() => setSelectedPost(post)}
+                        onFollow={handleFollow}
+                        isFollowing={isFollowing(post.creatorId)}
+                        formatTimeAgo={formatTimeAgo}
+                      />
+                      {/* Show "People to Follow" after every 2 posts */}
+                      {(index + 1) % 2 === 0 && allCreators && allCreators.length > 0 && (
+                        <PeopleToFollow
+                          key={`people-${index}`}
+                          creators={allCreators.filter(c => c._id !== post.creatorId)}
+                          onFollow={handleFollow}
+                          isFollowing={isFollowing}
+                        />
+                      )}
+                    </>
                   ))}
                 </>
               )}
@@ -451,6 +476,65 @@ export default function Explore() {
   );
 }
 
+// People to Follow Component
+function PeopleToFollow({
+  creators,
+  onFollow,
+  isFollowing,
+}: {
+  creators: any[];
+  onFollow: (id: Id<"creators">) => void;
+  isFollowing: (id: Id<"creators">) => boolean;
+}) {
+  if (!creators || creators.length === 0) return null;
+
+  return (
+    <div className="py-6 border-b border-gray-100">
+      <div className="px-4 sm:px-6 mb-4">
+        <h3 className="text-sm font-bold text-black">People to follow</h3>
+        <p className="text-xs text-gray-500 mt-0.5">Discover new creators</p>
+      </div>
+      <div className="flex gap-4 overflow-x-auto px-4 sm:px-6 pb-2 scrollbar-hide">
+        {creators.slice(0, 10).map((creator) => (
+          <div
+            key={creator._id}
+            className="flex flex-col items-center gap-2 min-w-[80px]"
+          >
+            <a
+              href={`/${creator.username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-14 w-14 rounded-full overflow-hidden bg-gray-100 shrink-0"
+            >
+              <img
+                src={creator.avatar}
+                alt={creator.name}
+                className="h-full w-full object-cover"
+              />
+            </a>
+            <div className="text-center">
+              <p className="text-xs font-bold text-black truncate max-w-[80px]">
+                {creator.name}
+              </p>
+              <button
+                onClick={() => onFollow(creator._id)}
+                className={cn(
+                  "mt-1 rounded-full px-3 py-1 text-xs font-medium transition-all whitespace-nowrap",
+                  isFollowing(creator._id)
+                    ? "bg-gray-100 text-gray-700"
+                    : "bg-black text-white"
+                )}
+              >
+                {isFollowing(creator._id) ? "Following" : "Follow"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Post Card Component
 function PostCard({
   post,
@@ -477,34 +561,34 @@ function PostCard({
     <motion.article
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl bg-white p-6 border border-gray-200"
+      className="bg-white py-6 border-b border-gray-100 last:border-b-0"
     >
       {/* Creator Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 px-4 sm:px-6">
         <a
           href={`/${displayUsername}`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3"
         >
-          <div className="h-10 w-10 rounded-xl overflow-hidden bg-gray-100">
+          <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 shrink-0">
             <img
               src={post.creatorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayUsername}`}
               alt={displayCreatorName}
               className="h-full w-full object-cover"
             />
           </div>
-          <div>
-            <p className="text-sm font-bold text-black">{displayCreatorName}</p>
+          <div className="flex flex-col">
+            <p className="text-sm font-bold text-black leading-tight">{displayCreatorName}</p>
             <p className="text-xs text-gray-500">@{displayUsername} · {formatTimeAgo(post._creationTime)}</p>
           </div>
         </a>
         <button
           onClick={() => onFollow(post.creatorId)}
           className={cn(
-            "flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-xs font-bold transition-all",
+            "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
             isFollowing
-              ? "border-2 border-gray-200 bg-white text-black hover:bg-gray-50"
+              ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
               : "bg-black text-white hover:bg-gray-800"
           )}
         >
@@ -514,9 +598,9 @@ function PostCard({
       </div>
 
       {/* Content */}
-      <div className="mb-4">
+      <div className="mb-4 px-4 sm:px-6">
         {post.type === "text" && post.content && (
-          <p className="text-sm font-medium text-gray-800 whitespace-pre-wrap leading-relaxed">
+          <p className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap">
             {post.content}
           </p>
         )}
@@ -525,13 +609,13 @@ function PostCard({
           <img
             src={post.mediaUrl}
             alt="Post"
-            className="w-full rounded-xl object-cover max-h-96"
+            className="w-full rounded-2xl object-cover max-h-[500px]"
           />
         )}
 
         {post.type === "video" && post.playbackId && (
-          <div className="relative rounded-xl overflow-hidden bg-black">
-            <video controls className="w-full max-h-96 object-cover">
+          <div className="relative rounded-2xl overflow-hidden bg-black">
+            <video controls className="w-full max-h-[500px] object-cover">
               <source src={`https://stream.mux.com/${post.playbackId}.m3u8`} type="application/x-mpegURL" />
             </video>
           </div>
@@ -547,29 +631,29 @@ function PostCard({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
+      <div className="flex items-center gap-6 px-4 sm:px-6">
         <button
           onClick={() => onLike(post._id)}
-          className="flex items-center gap-2 hover:text-red-500 transition-colors"
+          className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors group"
         >
-          <Heart size={18} className="fill-red-500 text-red-500" />
-          <span className="text-xs font-bold text-gray-700">{displayLikeCount}</span>
+          <Heart size={20} className="group-hover:scale-110 transition-transform" />
+          <span className="text-sm font-medium">{displayLikeCount}</span>
         </button>
         <button
           onClick={onComment}
-          className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors"
+          className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors group"
         >
-          <MessageCircle size={18} />
-          <span className="text-xs font-bold">{displayCommentCount}</span>
+          <MessageCircle size={20} className="group-hover:scale-110 transition-transform" />
+          <span className="text-sm font-medium">{displayCommentCount}</span>
         </button>
         <a
           href={`/${displayUsername}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors ml-auto"
+          className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors ml-auto group"
         >
-          <ExternalLink size={16} />
-          <span className="text-xs font-bold">View Profile</span>
+          <span className="text-sm font-medium">View Profile</span>
+          <ExternalLink size={16} className="group-hover:scale-110 transition-transform" />
         </a>
       </div>
     </motion.article>
