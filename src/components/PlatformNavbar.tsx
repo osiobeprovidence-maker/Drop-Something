@@ -17,7 +17,10 @@ export const PlatformNavbar = () => {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const userData = JSON.parse(storedUser);
+      setUser(userData);
+      console.log('PlatformNavbar - User loaded:', userData);
+      console.log('PlatformNavbar - Is admin:', userData.email === SUPER_ADMIN_EMAIL);
     }
   }, []);
 
