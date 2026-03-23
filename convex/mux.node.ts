@@ -3,9 +3,20 @@
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 
-// Mux configuration
-// Token ID: f3eecb08-16b6-426d-b9ba-906ab2193732
-// Token Secret should be set in environment variables as MUX_TOKEN_SECRET
+// Helper function to create base64 encoding for Basic Auth
+function toBase64(str: string): string {
+  try {
+    // Try using Node.js Buffer if available
+    if (typeof Buffer !== "undefined") {
+      return Buffer.from(str).toString("base64");
+    }
+  } catch (e) {
+    // Fall back to manual base64 encoding
+  }
+  
+  // Manual base64 encoding for compatibility
+  return btoa(unescape(encodeURIComponent(str)));
+}
 
 // Create a Mux direct upload for video
 export const createVideoUpload = action({
