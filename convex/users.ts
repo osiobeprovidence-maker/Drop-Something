@@ -49,3 +49,39 @@ export const currentUser = query({
       .unique();
   },
 });
+
+// Action to set admin role for super admin user
+export const setAdminRole = mutation({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    // Only allow setting admin for super admin email
+    const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
+    if (args.email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(user._id, { role: "admin" });
+    return { success: true, userId: user._id };
+  },
+});
+
+// Get user by email (for admin purposes)
+export const getUserByEmail = query({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+    return user;
+  },
+});
