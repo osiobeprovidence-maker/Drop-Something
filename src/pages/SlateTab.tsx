@@ -192,42 +192,54 @@ export default function SlateTab({
       }
 
       if (activeType === "video" && videoFile && createVideoUpload && getVideoPlaybackInfo) {
-        // Use Mux for video upload
+        // Use Mux for video upload - FREE for all users
         setIsUploading(true);
 
-        // Step 1: Create Mux upload
-        const { uploadId, uploadUrl } = await createVideoUpload({
-          fileName: videoFile.name,
-          fileSize: videoFile.size,
-        });
+        try {
+          // Check video file size (100MB limit)
+          if (videoFile.size > 100 * 1024 * 1024) {
+            throw new Error("Video file is too large. Maximum size is 100MB.");
+          }
 
-        // Step 2: Upload video to Mux
-        const uploadResult = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": videoFile.type },
-          body: videoFile,
-        });
+          // Step 1: Create Mux upload
+          const { uploadId, uploadUrl } = await createVideoUpload({
+            fileName: videoFile.name,
+            fileSize: videoFile.size,
+          });
 
-        if (!uploadResult.ok) throw new Error("Mux upload failed");
+          // Step 2: Upload video to Mux
+          const uploadResult = await fetch(uploadUrl, {
+            method: "POST",
+            headers: { "Content-Type": videoFile.type },
+            body: videoFile,
+          });
 
-        // Step 3: Wait for Mux to process and get playback ID
-        // In production, you'd use webhooks instead of polling
-        let playbackInfo = await getVideoPlaybackInfo({ uploadId });
-        let attempts = 0;
-        const maxAttempts = 30; // Wait up to 30 seconds
+          if (!uploadResult.ok) {
+            throw new Error("Video upload failed. Please try again.");
+          }
 
-        while (!playbackInfo.playbackId && attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-          playbackInfo = await getVideoPlaybackInfo({ uploadId });
-          attempts++;
+          // Step 3: Wait for Mux to process and get playback ID
+          // In production, you'd use webhooks instead of polling
+          let playbackInfo = await getVideoPlaybackInfo({ uploadId });
+          let attempts = 0;
+          const maxAttempts = 60; // Wait up to 60 seconds for larger videos
+
+          while (!playbackInfo.playbackId && attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+            playbackInfo = await getVideoPlaybackInfo({ uploadId });
+            attempts++;
+          }
+
+          if (!playbackInfo.playbackId) {
+            throw new Error("Video processing is taking longer than expected. Your video will be available soon.");
+          }
+
+          playbackId = playbackInfo.playbackId;
+          setIsUploading(false);
+        } catch (error: any) {
+          console.error("Video upload error:", error);
+          throw error;
         }
-
-        if (!playbackInfo.playbackId) {
-          throw new Error("Video processing timed out");
-        }
-
-        playbackId = playbackInfo.playbackId;
-        setIsUploading(false);
       }
 
       if (activeType === "audio" && audioFile) {
@@ -440,7 +452,7 @@ export default function SlateTab({
                 >
                   <Video size={32} />
                   <span className="text-sm font-bold">Click to upload video</span>
-                  <span className="text-xs">MP4 up to 100MB (Free for all users)</span>
+                  <span className="text-xs text-center px-4">MP4 up to 100MB, max 15 min (Free for all users)</span>
                 </button>
               )}
             </div>
