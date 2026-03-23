@@ -13,6 +13,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useFollow } from "@/src/context/FollowContext";
 import { useAuth } from "@/src/context/AuthContext";
+import { useAdmin } from "@/src/context/AdminContext";
 import { PaystackPayment } from "@/src/lib/PaystackPayment";
 
 export default function CreatorPage() {
@@ -243,6 +244,8 @@ export default function CreatorPage() {
 
   const finalAmount = tipAmount || (customAmount ? parseInt(customAmount) : 0);
 
+  const { isAdmin } = useAdmin();
+
   // Show loading state
   if (isLoading) {
     return (
@@ -318,7 +321,14 @@ export default function CreatorPage() {
           
           {/* Profile Info Container - Centered */}
           <div className="mt-3 flex flex-col items-center text-center">
-            <h1 className="text-xl font-black text-black sm:text-2xl">@{displayCreator?.username}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-black text-black sm:text-2xl">@{displayCreator?.username}</h1>
+              {displayCreator?.username === "dropsomething" && (
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">
+                  <Check size={14} /> Official
+                </span>
+              )}
+            </div>
             <p className="mt-1 text-sm font-medium text-black/60 max-w-lg">{displayCreator?.bio}</p>
 
             {/* Social Links - Platform Icons */}
@@ -339,6 +349,18 @@ export default function CreatorPage() {
                     <link.Icon size={18} className={link.platform !== 'website' ? link.color : ''} />
                   </a>
                 ))}
+              </div>
+            )}
+
+            {/* Admin quick action: Post as DropSomething */}
+            {isAdmin && displayCreator?.username === "dropsomething" && (
+              <div className="mt-4">
+                <a
+                  href="/admin"
+                  className="inline-flex items-center gap-2 rounded-xl bg-black px-4 py-2 text-sm font-bold text-white hover:bg-gray-900"
+                >
+                  Post as DropSomething
+                </a>
               </div>
             )}
 

@@ -17,6 +17,23 @@ export const seedMockData = mutation({
     });
 
     const mockCreators = [
+      // Official platform creator
+      {
+        username: "dropsomething",
+        name: "DropSomething",
+        avatar: "https://raw.githubusercontent.com/your-repo/logo/main/dropsomething-avatar.png",
+        coverImage: "https://picsum.photos/seed/dropsomething-cover/1200/400",
+        bio: "Official DropSomething account — news, updates, and featured posts from the platform.",
+        category: "Platform",
+        supporters: 0,
+        pageStyle: "support" as const,
+        totalRevenue: 0,
+        supporterCount: 0,
+        links: [],
+        memberships: [],
+        goals: [],
+        products: [],
+      },
       {
         username: "alexrivera",
         name: "Alex Rivera",

@@ -467,6 +467,52 @@ export const ensureCreatorProfile = mutation({
   },
 });
 
+// Admin-only: assign an existing creator to a user by email
+export const assignCreatorToEmail = mutation({
+  args: { username: v.string(), email: v.string() },
+  handler: async (ctx, args) => {
+    // Require authenticated admin user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const requestingUser = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+
+    if (!requestingUser || requestingUser.role !== "admin") {
+      throw new Error("Not authorized");
+    }
+
+    // Find the target user by email
+    const targetUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .unique();
+
+    if (!targetUser) {
+      throw new Error("Target user not found");
+    }
+
+    // Find the creator by username
+    const creator = await ctx.db
+      .query("creators")
+      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .unique();
+
+    if (!creator) {
+      throw new Error("Creator not found");
+    }
+
+    // Patch the creator to point to the target user
+    await ctx.db.patch(creator._id, { userId: targetUser._id });
+
+    return { success: true, creatorId: creator._id, userId: targetUser._id };
+  },
+});
+
 // Query to check if user is following a creator
 export const isFollowing = query({
   args: {
