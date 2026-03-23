@@ -30,6 +30,8 @@ interface SlateTabProps {
   slates: Slate[];
   generateUploadUrl: () => Promise<string>;
   hasProFeatures: boolean;
+  createVideoUpload?: (args: { fileName: string; fileSize: number }) => Promise<{ uploadId: string; uploadUrl: string }>;
+  getVideoPlaybackInfo?: (args: { uploadId: string }) => Promise<{ status: string; playbackId: string | null; playbackUrl: string | null }>;
 }
 
 export default function SlateTab({
@@ -39,6 +41,8 @@ export default function SlateTab({
   slates,
   generateUploadUrl,
   hasProFeatures,
+  createVideoUpload,
+  getVideoPlaybackInfo,
 }: SlateTabProps) {
   const [activeType, setActiveType] = useState<"text" | "image" | "video" | "audio">("text");
   const [textContent, setTextContent] = useState("");
@@ -198,27 +202,42 @@ export default function SlateTab({
         setIsUploading(false);
       }
 
-      if (activeType === "video" && videoFile) {
-        // For Mux video upload, we would typically use Mux's API
-        // For now, we'll upload to Convex storage and extract a playbackId
-        // In production, you'd integrate with Mux's direct upload API
+      if (activeType === "video" && videoFile && createVideoUpload && getVideoPlaybackInfo) {
+        // Use Mux for video upload
         setIsUploading(true);
-        
-        // Simulate Mux upload - in production, use Mux's API
-        const postUrl = await generateUploadUrl();
-        const result = await fetch(postUrl, {
+
+        // Step 1: Create Mux upload
+        const { uploadId, uploadUrl } = await createVideoUpload({
+          fileName: videoFile.name,
+          fileSize: videoFile.size,
+        });
+
+        // Step 2: Upload video to Mux
+        const uploadResult = await fetch(uploadUrl, {
           method: "POST",
           headers: { "Content-Type": videoFile.type },
           body: videoFile,
         });
 
-        if (!result.ok) throw new Error("Upload failed");
-        const { storageId } = await result.json();
-        
-        // For demo purposes, we'll use the storageId as playbackId
-        // In production, this would be the actual Mux playback ID
-        playbackId = storageId;
-        mediaUrl = storageId;
+        if (!uploadResult.ok) throw new Error("Mux upload failed");
+
+        // Step 3: Wait for Mux to process and get playback ID
+        // In production, you'd use webhooks instead of polling
+        let playbackInfo = await getVideoPlaybackInfo({ uploadId });
+        let attempts = 0;
+        const maxAttempts = 30; // Wait up to 30 seconds
+
+        while (!playbackInfo.playbackId && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+          playbackInfo = await getVideoPlaybackInfo({ uploadId });
+          attempts++;
+        }
+
+        if (!playbackInfo.playbackId) {
+          throw new Error("Video processing timed out");
+        }
+
+        playbackId = playbackInfo.playbackId;
         setIsUploading(false);
       }
 

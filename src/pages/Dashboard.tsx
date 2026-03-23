@@ -9,7 +9,7 @@ import {
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import SlateTab from "./SlateTab";
@@ -61,6 +61,10 @@ export default function Dashboard() {
   const wishlists = useQuery(api.wishlist.getWishlistsByCreator, {
     creatorId: convexCreator?._id as Id<"creators"> | undefined
   });
+
+  // Mux actions for video upload
+  const createVideoUpload = useAction(api.slates.createVideoUpload);
+  const getVideoPlaybackInfo = useAction(api.slates.getVideoPlaybackInfo);
   const addProduct = useMutation(api.creators.createProduct);
   const updateProduct = useMutation(api.creators.updateProduct);
   const deleteProduct = useMutation(api.creators.deleteProduct);
@@ -1119,6 +1123,8 @@ export default function Dashboard() {
                 slates={slates || []}
                 generateUploadUrl={generateUploadUrl}
                 hasProFeatures={!!hasProFeatures}
+                createVideoUpload={createVideoUpload}
+                getVideoPlaybackInfo={getVideoPlaybackInfo}
               />
             )}
           </AnimatePresence>
