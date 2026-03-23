@@ -59,6 +59,7 @@ export default function SlateTab({
   const [slateToDelete, setSlateToDelete] = useState<Id<"slates"> | null>(null);
   const [showProModal, setShowProModal] = useState(false);
   const [proFeatureType, setProFeatureType] = useState<"video" | "audio" | "locked" | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -196,18 +197,27 @@ export default function SlateTab({
         setIsUploading(true);
 
         try {
+          console.log("📹 [Video Upload] Starting video upload:", {
+            fileName: videoFile.name,
+            fileSize: `${(videoFile.size / 1024 / 1024).toFixed(2)}MB`,
+            type: videoFile.type,
+          });
+
           // Check video file size (100MB limit)
           if (videoFile.size > 100 * 1024 * 1024) {
             throw new Error("Video file is too large. Maximum size is 100MB.");
           }
 
           // Step 1: Create Mux upload
+          console.log("📹 [Video Upload] Creating Mux upload URL...");
           const { uploadId, uploadUrl } = await createVideoUpload({
             fileName: videoFile.name,
             fileSize: videoFile.size,
           });
+          console.log("✅ [Video Upload] Mux upload created. ID:", uploadId);
 
           // Step 2: Upload video to Mux
+          console.log("📹 [Video Upload] Uploading file to Mux...");
           const uploadResult = await fetch(uploadUrl, {
             method: "POST",
             headers: { "Content-Type": videoFile.type },
@@ -215,29 +225,40 @@ export default function SlateTab({
           });
 
           if (!uploadResult.ok) {
-            throw new Error("Video upload failed. Please try again.");
+            const errorText = await uploadResult.text();
+            console.error("❌ [Video Upload] HTTP Error:", {
+              status: uploadResult.status,
+              statusText: uploadResult.statusText,
+              body: errorText,
+            });
+            throw new Error(`Video upload failed with status ${uploadResult.status}. Please try again.`);
           }
+          console.log("✅ [Video Upload] File uploaded successfully");
 
           // Step 3: Wait for Mux to process and get playback ID
-          // In production, you'd use webhooks instead of polling
+          console.log("📹 [Video Upload] Polling for playback ID...");
           let playbackInfo = await getVideoPlaybackInfo({ uploadId });
           let attempts = 0;
           const maxAttempts = 60; // Wait up to 60 seconds for larger videos
 
           while (!playbackInfo.playbackId && attempts < maxAttempts) {
+            console.log(`⏳ [Video Upload] Processing... (${attempts + 1}/${maxAttempts})`);
             await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
             playbackInfo = await getVideoPlaybackInfo({ uploadId });
             attempts++;
           }
 
           if (!playbackInfo.playbackId) {
+            console.error("❌ [Video Upload] Timeout waiting for playback ID after 60 seconds");
             throw new Error("Video processing is taking longer than expected. Your video will be available soon.");
           }
 
+          console.log("✅ [Video Upload] Playback ID received:", playbackInfo.playbackId);
           playbackId = playbackInfo.playbackId;
           setIsUploading(false);
         } catch (error: any) {
-          console.error("Video upload error:", error);
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          console.error("❌ [Video Upload] Error:", errorMsg);
           throw error;
         }
       }
@@ -271,7 +292,9 @@ export default function SlateTab({
         visibility,
       });
 
-      // Reset form
+      // ✅ Success - Reset form and error
+      console.log("✅ Slate created successfully");
+      setErrorMessage(null);
       setTextContent("");
       setImageFile(null);
       setImagePreview("");
@@ -284,8 +307,25 @@ export default function SlateTab({
       if (videoInputRef.current) videoInputRef.current.value = "";
       if (audioInputRef.current) audioInputRef.current.value = "";
     } catch (err) {
-      console.error("Error creating slate:", err);
-      alert("Failed to create slate. Please try again.");
+      // ❌ Extract real error message from caught error
+      let detailedError = "Failed to create slate. Please try again.";
+      
+      if (err instanceof Error) {
+        detailedError = err.message;
+        console.error("❌ Error details:", {
+          message: err.message,
+          stack: err.stack,
+          type: err.constructor.name,
+        });
+      } else if (typeof err === "string") {
+        detailedError = err;
+        console.error("❌ String error:", err);
+      } else {
+        console.error("❌ Unknown error type:", err);
+      }
+      
+      setErrorMessage(detailedError);
+      console.error("❌ [Frontend] Error creating slate:", detailedError);
     } finally {
       setIsSubmitting(false);
     }
@@ -321,7 +361,29 @@ export default function SlateTab({
         <p className="text-sm text-black/40">Share updates, images, and videos with your audience.</p>
       </div>
 
-      {/* Create Post Card */}
+      {/* Error Alert */}
+      <AnimatePresence>
+        {errorMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-start gap-3 rounded-lg bg-red-50 p-4 border border-red-200"
+          >
+            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-900">Error Creating Slate</p>
+              <p className="text-sm text-red-700 mt-1">{errorMessage}</p>
+            </div>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="text-red-600 hover:text-red-700 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
         <div className="flex gap-2 mb-6 flex-wrap">
           <button

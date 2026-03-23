@@ -5,6 +5,7 @@ import {
   signOut as firebaseSignOut 
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import { setupFirebaseAuthWithConvex } from "../lib/convex";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -50,7 +51,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 1. Immediately update the Firebase user state
       setUser(firebaseUser);
       
-      // 2. If no user, we're definitely not loading anymore
+      // 2. Set up Convex authentication with Firebase token
+      await setupFirebaseAuthWithConvex(firebaseUser);
+      
+      // 3. If no user, we're definitely not loading anymore
       if (!firebaseUser) {
         setConvexUserId(null);
         setIsLoading(false);
@@ -58,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // 3. Sync with Convex in the background, but don't let it block the app if it hangs
+      // 4. Sync with Convex in the background
       try {
         const result = await storeUser({
           name: firebaseUser.displayName || "Anonymous",
@@ -89,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error("Error storing user in Convex:", error);
       } finally {
-        // 4. Always resolve loading state once we've tried to sync
+        // 5. Always resolve loading state once we've tried to sync
         setIsLoading(false);
       }
     });
