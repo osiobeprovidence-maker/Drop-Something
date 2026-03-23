@@ -11,8 +11,9 @@
  * Output can be used in Convex environment variables
  */
 
-const bcrypt = require('bcryptjs');
-const readline = require('readline');
+import bcryptjs from 'bcryptjs';
+import readline from 'readline';
+
 const args = process.argv.slice(2);
 
 async function generateHash() {
@@ -34,8 +35,8 @@ async function generateHash() {
 
     console.log('\n🔐 Generating bcryptjs hash...\n');
     
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(password, salt);
+    const salt = bcryptjs.genSaltSync(10);
+    const hash = bcryptjs.hashSync(password, salt);
 
     console.log('✅ Hash generated successfully!\n');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -46,7 +47,7 @@ async function generateHash() {
 
     // Verify the hash works
     console.log('🧪 Testing hash...');
-    const isValid = bcrypt.compareSync(password, hash);
+    const isValid = bcryptjs.compareSync(password, hash);
     if (isValid) {
       console.log('✅ Hash verification: PASSED\n');
     } else {

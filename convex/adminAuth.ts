@@ -1,5 +1,6 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
+import bcryptjs from "bcryptjs";
 
 /**
  * Admin Authentication Module
@@ -42,13 +43,8 @@ export const login = mutation({
         throw new Error("Invalid credentials");
       }
 
-      // In production, use bcryptjs for password verification
-      // For now, we'll do a simple comparison (you should use bcrypt in production)
-      // const bcrypt = require('bcryptjs');
-      // const isPasswordValid = await bcrypt.compare(args.password, adminPasswordHash);
-      
-      // Simple string comparison (REPLACE WITH BCRYPT IN PRODUCTION)
-      const isPasswordValid = args.password === adminPasswordHash;
+      // Verify password using bcryptjs
+      const isPasswordValid = await bcryptjs.compare(args.password, adminPasswordHash);
 
       if (!isPasswordValid) {
         throw new Error("Invalid credentials");
