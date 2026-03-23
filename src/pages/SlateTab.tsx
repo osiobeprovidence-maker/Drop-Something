@@ -97,18 +97,7 @@ export default function SlateTab({
       return;
     }
 
-    // Check if user has Pro features for video upload
-    if (!hasProFeatures) {
-      setProFeatureType("video");
-      setShowProModal(true);
-      setVideoFile(null);
-      setVideoPreview("");
-      if (videoInputRef.current) {
-        videoInputRef.current.value = "";
-      }
-      return;
-    }
-
+    // All users can upload videos, no Pro check needed
     setVideoFile(file);
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -451,7 +440,7 @@ export default function SlateTab({
                 >
                   <Video size={32} />
                   <span className="text-sm font-bold">Click to upload video</span>
-                  <span className="text-xs">MP4 up to 100MB (Pro feature)</span>
+                  <span className="text-xs">MP4 up to 100MB (Free for all users)</span>
                 </button>
               )}
             </div>
@@ -693,12 +682,12 @@ export default function SlateTab({
               </div>
               
               <div className="space-y-3 mb-6">
-                {proFeatureType === "video" && (
+                {proFeatureType === "locked" && (
                   <div className="flex items-start gap-3 rounded-xl bg-black/5 p-4">
                     <AlertCircle size={20} className="text-amber-600 mt-0.5" />
                     <div>
-                      <p className="text-sm font-bold text-black">Video Uploads</p>
-                      <p className="text-xs text-black/60 mt-1">Upload videos up to 100MB with Mux integration for seamless streaming.</p>
+                      <p className="text-sm font-bold text-black">Lock Content for Monetization</p>
+                      <p className="text-xs text-black/60 mt-1">Restrict content to followers, supporters, or members to earn recurring revenue.</p>
                     </div>
                   </div>
                 )}
@@ -708,15 +697,6 @@ export default function SlateTab({
                     <div>
                       <p className="text-sm font-bold text-black">Audio Uploads</p>
                       <p className="text-xs text-black/60 mt-1">Upload audio files up to 50MB (MP3, WAV, OGG) for podcasts, music, and voice notes.</p>
-                    </div>
-                  </div>
-                )}
-                {proFeatureType === "locked" && (
-                  <div className="flex items-start gap-3 rounded-xl bg-black/5 p-4">
-                    <AlertCircle size={20} className="text-amber-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-bold text-black">Locked Content</p>
-                      <p className="text-xs text-black/60 mt-1">Restrict content to followers, supporters, or members for monetization.</p>
                     </div>
                   </div>
                 )}
