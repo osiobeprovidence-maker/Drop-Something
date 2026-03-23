@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard, User, Heart, Users, Target, ShoppingBag, Link as LinkIcon,
-  LogOut, Plus, Edit2, Trash2, Check, Settings,
+  LogOut, Plus, Edit2, Trash2, Check, Settings, Shield,
   TrendingUp, DollarSign, Image as ImageIcon, ExternalLink, Copy, Share2,
   Globe, Package, FileText, X, Menu, Square, Search
 } from "lucide-react";
@@ -24,6 +24,10 @@ export default function Dashboard() {
     await signOut();
     navigate("/login");
   };
+
+  // Super admin email check
+  const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
+  const isAdmin = user?.email === SUPER_ADMIN_EMAIL;
 
   // Fetch live data from Convex
   const convexCreator = useQuery(api.creators.getCreatorByUserId, {
@@ -605,6 +609,19 @@ export default function Dashboard() {
               </button>
             ))}
           </nav>
+
+          {/* Admin Button - Only for super admin */}
+          {isAdmin && (
+            <div className="mt-4 pt-4 border-t border-black/5">
+              <Link
+                to="/admin"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-all"
+              >
+                <Shield size={20} />
+                Admin Panel
+              </Link>
+            </div>
+          )}
 
           <div className="mt-auto pt-4 border-t border-black/5">
             <button

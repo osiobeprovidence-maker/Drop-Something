@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Coffee, Menu, X, Search, Info, Users, HelpCircle } from "lucide-react";
+import { Coffee, Menu, X, Search, Info, Users, HelpCircle, Shield } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -9,6 +9,10 @@ export const PlatformNavbar = () => {
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<any>(null);
+
+  // Super admin email - only this user can access admin panel
+  const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
+  const isAdmin = user?.email === SUPER_ADMIN_EMAIL;
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -82,6 +86,17 @@ export const PlatformNavbar = () => {
             </Link>
           ))}
           <div className="flex items-center gap-4">
+            {/* Admin Button - Only for super admin */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-1.5 rounded-full bg-red-50 px-4 py-2 text-sm font-bold text-red-600 border border-red-100 transition-all hover:bg-red-100 hover:scale-105 active:scale-95"
+                title="Admin Panel"
+              >
+                <Shield size={14} />
+                Admin
+              </Link>
+            )}
             {user ? (
               <Link
                 to="/dashboard"
@@ -175,6 +190,17 @@ export const PlatformNavbar = () => {
                         {link.name}
                       </Link>
                     ))}
+                    {/* Admin Link - Only for super admin */}
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-base font-semibold text-red-600 bg-red-50 hover:bg-red-100"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Shield size={20} className="text-red-600" />
+                        Admin Panel
+                      </Link>
+                    )}
                   </div>
                 </div>
 
