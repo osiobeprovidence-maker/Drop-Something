@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, action } from "./_generated/server";
 import { v } from "convex/values";
 
 export const storeUser = mutation({
@@ -50,14 +50,14 @@ export const currentUser = query({
   },
 });
 
-// Action to set admin role for super admin user
+// Mutation to set admin role for super admin user (can be run via CLI with convex run)
 export const setAdminRole = mutation({
   args: { email: v.string() },
   handler: async (ctx, args) => {
     // Only allow setting admin for super admin email
     const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
     if (args.email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
-      throw new Error("Unauthorized");
+      throw new Error("Unauthorized: Only the super admin email can be set as admin");
     }
 
     const user = await ctx.db
@@ -66,13 +66,39 @@ export const setAdminRole = mutation({
       .first();
 
     if (!user) {
-      throw new Error("User not found");
+      throw new Error("User not found: No user exists with email " + args.email);
     }
 
     await ctx.db.patch(user._id, { role: "admin" });
-    return { success: true, userId: user._id };
+    return { success: true, userId: user._id, email: args.email };
   },
 });
+
+// Also export a simpler version for the mutation helper
+export const setAdminRoleMutation = mutation({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    // This is kept for backward compatibility - redirects to setAdminRole logic
+    const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
+    if (args.email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+      throw new Error("Unauthorized: Only the super admin email can be set as admin");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found: No user exists with email " + args.email);
+    }
+
+    await ctx.db.patch(user._id, { role: "admin" });
+    return { success: true, userId: user._id, email: args.email };
+  },
+});
+
+// Remove the action - not needed since mutations work with convex run
 
 // Get user by email (for admin purposes)
 export const getUserByEmail = query({

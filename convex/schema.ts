@@ -84,6 +84,7 @@ export default defineSchema({
     amount: v.number(),
     message: v.optional(v.string()),
     type: v.union(v.literal("tip"), v.literal("membership")),
+    paystackReference: v.optional(v.string()),
   }).index("by_creatorId", ["creatorId"]),
 
   // Payment Details for creator payouts

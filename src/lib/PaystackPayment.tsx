@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import React from "react";
 
 interface PaystackPaymentProps {
   email: string;
@@ -30,9 +31,9 @@ export function PaystackPayment({
 }: PaystackPaymentProps) {
   const [loading, setLoading] = useState(false);
   
-  const generateReference = useQuery(api.paystack.node.generateReference);
-  const initializePayment = useAction(api.paystack.node.initializePayment);
-  const verifyPayment = useAction(api.paystack.node.verifyPayment);
+  const generateReference = useQuery(api.paystack.generateReference);
+  const initializePayment = useAction(api.paystack.initializePayment);
+  const verifyPayment = useAction(api.paystack.verifyPayment);
   
   const recordTip = useMutation(api.paystack.recordTipPayment);
   const recordContribution = useMutation(api.paystack.recordWishlistContribution);
@@ -146,9 +147,9 @@ export function PaystackPayment({
 
 // Helper hook to use Paystack
 export function usePaystack() {
-  const generateReference = useQuery(api.paystack.node.generateReference);
-  const initializePayment = useAction(api.paystack.node.initializePayment);
-  const verifyPayment = useAction(api.paystack.node.verifyPayment);
+  const generateReference = useQuery(api.paystack.generateReference);
+  const initializePayment = useAction(api.paystack.initializePayment);
+  const verifyPayment = useAction(api.paystack.verifyPayment);
 
   return {
     generateReference,

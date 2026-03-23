@@ -256,7 +256,10 @@ export const getFollowingSlates = query({
         }
 
         const creator = await ctx.db.get(slate.creatorId);
-        let avatar = creator?.avatar;
+        let avatar = (creator as any)?.avatar;
+        let creatorName = (creator as any)?.name || "Unknown";
+        let creatorUsername = (creator as any)?.username || "unknown";
+        
         if (avatar && !avatar.startsWith("http") && !avatar.startsWith("data:")) {
           try {
             const url = await ctx.storage.getUrl(avatar);
@@ -279,8 +282,8 @@ export const getFollowingSlates = query({
         return {
           ...slate,
           mediaUrl,
-          creatorName: creator?.name || "Unknown",
-          creatorUsername: creator?.username || "unknown",
+          creatorName,
+          creatorUsername,
           creatorAvatar: avatar,
           likeCount,
           commentCount,
