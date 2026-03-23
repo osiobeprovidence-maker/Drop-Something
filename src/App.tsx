@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, useParam
 import LandingPage from "./pages/LandingPage";
 import CreatorPage from "./pages/CreatorPage";
 import Dashboard from "./pages/Dashboard";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminRoute from "./pages/AdminRoute";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import SettingsPage from "./pages/SettingsPage";
@@ -18,6 +18,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { FollowProvider } from "./context/FollowContext";
 import { DataProvider } from "./context/DataContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AdminProvider } from "./context/AdminContext";
 
 function AppContent() {
   const location = useLocation();
@@ -96,7 +97,7 @@ function AppContent() {
           <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin" element={<AdminRoute />} />
           <Route path="/:username" element={<CreatorPage />} />
         </Routes>
       </main>
@@ -109,15 +110,17 @@ function AppContent() {
 export default function App() {
   return (
     <Router>
-      <AuthProvider>
-        <DataProvider>
-          <FollowProvider>
-            <ThemeProvider>
-              <AppContent />
-            </ThemeProvider>
-          </FollowProvider>
-        </DataProvider>
-      </AuthProvider>
+      <AdminProvider>
+        <AuthProvider>
+          <DataProvider>
+            <FollowProvider>
+              <ThemeProvider>
+                <AppContent />
+              </ThemeProvider>
+            </FollowProvider>
+          </DataProvider>
+        </AuthProvider>
+      </AdminProvider>
     </Router>
   );
 }

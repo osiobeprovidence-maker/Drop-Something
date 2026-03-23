@@ -6,8 +6,7 @@ import {
   TrendingUp, Activity, DollarSign, Package
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
-import { useAuth } from "@/src/context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useAdmin } from "@/src/context/AdminContext";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -17,11 +16,10 @@ type AdminTab = "overview" | "users" | "slate" | "comments" | "shop" | "reports"
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { signOut } = useAuth();
-  const navigate = useNavigate();
+  const { adminLogout } = useAdmin();
 
-  // Admin dashboard is now publicly accessible - no auth required
-  // Anyone can access it by going directly to /admin route
+  // Admin dashboard with secure authentication
+  // Only accessible to users with valid admin session
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -67,9 +65,8 @@ export default function AdminDashboard() {
 
           <div className="mt-auto pt-4 border-t border-gray-200">
             <button
-              onClick={async () => {
-                await signOut();
-                navigate("/");
+              onClick={() => {
+                adminLogout();
               }}
               className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
             >
