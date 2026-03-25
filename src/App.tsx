@@ -110,8 +110,8 @@ function AppContent() {
 export default function App() {
   return (
     <Router>
-      <AdminProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <AdminProvider>
           <DataProvider>
             <FollowProvider>
               <ThemeProvider>
@@ -119,8 +119,8 @@ export default function App() {
               </ThemeProvider>
             </FollowProvider>
           </DataProvider>
-        </AuthProvider>
-      </AdminProvider>
+        </AdminProvider>
+      </AuthProvider>
     </Router>
   );
 }
