@@ -37,14 +37,16 @@ export const initializePayment = action({
           amount: args.amount * 100,
           reference: args.reference,
           metadata: args.metadata,
-          callback: `${process.env.APP_URL || "http://localhost:3000"}/payment/callback`,
+          callback_url: `${process.env.APP_URL || "http://localhost:3000"}/payment/callback`,
         }),
       });
 
       const data = await response.json();
 
       if (!data.status) {
-        throw new Error(data.message || "Failed to initialize payment");
+        const msg = data?.message || JSON.stringify(data);
+        console.error("Paystack initialize response error:", data);
+        throw new Error(msg || "Failed to initialize payment");
       }
 
       return {
