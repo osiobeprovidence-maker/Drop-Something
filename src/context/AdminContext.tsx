@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useAuth } from "@/src/context/AuthContext";
 
 interface AdminContextType {
   isAdmin: boolean;
@@ -43,6 +44,33 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
     setIsLoading(false);
   }, []);
+
+  // Also accept platform-authenticated admins: if the logged-in user (via AuthContext)
+  // has an `admin` role in the users table, consider them an admin for the admin panel
+  const { convexUserId, isLoading: authLoading } = useAuth();
+  const allUsers = useQuery(api.admin.getAllUsers);
+
+  useEffect(() => {
+    // Wait until AuthProvider finished loading and users are available
+    if (isLoading || authLoading) return;
+    if (!convexUserId || !allUsers) return;
+
+    try {
+      const current = allUsers.find((u: any) => String(u._id) === String(convexUserId));
+      if (current && current.role === "admin") {
+        // create the same adminSession shape used by adminLogin
+        const session = {
+          isAdmin: true,
+          email: current.email,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem("adminSession", JSON.stringify(session));
+        setIsAdmin(true);
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, [convexUserId, authLoading, allUsers, isLoading]);
 
   const adminLogin = async (email: string, password: string) => {
     console.log("🔐 [AdminContext] Login attempt:", { email });
