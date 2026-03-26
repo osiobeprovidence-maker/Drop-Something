@@ -15,6 +15,7 @@ interface PaystackPaymentProps {
   onSuccess?: (reference: string) => void;
   onError?: (error: string) => void;
   children: (props: { loading: boolean; handlePayment: () => void }) => React.ReactNode;
+  key?: React.Key;
 }
 
 export function PaystackPayment({
@@ -30,10 +31,10 @@ export function PaystackPayment({
   children,
 }: PaystackPaymentProps) {
   const [loading, setLoading] = useState(false);
-  
+
   const generateReference = useQuery(api.paystack.generateReference);
   const verifyPayment = useAction(api.paystack.verifyPayment);
-  
+
   const recordTip = useMutation(api.paystack.recordTipPayment);
   const recordContribution = useMutation(api.paystack.recordWishlistContribution);
   const recordPurchase = useMutation(api.paystack.recordProductPurchase);
@@ -49,7 +50,7 @@ export function PaystackPayment({
 
     try {
       // Generate unique reference
-      const reference = await generateReference();
+      const reference = generateReference || `DS_${Date.now()}_${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
       // Use Paystack inline with public key for better UX
       const publicKey = (import.meta as any).env?.VITE_PAYSTACK_PUBLIC_KEY || '';

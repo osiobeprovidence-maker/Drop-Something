@@ -25,6 +25,8 @@ export default function CreatorPage() {
     username: username || ""
   });
   const addConvexTip = useMutation(api.creators.addTip);
+  const currentUser = useQuery(api.users.currentUser);
+  const userEmail = currentUser?.email || "";
 
   // Get slates for this creator
   const slates = useQuery(api.slates.getPublicSlatesByCreator, {
@@ -45,6 +47,7 @@ export default function CreatorPage() {
   const [activeTab, setActiveTab] = useState("home");
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedWishlist, setSelectedWishlist] = useState<Id<"wishlists"> | null>(null);
 
   // Derived values from hooks (still part of hook section)
   const displayCreator = convexCreator;
@@ -229,17 +232,17 @@ export default function CreatorPage() {
     }
   };
 
-  const handlePurchase = async (product: any) => {
-    // Placeholder for payment flow integration
-    // TODO: Integrate with Paystack for payment processing
-    setSelectedProduct(product);
-    setIsPurchasing(true);
-    
-    // For now, show a placeholder message
-    alert(`Purchase flow for "${product.title}" - Paystack integration coming soon`);
-    
+  const handlePurchaseSuccess = async (reference: string) => {
     setIsPurchasing(false);
     setSelectedProduct(null);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
+  };
+
+  const handlePurchaseError = (error: string) => {
+    setIsPurchasing(false);
+    setSelectedProduct(null);
+    alert(`Payment failed: ${error}`);
   };
 
   const finalAmount = tipAmount || (customAmount ? parseInt(customAmount) : 0);
@@ -682,16 +685,45 @@ export default function CreatorPage() {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     {displayCreator.memberships.map((tier) => (
-                      <div key={tier._id} className="flex flex-col rounded-[2rem] bg-white p-6 shadow-sm border border-black/5">
-                        <div className="mb-4">
-                          <h3 className="text-xs font-bold uppercase tracking-widest text-black/30">{tier.title}</h3>
-                          <p className="mt-1 text-2xl font-black text-black">₦{tier.price.toLocaleString()}<span className="text-xs font-medium text-black/40">/mo</span></p>
-                        </div>
-                        <p className="flex-1 text-sm text-black/60 leading-relaxed mb-6">{tier.description}</p>
-                        <button className="flex h-12 w-full items-center justify-center rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95">
-                          Join
-                        </button>
-                      </div>
+                      <PaystackPayment
+                        key={tier._id}
+                        email={userEmail}
+                        amount={tier.price}
+                        type="membership"
+                        creatorId={displayCreator._id as Id<"creators">}
+                        userId={convexUserId as Id<"users">}
+                        itemId={tier._id}
+                        itemName={tier.title}
+                        onSuccess={handlePurchaseSuccess}
+                        onError={handlePurchaseError}
+                      >
+                        {({ loading, handlePayment }) => (
+                          <div className="flex flex-col rounded-[2rem] bg-white p-6 shadow-sm border border-black/5">
+                            <div className="mb-4">
+                              <h3 className="text-xs font-bold uppercase tracking-widest text-black/30">{tier.title}</h3>
+                              <p className="mt-1 text-2xl font-black text-black">₦{tier.price.toLocaleString()}<span className="text-xs font-medium text-black/40">/mo</span></p>
+                            </div>
+                            <p className="flex-1 text-sm text-black/60 leading-relaxed mb-6">{tier.description}</p>
+                            <button
+                              onClick={handlePayment}
+                              disabled={loading || !userEmail}
+                              className="flex h-12 w-full items-center justify-center rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                            >
+                              {loading ? (
+                                <>
+                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                  Processing...
+                                </>
+                              ) : (
+                                <>
+                                  Join
+                                  <ChevronRight size={16} />
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </PaystackPayment>
                     ))}
                   </div>
                 </section>
@@ -712,46 +744,61 @@ export default function CreatorPage() {
                   </div>
                   <div className="grid gap-6 sm:grid-cols-2">
                     {displayCreator.products.map((product) => (
-                      <div key={product._id} className="group flex flex-col rounded-[2rem] bg-white overflow-hidden shadow-sm border border-black/5">
-                        <div className="aspect-square w-full bg-zinc-100 overflow-hidden">
-                          <img
-                            src={product.image || `https://picsum.photos/seed/${product._id}/600/600`}
-                            alt=""
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
-                        <div className="p-6 flex flex-col flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className={cn(
-                              "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                              product.type === "digital" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
-                            )}>
-                              {product.type}
-                            </span>
-                            <span className="font-bold text-black">₦{product.price.toLocaleString()}</span>
+                      <PaystackPayment
+                        key={product._id}
+                        email={userEmail}
+                        amount={product.price}
+                        type="product"
+                        creatorId={displayCreator._id as Id<"creators">}
+                        userId={convexUserId as Id<"users">}
+                        itemId={product._id}
+                        itemName={product.title}
+                        onSuccess={handlePurchaseSuccess}
+                        onError={handlePurchaseError}
+                      >
+                        {({ loading, handlePayment }) => (
+                          <div className="group flex flex-col rounded-[2rem] bg-white overflow-hidden shadow-sm border border-black/5">
+                            <div className="aspect-square w-full bg-zinc-100 overflow-hidden">
+                              <img
+                                src={product.image || `https://picsum.photos/seed/${product._id}/600/600`}
+                                alt=""
+                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+                            <div className="p-6 flex flex-col flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className={cn(
+                                  "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                                  product.type === "digital" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
+                                )}>
+                                  {product.type}
+                                </span>
+                                <span className="font-bold text-black">₦{product.price.toLocaleString()}</span>
+                              </div>
+                              <h4 className="text-lg font-bold text-black mb-2">{product.title}</h4>
+                              <p className="text-sm text-black/60 line-clamp-2 flex-1 mb-6">{product.description}</p>
+                              <button
+                                onClick={handlePayment}
+                                disabled={loading || !userEmail}
+                                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                              >
+                                {loading ? (
+                                  <>
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  <>
+                                    Buy Now
+                                    <ChevronRight size={16} />
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           </div>
-                          <h4 className="text-lg font-bold text-black mb-2">{product.title}</h4>
-                          <p className="text-sm text-black/60 line-clamp-2 flex-1 mb-6">{product.description}</p>
-                          <button
-                            onClick={() => handlePurchase(product)}
-                            disabled={isPurchasing}
-                            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
-                          >
-                            {isPurchasing ? (
-                              <>
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                                Processing...
-                              </>
-                            ) : (
-                              <>
-                                Buy Now
-                                <ChevronRight size={16} />
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
+                        )}
+                      </PaystackPayment>
                     ))}
                   </div>
                 </section>
@@ -823,7 +870,36 @@ export default function CreatorPage() {
                             </p>
 
                             {/* Contribute Button */}
-                            {!isCompleted && (
+                            {!isCompleted && convexUserId && userEmail ? (
+                              <PaystackPayment
+                                email={userEmail}
+                                amount={item.targetAmount - item.currentAmount}
+                                type="wishlist"
+                                creatorId={displayCreator._id as Id<"creators">}
+                                userId={convexUserId as Id<"users">}
+                                itemId={item._id}
+                                itemName={item.title}
+                                onSuccess={handlePurchaseSuccess}
+                                onError={handlePurchaseError}
+                              >
+                                {({ loading, handlePayment }) => (
+                                  <button
+                                    onClick={handlePayment}
+                                    disabled={loading}
+                                    className="mt-6 w-full h-12 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                                  >
+                                    {loading ? (
+                                      <>
+                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white inline-block mr-2" />
+                                        Processing...
+                                      </>
+                                    ) : (
+                                      `Contribute ₦${(item.targetAmount - item.currentAmount).toLocaleString()}`
+                                    )}
+                                  </button>
+                                )}
+                              </PaystackPayment>
+                            ) : !isCompleted ? (
                               <button
                                 onClick={() => {
                                   // Scroll to support section
@@ -836,7 +912,7 @@ export default function CreatorPage() {
                               >
                                 Contribute to this goal
                               </button>
-                            )}
+                            ) : null}
                           </div>
                         </div>
                       );

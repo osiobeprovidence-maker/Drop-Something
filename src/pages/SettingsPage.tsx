@@ -14,6 +14,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { auth } from "@/src/lib/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
+import { PaystackPayment } from "@/src/lib/PaystackPayment";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export default function SettingsPage() {
   }, [convexUserId, ensureCreatorProfile]);
 
   // Fetch data from Convex
-  const paymentDetails = useQuery(api.settings.getPaymentDetails, 
+  const paymentDetails = useQuery(api.settings.getPaymentDetails,
     convexUserId && !isInitializing ? { userId: convexUserId as Id<"users"> } : "skip"
   );
   const kyc = useQuery(api.settings.getKYC,
@@ -60,6 +61,8 @@ export default function SettingsPage() {
   const addresses = useQuery(api.settings.getAddresses,
     convexUserId && !isInitializing ? { userId: convexUserId as Id<"users"> } : "skip"
   );
+  const currentUser = useQuery(api.users.currentUser);
+  const userEmail = currentUser?.email || "";
 
   const menuItems = [
     { id: "profile", label: "Profile", icon: User },
@@ -169,7 +172,7 @@ export default function SettingsPage() {
             {activeTab === "profile" && <ProfileTab convexUserId={convexUserId} />}
             {activeTab === "payment" && <PaymentTab paymentDetails={paymentDetails} convexUserId={convexUserId} />}
             {activeTab === "kyc" && <KYCTab kyc={kyc} convexUserId={convexUserId} />}
-            {activeTab === "subscription" && <SubscriptionTab subscription={subscription} convexUserId={convexUserId} />}
+            {activeTab === "subscription" && <SubscriptionTab subscription={subscription} convexUserId={convexUserId} userEmail={userEmail} />}
             {activeTab === "security" && <SecurityTab user={user} />}
             {activeTab === "delivery" && <DeliveryTab addresses={addresses} convexUserId={convexUserId} />}
           </AnimatePresence>
@@ -747,32 +750,22 @@ function KYCTab({ kyc, convexUserId }: { kyc?: any, convexUserId?: string }) {
 
 // ==================== SUBSCRIPTION TAB ====================
 
-function SubscriptionTab({ subscription, convexUserId }: { subscription?: any, convexUserId?: string }) {
+function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscription?: any, convexUserId?: string, userEmail?: string }) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const isExpired = subscription?.expiresAt && subscription.expiresAt < Date.now();
   const isActive = subscription?.status === "active" && !isExpired;
 
-  const handleSubscribe = async () => {
-    if (!convexUserId) return;
-    
-    setIsProcessing(true);
-    try {
-      // TODO: Integrate Paystack payment
-      // For now, simulate subscription activation
-      const expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 days
-      
-      // This would be called after successful Paystack payment
-      // For demo, we'll just create the subscription directly
-      console.log("Subscription flow initiated for user:", convexUserId);
-      
-      alert("Payment integration coming soon! This will redirect to Paystack for ₦3000 payment.");
-    } catch (err) {
-      console.error("Subscription error:", err);
-      alert("Failed to process subscription.");
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleSubscribeSuccess = async (reference: string) => {
+    setIsProcessing(false);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
+  };
+
+  const handleSubscribeError = (error: string) => {
+    setIsProcessing(false);
+    alert(`Payment failed: ${error}`);
   };
 
   const formatDate = (timestamp: number) => {
@@ -849,24 +842,45 @@ function SubscriptionTab({ subscription, convexUserId }: { subscription?: any, c
           ))}
         </ul>
 
-        <button
-          onClick={handleSubscribe}
-          disabled={isProcessing || isActive}
-          className={cn(
-            "flex h-14 w-full items-center justify-center rounded-full text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]",
-            isActive 
-              ? "bg-white/20 text-white/60 cursor-not-allowed"
-              : "bg-white text-black hover:shadow-lg hover:shadow-white/20"
-          )}
-        >
-          {isProcessing ? (
-            <Loader2 size={20} className="animate-spin" />
-          ) : isActive ? (
-            "Current Plan"
-          ) : (
-            "Subscribe Now"
-          )}
-        </button>
+        {convexUserId && userEmail ? (
+          <PaystackPayment
+            email={userEmail}
+            amount={3000}
+            type="membership"
+            creatorId={convexUserId as Id<"creators">}
+            userId={convexUserId as Id<"users">}
+            onSuccess={handleSubscribeSuccess}
+            onError={handleSubscribeError}
+          >
+            {({ loading, handlePayment }) => (
+              <button
+                onClick={handlePayment}
+                disabled={loading || isActive}
+                className={cn(
+                  "flex h-14 w-full items-center justify-center rounded-full text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]",
+                  isActive
+                    ? "bg-white/20 text-white/60 cursor-not-allowed"
+                    : "bg-white text-black hover:shadow-lg hover:shadow-white/20"
+                )}
+              >
+                {loading ? (
+                  <Loader2 size={20} className="animate-spin" />
+                ) : isActive ? (
+                  "Current Plan"
+                ) : (
+                  "Subscribe Now"
+                )}
+              </button>
+            )}
+          </PaystackPayment>
+        ) : (
+          <button
+            disabled={true}
+            className="flex h-14 w-full items-center justify-center rounded-full text-sm font-bold bg-white/20 text-white/60 cursor-not-allowed transition-all"
+          >
+            Login Required
+          </button>
+        )}
       </div>
     </motion.div>
   );
