@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Plus, Edit2, Trash2, X, Target, RefreshCw, Check } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Id } from "@/convex/_generated/dataModel";
+import { useScrollLock } from "@/src/hooks/useScrollLock";
 
 interface Wishlist {
   _id: Id<"wishlists">;
@@ -47,6 +48,10 @@ export default function WishlistTab({
   const [editingItem, setEditingItem] = useState<Wishlist | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [wishlistToDelete, setWishlistToDelete] = useState<Id<"wishlists"> | null>(null);
+
+  // Lock body scroll when modals are open
+  useScrollLock(isModalOpen);
+  useScrollLock(deleteModalOpen);
 
   const openModal = (item: Wishlist | null = null) => {
     setEditingItem(item);

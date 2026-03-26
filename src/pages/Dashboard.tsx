@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard, User, Heart, Users, Target, ShoppingBag, Link as LinkIcon,
-  LogOut, Plus, Edit2, Trash2, Check, Settings, Shield,
+  LogOut, Plus, Edit2, Trash2, Check, Shield,
   TrendingUp, DollarSign, Image as ImageIcon, ExternalLink, Copy, Share2,
   Globe, Package, FileText, X, Menu, Square, Search
 } from "lucide-react";
@@ -12,6 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useScrollLock } from "@/src/hooks/useScrollLock";
 import SlateTab from "./SlateTab";
 import ShopTab from "./ShopTab";
 import WishlistTab from "./WishlistTab";
@@ -185,6 +186,11 @@ export default function Dashboard() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const coverAdjustRef = useRef<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll when modals are open
+  useScrollLock(isModalOpen);
+  useScrollLock(isDeleteModalOpen);
+  useScrollLock(isCoverAdjustOpen);
 
   const handleSave = async () => {
     setIsSaving(true);

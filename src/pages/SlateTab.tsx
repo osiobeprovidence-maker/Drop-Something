@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Id } from "@/convex/_generated/dataModel";
+import { useScrollLock } from "@/src/hooks/useScrollLock";
 
 interface Slate {
   _id: Id<"slates">;
@@ -60,6 +61,10 @@ export default function SlateTab({
   const [showProModal, setShowProModal] = useState(false);
   const [proFeatureType, setProFeatureType] = useState<"video" | "audio" | "locked" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Lock body scroll when modals are open
+  useScrollLock(deleteModalOpen);
+  useScrollLock(showProModal);
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);

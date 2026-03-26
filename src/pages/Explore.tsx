@@ -10,6 +10,7 @@ import { useAuth } from "@/src/context/AuthContext";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useScrollLock } from "@/src/hooks/useScrollLock";
 
 interface SlatePost {
   _id: Id<"slates">;
@@ -39,6 +40,9 @@ const getDisplayName = (name?: string | null, username?: string | null): string 
 export default function Explore() {
   const [activeTab, setActiveTab] = useState<"explore" | "following" | "creators">("explore");
   const [selectedPost, setSelectedPost] = useState<SlatePost | null>(null);
+
+  // Lock body scroll when comments modal is open
+  useScrollLock(!!selectedPost);
   const [commentText, setCommentText] = useState("");
   const [isCommenting, setIsCommenting] = useState(false);
 

@@ -3,6 +3,7 @@ import { Coffee, Menu, X, Search, Info, Users, HelpCircle, Shield } from "lucide
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
+import { useScrollLock } from "@/src/hooks/useScrollLock";
 
 export const PlatformNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,6 +11,9 @@ export const PlatformNavbar = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<any>(null);
   const [showAdminButton, setShowAdminButton] = useState(false);
+
+  // Lock body scroll when mobile menu is open
+  useScrollLock(isOpen);
 
   // Super admin email - only this user can access admin panel
   const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
