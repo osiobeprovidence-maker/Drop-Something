@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { useScrollLock } from "@/src/hooks/useScrollLock";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export const PlatformNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,27 +17,29 @@ export const PlatformNavbar = () => {
   // Lock body scroll when mobile menu is open
   useScrollLock(isOpen);
 
-  // Super admin email - only this user can access admin panel
-  const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
+  // Check admin role from database
+  const currentUser = useQuery(api.users.currentUser);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const userData = JSON.parse(storedUser);
       setUser(userData);
-      
-      // Check if this is the super admin
-      const userEmail = userData?.email || userData?.user?.email || "";
-      const isAdmin = userEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-      setShowAdminButton(isAdmin);
-      
-      console.log('🔐 Admin Access Check:', {
-        email: userEmail,
-        isSuperAdmin: isAdmin,
-        userData
-      });
     }
   }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      const isAdmin = currentUser.role === "admin" || currentUser.email?.toLowerCase() === "riderezzy@gmail.com";
+      setShowAdminButton(isAdmin);
+
+      console.log('🔐 Admin Access Check:', {
+        email: currentUser.email,
+        role: currentUser.role,
+        isSuperAdmin: isAdmin,
+      });
+    }
+  }, [currentUser]);
 
   const navLinks = [
     { name: "Home", href: "/", icon: Coffee },
