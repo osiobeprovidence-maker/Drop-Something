@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard, User, Heart, Users, Target, ShoppingBag, Link as LinkIcon,
-  LogOut, Plus, Edit2, Trash2, Check, Shield,
+  LogOut, Plus, Edit2, Trash2, Check, Settings, Shield,
   TrendingUp, DollarSign, Image as ImageIcon, ExternalLink, Copy, Share2,
   Globe, Package, FileText, X, Menu, Square, Search
 } from "lucide-react";
