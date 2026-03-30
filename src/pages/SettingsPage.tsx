@@ -751,22 +751,13 @@ function KYCTab({ kyc, convexUserId }: { kyc?: any, convexUserId?: string }) {
 // ==================== SUBSCRIPTION TAB ====================
 
 function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscription?: any, convexUserId?: string, userEmail?: string }) {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
 
   const isExpired = subscription?.expiresAt && subscription.expiresAt < Date.now();
   const isActive = subscription?.status === "active" && !isExpired;
 
-  const handleSubscribeSuccess = async (reference: string) => {
-    setIsProcessing(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
-  };
+  const handleSubscribeSuccess = async (_reference: string) => {};
 
-  const handleSubscribeError = (error: string) => {
-    setIsProcessing(false);
-    alert(`Payment failed: ${error}`);
-  };
+  const handleSubscribeError = (_error: string) => {};
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('en-NG', {
@@ -809,7 +800,7 @@ function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscripti
               <DollarSign size={32} className="text-black/40" />
             </div>
             <p className="font-bold text-black">No Active Subscription</p>
-            <p className="text-sm text-black/40 mt-1">Subscribe to unlock shop features</p>
+            <p className="text-sm text-black/40 mt-1">Subscriptions are only needed for premium features.</p>
           </div>
         )}
       </div>
@@ -818,8 +809,8 @@ function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscripti
       <div className="rounded-3xl border-2 border-black bg-black p-8 shadow-sm text-white">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-black">Shop Plan</h2>
-            <p className="text-sm text-white/60 mt-1">Sell digital & physical products</p>
+            <h2 className="text-xl font-black">Shop Access</h2>
+            <p className="text-sm text-white/60 mt-1">All creators can now create products for free</p>
           </div>
           <div className="text-right">
             <p className="text-3xl font-black">₦3,000</p>
@@ -829,11 +820,11 @@ function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscripti
 
         <ul className="space-y-3 mb-8">
           {[
-            "Unlimited products",
-            "Digital file delivery",
-            "Physical shipping support",
-            "Sales analytics",
-            "Customer management"
+            "Create digital and physical products",
+            "Add prices, stock, and product images",
+            "Manage your shop from the dashboard",
+            "No subscription required",
+            "Available to every creator"
           ].map((feature, i) => (
             <li key={i} className="flex items-center gap-3">
               <CheckCircle2 size={20} className="text-emerald-400" />
@@ -855,20 +846,18 @@ function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscripti
             {({ loading, handlePayment }) => (
               <button
                 onClick={handlePayment}
-                disabled={loading || isActive}
+                disabled={true}
                 className={cn(
                   "flex h-14 w-full items-center justify-center rounded-full text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]",
-                  isActive
+                  true
                     ? "bg-white/20 text-white/60 cursor-not-allowed"
                     : "bg-white text-black hover:shadow-lg hover:shadow-white/20"
                 )}
               >
-                {loading ? (
+                {false ? (
                   <Loader2 size={20} className="animate-spin" />
-                ) : isActive ? (
-                  "Current Plan"
                 ) : (
-                  "Subscribe Now"
+                  "Included For All Creators"
                 )}
               </button>
             )}
@@ -878,7 +867,7 @@ function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscripti
             disabled={true}
             className="flex h-14 w-full items-center justify-center rounded-full text-sm font-bold bg-white/20 text-white/60 cursor-not-allowed transition-all"
           >
-            Login Required
+            Included For All Creators
           </button>
         )}
       </div>

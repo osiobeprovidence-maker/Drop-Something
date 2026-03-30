@@ -22,7 +22,6 @@ interface ShopTabProps {
   products: Product[];
   openModal: (type: "product", item?: Product) => void;
   openDeleteModal: (type: string, id: string, title: string) => void;
-  hasProFeatures: boolean;
 }
 
 interface Template {
@@ -45,7 +44,6 @@ export default function ShopTab({
   products,
   openModal,
   openDeleteModal,
-  hasProFeatures,
 }: ShopTabProps) {
   const [showTemplates, setShowTemplates] = useState(false);
 
@@ -118,42 +116,6 @@ export default function ShopTab({
       icon: TrendingUp,
     },
   ];
-
-  // Pro Lock Overlay
-  if (!hasProFeatures) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        className="space-y-8"
-      >
-        {/* Header */}
-        <div>
-          <h2 className="text-xl font-bold text-black">Shop</h2>
-          <p className="text-sm text-black/40">Sell products and services to your audience.</p>
-        </div>
-
-        {/* Pro Lock */}
-        <div className="rounded-3xl border-2 border-dashed border-amber-200 bg-amber-50 p-12 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-600 mb-6">
-            <Lock size={32} />
-          </div>
-          <h3 className="text-lg font-bold text-black">Shop is a Pro Feature</h3>
-          <p className="text-sm text-black/60 mt-2 max-w-md mx-auto">
-            Upgrade to Pro to start selling digital products, services, and physical goods to your audience.
-          </p>
-          <a
-            href="/settings"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-black px-6 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95"
-          >
-            <Star size={16} />
-            Upgrade to Pro
-          </a>
-        </div>
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div

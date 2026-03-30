@@ -1138,7 +1138,6 @@ export default function Dashboard() {
                 products={products}
                 openModal={openModal}
                 openDeleteModal={openDeleteModal}
-                hasProFeatures={!!hasProFeatures}
               />
             )}
 
