@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Coffee, Menu, X, Search, Info, Users, HelpCircle, Shield } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/src/lib/utils";
@@ -6,27 +6,24 @@ import { motion, AnimatePresence } from "motion/react";
 import { useScrollLock } from "@/src/hooks/useScrollLock";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { useAuth } from "@/src/context/AuthContext";
 
 export const PlatformNavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
-  const [user, setUser] = useState<any>(null);
   const [showAdminButton, setShowAdminButton] = useState(false);
+  const { user, convexUserId } = useAuth();
 
   // Lock body scroll when mobile menu is open
   useScrollLock(isOpen);
 
   // Check admin role from database
   const currentUser = useQuery(api.users.currentUser);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      setUser(userData);
-    }
-  }, []);
+  const creatorProfile = useQuery(
+    api.creators.getCreatorByUserId,
+    convexUserId ? { userId: convexUserId as Id<"users"> } : "skip"
+  );
 
   useEffect(() => {
     if (currentUser) {
@@ -74,6 +71,17 @@ export const PlatformNavbar = () => {
     };
   }, [isOpen]);
 
+  const profileName =
+    creatorProfile?.username ||
+    currentUser?.name ||
+    user?.displayName ||
+    "My dashboard";
+
+  const profileAvatar =
+    currentUser?.image ||
+    user?.photoURL ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileName)}`;
+
   return (
     <nav className={cn(
       "fixed top-0 left-0 right-0 z-50 w-full border-b transition-all duration-300",
@@ -117,9 +125,15 @@ export const PlatformNavbar = () => {
             {user ? (
               <Link
                 to="/dashboard"
-                className="rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition-transform hover:scale-105 active:scale-95"
+                className="flex items-center gap-3 rounded-full border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-black transition-all hover:border-black/20 hover:bg-black/5"
               >
-                Dashboard
+                <img
+                  src={profileAvatar}
+                  alt={profileName}
+                  className="h-8 w-8 rounded-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <span className="max-w-[140px] truncate">@{profileName}</span>
               </Link>
             ) : (
               <>
@@ -225,10 +239,19 @@ export const PlatformNavbar = () => {
                   {user ? (
                     <Link
                       to="/dashboard"
-                      className="flex h-12 items-center justify-center rounded-xl bg-black text-base font-semibold text-white"
+                      className="flex items-center gap-3 rounded-xl border border-black/10 bg-white px-4 py-3 text-base font-semibold text-black"
                       onClick={() => setIsOpen(false)}
                     >
-                      Dashboard
+                      <img
+                        src={profileAvatar}
+                        alt={profileName}
+                        className="h-10 w-10 rounded-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="min-w-0 text-left">
+                        <p className="truncate text-sm font-bold">@{profileName}</p>
+                        <p className="text-xs text-black/50">Open dashboard</p>
+                      </div>
                     </Link>
                   ) : (
                     <div className="grid grid-cols-2 gap-3">
