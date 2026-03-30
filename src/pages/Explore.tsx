@@ -127,6 +127,18 @@ export default function Explore() {
         content: commentText,
       });
       setCommentText("");
+      const incrementCommentCount = (postList: SlatePost[]) =>
+        postList.map((post) =>
+          post._id === selectedPost._id
+            ? { ...post, commentCount: post.commentCount + 1 }
+            : post
+        );
+
+      setExplorePosts((prev) => incrementCommentCount(prev));
+      setFollowingPosts((prev) => incrementCommentCount(prev));
+      setSelectedPost((prev) =>
+        prev ? { ...prev, commentCount: prev.commentCount + 1 } : prev
+      );
     } catch (error) {
       console.error("Error adding comment:", error);
     } finally {
@@ -490,27 +502,39 @@ export default function Explore() {
               </div>
 
               <div className="p-4 border-t border-black/5">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    placeholder="Add a comment..."
-                    className="flex-1 h-10 rounded-full border border-black/10 bg-black/5 px-4 text-sm focus:outline-none"
-                    onKeyPress={(e) => e.key === "Enter" && handleComment()}
-                  />
-                  <button
-                    onClick={handleComment}
-                    disabled={!commentText.trim() || isCommenting}
-                    className="h-10 w-10 rounded-full bg-black text-white flex items-center justify-center disabled:opacity-50"
-                  >
-                    {isCommenting ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <Send size={16} />
-                    )}
-                  </button>
-                </div>
+                {convexUserId ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      placeholder="Add a comment..."
+                      className="flex-1 h-10 rounded-full border border-black/10 bg-black/5 px-4 text-sm focus:outline-none"
+                      onKeyDown={(e) => e.key === "Enter" && handleComment()}
+                    />
+                    <button
+                      onClick={handleComment}
+                      disabled={!commentText.trim() || isCommenting}
+                      className="h-10 w-10 rounded-full bg-black text-white flex items-center justify-center disabled:opacity-50"
+                    >
+                      {isCommenting ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Send size={16} />
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-3 rounded-2xl bg-black/5 px-4 py-3">
+                    <p className="text-sm text-black/60">Log in to join the conversation.</p>
+                    <a
+                      href="/login"
+                      className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white"
+                    >
+                      Log in
+                    </a>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
@@ -597,7 +621,6 @@ function PostCard({
 }) {
   // Safe display values with defensive programming
   const displayLikeCount = formatCount(post.likeCount);
-  const displayCommentCount = formatCount(post.commentCount);
   const displayCreatorName = getDisplayName(post.creatorName, post.creatorUsername);
   const displayUsername = post.creatorUsername || "anonymous";
 
@@ -691,7 +714,6 @@ function PostCard({
           className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors group"
         >
           <MessageCircle size={20} className="group-hover:scale-110 transition-transform" />
-          <span className="text-sm font-medium">{displayCommentCount}</span>
         </button>
         <a
           href={`/${displayUsername}`}

@@ -130,6 +130,14 @@ export const getAllPublicSlates = query({
         // Safely resolve creator name with priority: name → username → "Anonymous"
         const creatorName = creator?.name || creator?.username || "Anonymous";
         const creatorUsername = creator?.username || "anonymous";
+        const likeCount = (await ctx.db
+          .query("slateLikes")
+          .withIndex("by_slateId", (q) => q.eq("slateId", slate._id))
+          .collect()).length;
+        const commentCount = (await ctx.db
+          .query("slateComments")
+          .withIndex("by_slateId", (q) => q.eq("slateId", slate._id))
+          .collect()).length;
 
         return {
           ...slate,
@@ -137,6 +145,8 @@ export const getAllPublicSlates = query({
           creatorName,
           creatorUsername,
           creatorAvatar: avatar,
+          likeCount,
+          commentCount,
         };
       })
     );
