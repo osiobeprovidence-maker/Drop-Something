@@ -29,8 +29,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isNewUser, setIsNewUser] = useState(false);
   
   const storeUser = useMutation(api.users.storeUser);
-  const ensureCreatorProfile = useMutation(api.creators.ensureCreatorProfile);
-  
   // Query to check if the user has a creator profile
   const creator = useQuery(api.creators.getCreatorByUserId, { 
     userId: convexUserId || undefined
@@ -82,14 +80,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setConvexUserId(newId);
         }
 
-        // Ensure a creator profile exists for this user (creates one if missing)
-        try {
-          if (newId) {
-            await ensureCreatorProfile({ userId: newId });
-          }
-        } catch (err) {
-          console.error("Error ensuring creator profile:", err);
-        }
       } catch (error) {
         console.error("Error storing user in Convex:", error);
       } finally {
