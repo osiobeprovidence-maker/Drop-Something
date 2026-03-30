@@ -46,14 +46,19 @@ export default function Explore() {
   const [commentText, setCommentText] = useState("");
   const [isCommenting, setIsCommenting] = useState(false);
 
-  const { convexUserId } = useAuth();
-  const { follow, unfollow, isFollowing } = useFollow();
+  const { user, convexUserId, isLoading: isAuthLoading } = useAuth();
+  const { following, follow, unfollow, isFollowing, isLoading: isFollowLoading } = useFollow();
   const toggleLike = useMutation(api.slates.toggleLike);
   const addComment = useMutation(api.slates.addComment);
 
   // Get ALL public slates (no pagination, shows all posts)
   const allSlates = useQuery(api.slates.getAllPublicSlates);
-  const [posts, setPosts] = useState<SlatePost[]>([]);
+  const followingSlatesResult = useQuery(
+    api.slates.getFollowingSlates,
+    convexUserId ? { userId: convexUserId as Id<"users">, limit: 50 } : "skip"
+  );
+  const [explorePosts, setExplorePosts] = useState<SlatePost[]>([]);
+  const [followingPosts, setFollowingPosts] = useState<SlatePost[]>([]);
 
   // Get some creators for "People to Follow" suggestions
   const allCreators = useQuery(api.creators.listCreators);
@@ -66,21 +71,25 @@ export default function Explore() {
 
   // Get all creators for Creators tab
   const creators = useQuery(api.creators.listCreators);
-  const { user } = useAuth();
 
-  // Update posts when slates load
+  // Update explore posts when slates load
   useEffect(() => {
-    if (activeTab === "creators") return;
     if (allSlates) {
-      if (activeTab === "explore") {
-        setPosts(allSlates);
-      } else if (activeTab === "following" && convexUserId) {
-        // Filter to only show posts from followed creators
-        // This would require a separate query in production
-        setPosts(allSlates);
-      }
+      setExplorePosts(allSlates);
     }
-  }, [allSlates, activeTab, convexUserId]);
+  }, [allSlates]);
+
+  // Update following posts from followed creators only
+  useEffect(() => {
+    if (followingSlatesResult?.items) {
+      setFollowingPosts(followingSlatesResult.items);
+      return;
+    }
+
+    if (!convexUserId) {
+      setFollowingPosts([]);
+    }
+  }, [followingSlatesResult, convexUserId]);
 
   const handleLike = async (slateId: Id<"slates">) => {
     if (!convexUserId) return;
@@ -90,19 +99,19 @@ export default function Explore() {
         userId: convexUserId as Id<"users">,
       });
       
-      // Update local state based on like result
-      setPosts((prev) =>
-        prev.map((post) => {
-          if (post._id === slateId) {
-            // If liked, add 1; if unliked, subtract 1
-            const newLikeCount = result.liked 
-              ? post.likeCount + 1 
-              : Math.max(0, post.likeCount - 1);
-            return { ...post, likeCount: newLikeCount };
-          }
-          return post;
-        })
-      );
+      const updatePostLikes = (postList: SlatePost[]) =>
+        postList.map((post) => {
+          if (post._id !== slateId) return post;
+
+          const newLikeCount = result.liked
+            ? post.likeCount + 1
+            : Math.max(0, post.likeCount - 1);
+
+          return { ...post, likeCount: newLikeCount };
+        });
+
+      setExplorePosts((prev) => updatePostLikes(prev));
+      setFollowingPosts((prev) => updatePostLikes(prev));
     } catch (error) {
       console.error("Error toggling like:", error);
     }
@@ -143,6 +152,10 @@ export default function Explore() {
     const days = Math.floor(hours / 24);
     return `${days}d ago`;
   };
+
+  const isFollowingTabLoading =
+    activeTab === "following" &&
+    (isAuthLoading || (convexUserId !== null && isFollowLoading) || (convexUserId !== null && followingSlatesResult === undefined));
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-20">
@@ -206,7 +219,7 @@ export default function Explore() {
               exit={{ opacity: 0, y: -10 }}
               className="divide-y divide-gray-100"
             >
-              {posts.length === 0 ? (
+              {explorePosts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 text-black/20 mb-6">
                     <FileText size={40} />
@@ -218,7 +231,7 @@ export default function Explore() {
                 </div>
               ) : (
                 <>
-                  {posts.map((post, index) => (
+                  {explorePosts.map((post, index) => (
                     <Fragment key={post._id}>
                       <PostCard
                         post={post}
@@ -252,7 +265,28 @@ export default function Explore() {
               exit={{ opacity: 0, y: -10 }}
               className="divide-y divide-gray-100"
             >
-              {posts.length === 0 ? (
+              {isFollowingTabLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <Loader2 size={32} className="animate-spin text-black/40" />
+                  <p className="mt-4 text-sm text-gray-500">Loading posts from creators you follow</p>
+                </div>
+              ) : !user || !convexUserId ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 text-black/20 mb-6">
+                    <Users size={40} />
+                  </div>
+                  <h3 className="text-xl font-bold text-black">Log in to see your following feed</h3>
+                  <p className="mt-2 text-gray-500 max-w-xs text-sm">
+                    Log in to see posts from the creators you follow
+                  </p>
+                  <a
+                    href="/login"
+                    className="mt-6 font-bold text-black underline underline-offset-4 text-sm"
+                  >
+                    Log in
+                  </a>
+                </div>
+              ) : following.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 text-black/20 mb-6">
                     <Users size={40} />
@@ -268,9 +302,19 @@ export default function Explore() {
                     Explore creators
                   </button>
                 </div>
+              ) : followingPosts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 text-black/20 mb-6">
+                    <FileText size={40} />
+                  </div>
+                  <h3 className="text-xl font-bold text-black">No posts from people you follow yet</h3>
+                  <p className="mt-2 text-gray-500 max-w-xs text-sm">
+                    When the creators you follow share something new, it will show up here
+                  </p>
+                </div>
               ) : (
                 <>
-                  {posts.map((post, index) => (
+                  {followingPosts.map((post, index) => (
                     <Fragment key={post._id}>
                       <PostCard
                         post={post}
