@@ -131,12 +131,14 @@ export const PlatformNavbar = () => {
                 to="/dashboard"
                 className="group flex h-11 items-center gap-2.5 rounded-full border border-black/10 bg-white pl-1.5 pr-4 text-black shadow-[0_1px_0_rgba(0,0,0,0.04)] transition-all hover:-translate-y-px hover:border-black/20 hover:shadow-md"
               >
-                <img
-                  src={profileAvatar}
-                  alt={profileName}
-                  className="h-8 w-8 rounded-full object-cover ring-1 ring-black/10"
-                  referrerPolicy="no-referrer"
-                />
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-black/10">
+                  <img
+                    src={profileAvatar}
+                    alt={profileName}
+                    className="h-full w-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </span>
                 <div className="min-w-0">
                   <span className="block max-w-[132px] truncate text-[15px] font-semibold leading-none">
                     {profileHandle}
@@ -250,12 +252,14 @@ export const PlatformNavbar = () => {
                       className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 py-3 text-base text-black shadow-[0_1px_0_rgba(0,0,0,0.04)]"
                       onClick={() => setIsOpen(false)}
                     >
-                      <img
-                        src={profileAvatar}
-                        alt={profileName}
-                        className="h-11 w-11 rounded-full object-cover ring-1 ring-black/10"
-                        referrerPolicy="no-referrer"
-                      />
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-black/10">
+                        <img
+                          src={profileAvatar}
+                          alt={profileName}
+                          className="h-full w-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </span>
                       <div className="min-w-0 text-left">
                         <p className="truncate text-sm font-bold">{profileHandle}</p>
                         <p className="text-xs text-black/50">Open dashboard</p>
