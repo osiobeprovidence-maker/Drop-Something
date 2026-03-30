@@ -71,6 +71,8 @@ export const PlatformNavbar = () => {
     };
   }, [isOpen]);
 
+  const isSignedIn = Boolean(user || currentUser || convexUserId);
+
   const profileName =
     creatorProfile?.username ||
     currentUser?.name ||
@@ -122,7 +124,7 @@ export const PlatformNavbar = () => {
                 Admin
               </Link>
             )}
-            {user ? (
+            {isSignedIn ? (
               <Link
                 to="/dashboard"
                 className="flex items-center gap-3 rounded-full border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-black transition-all hover:border-black/20 hover:bg-black/5"
@@ -236,7 +238,7 @@ export const PlatformNavbar = () => {
                 </div>
 
                 <div className="mt-auto pt-6 border-t border-black/5">
-                  {user ? (
+                  {isSignedIn ? (
                     <Link
                       to="/dashboard"
                       className="flex items-center gap-3 rounded-xl border border-black/10 bg-white px-4 py-3 text-base font-semibold text-black"
