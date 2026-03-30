@@ -80,6 +80,7 @@ export const PlatformNavbar = () => {
     "My dashboard";
 
   const profileAvatar =
+    creatorProfile?.avatar ||
     currentUser?.image ||
     user?.photoURL ||
     `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profileName)}`;
