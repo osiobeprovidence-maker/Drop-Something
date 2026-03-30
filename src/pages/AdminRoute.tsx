@@ -16,18 +16,18 @@ import AdminDashboard from "./AdminDashboard";
  * - Can be cleared by calling adminLogout()
  */
 export default function AdminRoute() {
-  const { isAdmin, isLoading, adminLogout } = useAdmin();
+  const { isAdmin, isLoading, adminLogout, sessionToken } = useAdmin();
 
   // Handle session expiration or invalid session
   useEffect(() => {
-    if (!isLoading && isAdmin) {
+    if (!isLoading && isAdmin && sessionToken) {
       const session = localStorage.getItem("adminSession");
       if (!session) {
         // Session was cleared externally, logout
-        adminLogout();
+        void adminLogout();
       }
     }
-  }, [isAdmin, isLoading, adminLogout]);
+  }, [isAdmin, isLoading, adminLogout, sessionToken]);
 
   // Show loading state
   if (isLoading) {

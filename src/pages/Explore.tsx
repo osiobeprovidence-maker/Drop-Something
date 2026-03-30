@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Heart, MessageCircle, UserPlus, ExternalLink, Loader2,
@@ -219,9 +219,8 @@ export default function Explore() {
               ) : (
                 <>
                   {posts.map((post, index) => (
-                    <>
+                    <Fragment key={post._id}>
                       <PostCard
-                        key={post._id}
                         post={post}
                         onLike={handleLike}
                         onComment={() => setSelectedPost(post)}
@@ -232,13 +231,12 @@ export default function Explore() {
                       {/* Show "People to Follow" after every 2 posts */}
                       {(index + 1) % 2 === 0 && allCreators && allCreators.length > 0 && (
                         <PeopleToFollow
-                          key={`people-${index}`}
                           creators={allCreators.filter(c => c._id !== post.creatorId)}
                           onFollow={handleFollow}
                           isFollowing={isFollowing}
                         />
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </>
               )}
@@ -273,9 +271,8 @@ export default function Explore() {
               ) : (
                 <>
                   {posts.map((post, index) => (
-                    <>
+                    <Fragment key={post._id}>
                       <PostCard
-                        key={post._id}
                         post={post}
                         onLike={handleLike}
                         onComment={() => setSelectedPost(post)}
@@ -286,13 +283,12 @@ export default function Explore() {
                       {/* Show "People to Follow" after every 2 posts */}
                       {(index + 1) % 2 === 0 && allCreators && allCreators.length > 0 && (
                         <PeopleToFollow
-                          key={`people-${index}`}
                           creators={allCreators.filter(c => c._id !== post.creatorId)}
                           onFollow={handleFollow}
                           isFollowing={isFollowing}
                         />
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </>
               )}
@@ -487,7 +483,7 @@ function PeopleToFollow({
   isFollowing,
 }: {
   creators: any[];
-  onFollow: (id: Id<"creators">) => void;
+  onFollow: (id: Id<"creators">) => void | Promise<void>;
   isFollowing: (id: Id<"creators">) => boolean;
 }) {
   if (!creators || creators.length === 0) return null;
@@ -549,9 +545,9 @@ function PostCard({
   formatTimeAgo,
 }: {
   post: SlatePost;
-  onLike: (id: Id<"slates">) => void;
+  onLike: (id: Id<"slates">) => void | Promise<void>;
   onComment: () => void;
-  onFollow: (id: Id<"creators">) => void;
+  onFollow: (id: Id<"creators">) => void | Promise<void>;
   isFollowing: boolean;
   formatTimeAgo: (timestamp: number) => string;
 }) {
@@ -617,15 +613,18 @@ function PostCard({
           />
         )}
 
-        {post.type === "video" && post.playbackId && (
+        {post.type === "video" && (post.playbackId || post.mediaUrl) && (
           <div className="relative rounded-2xl overflow-hidden bg-black">
             <video controls className="w-full max-h-[500px] object-cover">
-              <source src={`https://stream.mux.com/${post.playbackId}.m3u8`} type="application/x-mpegURL" />
+              <source
+                src={post.playbackId ? `https://stream.mux.com/${post.playbackId}.m3u8` : post.mediaUrl}
+                type={post.playbackId ? "application/x-mpegURL" : "video/mp4"}
+              />
             </video>
           </div>
         )}
 
-        {post.type === "audio" && post.playbackId && (
+        {post.type === "audio" && (post.playbackId || post.mediaUrl) && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
             <audio controls className="w-full">
               <source src={post.mediaUrl || `https://stream.mux.com/${post.playbackId}.m3u8`} />

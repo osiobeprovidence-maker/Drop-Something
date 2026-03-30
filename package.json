@@ -7,7 +7,7 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist",
+    "clean": "node -e \"const fs=require('fs'); const { execSync }=require('child_process'); if (process.platform === 'win32') { try { execSync('attrib -R /S /D dist', { stdio: 'ignore' }); } catch {} } fs.rmSync('dist', { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });\"",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

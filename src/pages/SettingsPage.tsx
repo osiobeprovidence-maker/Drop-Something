@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, type ChangeEvent, type FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Settings, User, CreditCard, Shield, Key, MapPin, Star,
@@ -213,7 +213,7 @@ function ProfileTab({ convexUserId }: { convexUserId?: string }) {
     }
   }, [creator]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'avatar' | 'coverImage') => {
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, field: 'avatar' | 'coverImage') => {
     const file = e.target.files?.[0];
     if (!file || !convexUserId || !creator) return;
 
@@ -243,7 +243,7 @@ function ProfileTab({ convexUserId }: { convexUserId?: string }) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!convexUserId || !creator) return;
 
@@ -410,7 +410,7 @@ function PaymentTab({ paymentDetails, convexUserId }: { paymentDetails?: any, co
     accountNumber: paymentDetails?.accountNumber || "",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!convexUserId) return;
 
@@ -526,7 +526,7 @@ function KYCTab({ kyc, convexUserId }: { kyc?: any, convexUserId?: string }) {
     idType: kyc?.idType || "international_passport",
   });
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'id' | 'selfie') => {
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, type: 'id' | 'selfie') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -554,7 +554,7 @@ function KYCTab({ kyc, convexUserId }: { kyc?: any, convexUserId?: string }) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!convexUserId) return;
 
@@ -846,9 +846,9 @@ function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscripti
           <PaystackPayment
             email={userEmail}
             amount={3000}
-            type="membership"
-            creatorId={convexUserId as Id<"creators">}
+            type="subscription"
             userId={convexUserId as Id<"users">}
+            subscriptionPlan="shop"
             onSuccess={handleSubscribeSuccess}
             onError={handleSubscribeError}
           >
@@ -1009,7 +1009,7 @@ function DeliveryTab({ addresses, convexUserId }: { addresses?: any[], convexUse
     isDefault: false,
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!convexUserId) return;
 

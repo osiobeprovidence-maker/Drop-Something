@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useFollow } from "@/src/context/FollowContext";
@@ -199,10 +199,6 @@ export default function CreatorPage() {
       alert("Please select or enter a valid amount.");
       return;
     }
-
-    // Use Paystack for payment
-    const user = await (api.users.currentUser as any)();
-    const userEmail = user?.email || "";
 
     if (!userEmail) {
       alert("Please log in to make a payment.");
@@ -641,19 +637,22 @@ export default function CreatorPage() {
                                 />
                               )}
 
-                              {slate.type === "video" && slate.playbackId && (
+                              {slate.type === "video" && (slate.playbackId || slate.mediaUrl) && (
                                 <div className="relative rounded-2xl overflow-hidden bg-black">
                                   <video
                                     controls
                                     className="w-full max-h-96 object-cover"
                                   >
-                                    <source src={`https://stream.mux.com/${slate.playbackId}.m3u8`} type="application/x-mpegURL" />
+                                    <source
+                                      src={slate.playbackId ? `https://stream.mux.com/${slate.playbackId}.m3u8` : slate.mediaUrl}
+                                      type={slate.playbackId ? "application/x-mpegURL" : "video/mp4"}
+                                    />
                                     Your browser does not support the video tag.
                                   </video>
                                 </div>
                               )}
 
-                              {slate.type === "audio" && slate.playbackId && (
+                              {slate.type === "audio" && (slate.playbackId || slate.mediaUrl) && (
                                 <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
                                   <audio controls className="w-full">
                                     <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />

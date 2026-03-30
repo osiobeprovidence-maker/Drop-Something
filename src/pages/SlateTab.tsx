@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, type ChangeEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Plus, Trash2, Image as ImageIcon, Video, FileText, Lock,
@@ -27,7 +27,7 @@ interface SlateTabProps {
     playbackId?: string;
     visibility: "public" | "followers" | "supporters" | "members";
   }) => Promise<Id<"slates">>;
-  deleteSlate: (args: { slateId: Id<"slates"> }) => Promise<void>;
+  deleteSlate: (args: { slateId: Id<"slates"> }) => Promise<boolean>;
   slates: Slate[];
   generateUploadUrl: () => Promise<string>;
   hasProFeatures: boolean;
@@ -77,7 +77,23 @@ export default function SlateTab({
     { value: "members" as const, label: "Members", icon: Star, description: "Members only", color: "text-amber-600" },
   ];
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadFileToStorage = async (file: File) => {
+    const postUrl = await generateUploadUrl();
+    const result = await fetch(postUrl, {
+      method: "POST",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!result.ok) {
+      throw new Error("Upload failed");
+    }
+
+    const { storageId } = await result.json();
+    return storageId as string;
+  };
+
+  const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -94,7 +110,7 @@ export default function SlateTab({
     reader.readAsDataURL(file);
   };
 
-  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -112,7 +128,7 @@ export default function SlateTab({
     reader.readAsDataURL(file);
   };
 
-  const handleAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAudioSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -184,108 +200,72 @@ export default function SlateTab({
 
       if (activeType === "image" && imageFile) {
         setIsUploading(true);
-        const postUrl = await generateUploadUrl();
-        const result = await fetch(postUrl, {
-          method: "POST",
-          headers: { "Content-Type": imageFile.type },
-          body: imageFile,
-        });
-
-        if (!result.ok) throw new Error("Upload failed");
-        const { storageId } = await result.json();
-        mediaUrl = storageId;
-        setIsUploading(false);
+        try {
+          mediaUrl = await uploadFileToStorage(imageFile);
+        } finally {
+          setIsUploading(false);
+        }
       }
 
-      if (activeType === "video" && videoFile && createVideoUpload && getVideoPlaybackInfo) {
-        // Use Mux for video upload - FREE for all users
+      if (activeType === "video" && videoFile) {
         setIsUploading(true);
 
         try {
-          console.log("📹 [Video Upload] Starting video upload:", {
-            fileName: videoFile.name,
-            fileSize: `${(videoFile.size / 1024 / 1024).toFixed(2)}MB`,
-            type: videoFile.type,
-          });
-
-          // Check video file size (100MB limit)
           if (videoFile.size > 100 * 1024 * 1024) {
             throw new Error("Video file is too large. Maximum size is 100MB.");
           }
 
-          // Step 1: Create Mux upload
-          console.log("📹 [Video Upload] Creating Mux upload URL...");
-          const { uploadId, uploadUrl } = await createVideoUpload({
-            fileName: videoFile.name,
-            fileSize: videoFile.size,
-          });
-          console.log("✅ [Video Upload] Mux upload created. ID:", uploadId);
+          if (createVideoUpload && getVideoPlaybackInfo) {
+            try {
+              const { uploadId, uploadUrl } = await createVideoUpload({
+                fileName: videoFile.name,
+                fileSize: videoFile.size,
+              });
 
-          // Step 2: Upload video to Mux
-          console.log("📹 [Video Upload] Uploading file to Mux...");
-          const uploadResult = await fetch(uploadUrl, {
-            method: "POST",
-            headers: { "Content-Type": videoFile.type },
-            body: videoFile,
-          });
+              const uploadResult = await fetch(uploadUrl, {
+                method: "PUT",
+                headers: { "Content-Type": videoFile.type },
+                body: videoFile,
+              });
 
-          if (!uploadResult.ok) {
-            const errorText = await uploadResult.text();
-            console.error("❌ [Video Upload] HTTP Error:", {
-              status: uploadResult.status,
-              statusText: uploadResult.statusText,
-              body: errorText,
-            });
-            throw new Error(`Video upload failed with status ${uploadResult.status}. Please try again.`);
-          }
-          console.log("✅ [Video Upload] File uploaded successfully");
+              if (!uploadResult.ok) {
+                throw new Error(`Mux upload failed with status ${uploadResult.status}`);
+              }
 
-          // Step 3: Wait for Mux to process and get playback ID
-          console.log("📹 [Video Upload] Polling for playback ID...");
-          let playbackInfo = await getVideoPlaybackInfo({ uploadId });
-          let attempts = 0;
-          const maxAttempts = 60; // Wait up to 60 seconds for larger videos
+              let playbackInfo = await getVideoPlaybackInfo({ uploadId });
+              let attempts = 0;
+              const maxAttempts = 60;
 
-          while (!playbackInfo.playbackId && attempts < maxAttempts) {
-            console.log(`⏳ [Video Upload] Processing... (${attempts + 1}/${maxAttempts})`);
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-            playbackInfo = await getVideoPlaybackInfo({ uploadId });
-            attempts++;
+              while (!playbackInfo.playbackId && attempts < maxAttempts) {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                playbackInfo = await getVideoPlaybackInfo({ uploadId });
+                attempts++;
+              }
+
+              if (playbackInfo.playbackId) {
+                playbackId = playbackInfo.playbackId;
+              }
+            } catch (muxError) {
+              console.warn("Mux upload failed, falling back to direct file storage:", muxError);
+            }
           }
 
-          if (!playbackInfo.playbackId) {
-            console.error("❌ [Video Upload] Timeout waiting for playback ID after 60 seconds");
-            throw new Error("Video processing is taking longer than expected. Your video will be available soon.");
+          if (!playbackId) {
+            mediaUrl = await uploadFileToStorage(videoFile);
           }
-
-          console.log("✅ [Video Upload] Playback ID received:", playbackInfo.playbackId);
-          playbackId = playbackInfo.playbackId;
+        } finally {
           setIsUploading(false);
-        } catch (error: any) {
-          const errorMsg = error instanceof Error ? error.message : String(error);
-          console.error("❌ [Video Upload] Error:", errorMsg);
-          throw error;
         }
       }
 
       if (activeType === "audio" && audioFile) {
-        // Upload audio to Convex storage
-        // In production, you could use Mux or a dedicated audio CDN
         setIsUploading(true);
-        const postUrl = await generateUploadUrl();
-        const result = await fetch(postUrl, {
-          method: "POST",
-          headers: { "Content-Type": audioFile.type },
-          body: audioFile,
-        });
-
-        if (!result.ok) throw new Error("Upload failed");
-        const { storageId } = await result.json();
-        
-        // Store in both mediaUrl and playbackId for audio
-        mediaUrl = storageId;
-        playbackId = storageId;
-        setIsUploading(false);
+        try {
+          mediaUrl = await uploadFileToStorage(audioFile);
+          playbackId = mediaUrl;
+        } finally {
+          setIsUploading(false);
+        }
       }
 
       await createSlate({
@@ -668,21 +648,23 @@ export default function SlateTab({
                 />
               )}
 
-              {slate.type === "video" && slate.playbackId && (
+              {slate.type === "video" && (slate.playbackId || slate.mediaUrl) && (
                 <div className="relative rounded-2xl overflow-hidden bg-black">
-                  {/* Mux Video Player */}
                   <video
                     controls
                     className="w-full max-h-96 object-cover"
                     poster=""
                   >
-                    <source src={`https://stream.mux.com/${slate.playbackId}.m3u8`} type="application/x-mpegURL" />
+                    <source
+                      src={slate.playbackId ? `https://stream.mux.com/${slate.playbackId}.m3u8` : slate.mediaUrl}
+                      type={slate.playbackId ? "application/x-mpegURL" : "video/mp4"}
+                    />
                     Your browser does not support the video tag.
                   </video>
                 </div>
               )}
 
-              {slate.type === "audio" && slate.playbackId && (
+              {slate.type === "audio" && (slate.playbackId || slate.mediaUrl) && (
                 <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
                   <audio controls className="w-full">
                     <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />

@@ -360,9 +360,9 @@ export const createSlate = mutation({
         throw new Error("Image slates require mediaUrl");
       }
 
-      if (args.type === "video" && !args.playbackId) {
-        console.error("❌ [createSlate] Video slate without playbackId");
-        throw new Error("Video slates require playbackId");
+      if (args.type === "video" && !args.playbackId && !args.mediaUrl) {
+        console.error("❌ [createSlate] Video slate without playbackId or mediaUrl");
+        throw new Error("Video slates require playbackId or mediaUrl");
       }
 
       if (args.type === "audio" && !args.playbackId && !args.mediaUrl) {

@@ -3,42 +3,37 @@
 import { action } from "./_generated/server";
 import { v } from "convex/values";
 
-// Helper function to create base64 encoding for Basic Auth
-function toBase64(str: string): string {
-  try {
-    // Try using Node.js Buffer if available
-    if (typeof Buffer !== "undefined") {
-      return Buffer.from(str).toString("base64");
-    }
-  } catch (e) {
-    // Fall back to manual base64 encoding
+function getMuxCredentials() {
+  const tokenId = process.env.MUX_TOKEN_ID || "";
+  const tokenSecret = process.env.MUX_TOKEN_SECRET || "";
+
+  if (!tokenId || !tokenSecret) {
+    throw new Error("Mux is not configured. Set MUX_TOKEN_ID and MUX_TOKEN_SECRET.");
   }
-  
-  // Manual base64 encoding for compatibility
-  return btoa(unescape(encodeURIComponent(str)));
+
+  return {
+    tokenId,
+    tokenSecret,
+  };
 }
 
-// Create a Mux direct upload for video
+function getMuxAuthHeader() {
+  const { tokenId, tokenSecret } = getMuxCredentials();
+  return `Basic ${Buffer.from(`${tokenId}:${tokenSecret}`).toString("base64")}`;
+}
+
 export const createVideoUpload = action({
   args: {
     fileName: v.string(),
     fileSize: v.number(),
   },
-  handler: async (ctx, args) => {
-    const tokenId = "f3eecb08-16b6-426d-b9ba-906ab2193732";
-    const tokenSecret = process.env.MUX_TOKEN_SECRET || "";
-    
-    if (!tokenSecret) {
-      throw new Error("MUX_TOKEN_SECRET not configured");
-    }
-
+  handler: async (_ctx, args) => {
     try {
-      // Create upload using Mux API
       const response = await fetch("https://api.mux.com/video/v1/uploads", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Basic " + Buffer.from(`${tokenId}:${tokenSecret}`).toString("base64"),
+          Authorization: getMuxAuthHeader(),
         },
         body: JSON.stringify({
           new_asset_settings: {
@@ -64,40 +59,26 @@ export const createVideoUpload = action({
       };
     } catch (error) {
       console.error("Mux upload error:", error);
-      throw new Error("Failed to create Mux upload");
+      throw error instanceof Error ? error : new Error("Failed to create Mux upload");
     }
   },
 });
 
-// Get Mux playback info after upload completes
 export const getVideoPlaybackInfo = action({
   args: {
     uploadId: v.string(),
   },
-  handler: async (ctx, args) => {
-    const tokenId = "f3eecb08-16b6-426d-b9ba-906ab2193732";
-    const tokenSecret = process.env.MUX_TOKEN_SECRET || "";
-    
-    if (!tokenSecret) {
-      return {
-        status: "error",
-        playbackId: null,
-        playbackUrl: null,
-      };
-    }
-
+  handler: async (_ctx, args) => {
     try {
-      // Get upload status
-      const response = await fetch(`https://api.mux.com/video/v1/uploads/${args.uploadId}`, {
+      const uploadResponse = await fetch(`https://api.mux.com/video/v1/uploads/${args.uploadId}`, {
         method: "GET",
         headers: {
-          "Authorization": "Basic " + Buffer.from(`${tokenId}:${tokenSecret}`).toString("base64"),
+          Authorization: getMuxAuthHeader(),
         },
       });
 
-      const data = await response.json();
-
-      if (!data.data) {
+      const uploadData = await uploadResponse.json();
+      if (!uploadData.data) {
         return {
           status: "error",
           playbackId: null,
@@ -105,8 +86,7 @@ export const getVideoPlaybackInfo = action({
         };
       }
 
-      const upload = data.data;
-      
+      const upload = uploadData.data;
       if (!upload.asset_id) {
         return {
           status: "uploading",
@@ -115,16 +95,14 @@ export const getVideoPlaybackInfo = action({
         };
       }
 
-      // Get asset info
       const assetResponse = await fetch(`https://api.mux.com/video/v1/assets/${upload.asset_id}`, {
         method: "GET",
         headers: {
-          "Authorization": "Basic " + Buffer.from(`${tokenId}:${tokenSecret}`).toString("base64"),
+          Authorization: getMuxAuthHeader(),
         },
       });
 
       const assetData = await assetResponse.json();
-
       if (!assetData.data) {
         return {
           status: "error",
@@ -135,7 +113,7 @@ export const getVideoPlaybackInfo = action({
 
       const asset = assetData.data;
       const playbackId = asset.playback_ids?.[0]?.id || null;
-      
+
       return {
         status: asset.status,
         playbackId,

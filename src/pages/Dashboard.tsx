@@ -1,10 +1,19 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  type FormEvent,
+  type ChangeEvent,
+  type MouseEvent as ReactMouseEvent,
+  type TouchEvent as ReactTouchEvent,
+} from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard, User, Heart, Users, Target, ShoppingBag, Link as LinkIcon,
   LogOut, Plus, Edit2, Trash2, Check, Settings, Shield,
   TrendingUp, DollarSign, Image as ImageIcon, ExternalLink, Copy, Share2,
-  Globe, Package, FileText, X, Menu, Square, Search
+  Globe, Package, FileText, X, Menu, Square, Search, Loader2
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
@@ -26,19 +35,21 @@ export default function Dashboard() {
     navigate("/login");
   };
 
-  // Super admin email check
+  const currentUser = useQuery(api.users.currentUser);
   const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
   const [showAdminButton, setShowAdminButton] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      const userEmail = userData?.email || userData?.user?.email || "";
-      const isAdmin = userEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-      setShowAdminButton(isAdmin);
+    if (currentUser === undefined) {
+      return;
     }
-  }, []);
+
+    const isAdmin =
+      currentUser?.role === "admin" ||
+      currentUser?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+
+    setShowAdminButton(!!isAdmin);
+  }, [currentUser]);
 
   // Fetch live data from Convex
   const convexCreator = useQuery(api.creators.getCreatorByUserId, {
@@ -141,7 +152,7 @@ export default function Dashboard() {
     }
   }, [convexCreator]);
 
-  const handleProfileSubmit = async (e: React.FormEvent) => {
+  const handleProfileSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!convexCreator) return;
     
@@ -287,7 +298,7 @@ export default function Dashboard() {
   };
 
   // Handle product image upload
-  const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProductImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -326,7 +337,7 @@ export default function Dashboard() {
   };
 
   // Handle profile image upload
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'avatar' | 'coverImage') => {
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, field: 'avatar' | 'coverImage') => {
     const file = e.target.files?.[0];
     if (!file || !convexCreator) return;
 
@@ -392,18 +403,18 @@ export default function Dashboard() {
     setIsCoverAdjustOpen(true);
   };
 
-  const handleCoverMouseDown = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+  const handleCoverMouseDown = (e: ReactMouseEvent<HTMLDivElement> | ReactTouchEvent<HTMLDivElement>) => {
     setIsDragging(true);
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as ReactMouseEvent<HTMLDivElement>).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as ReactMouseEvent<HTMLDivElement>).clientY;
     setDragStart({ x: clientX, y: clientY });
   };
 
-  const handleCoverMouseMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+  const handleCoverMouseMove = (e: ReactMouseEvent<HTMLDivElement> | ReactTouchEvent<HTMLDivElement>) => {
     if (!isDragging || !containerRef.current) return;
     
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as ReactMouseEvent<HTMLDivElement>).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as ReactMouseEvent<HTMLDivElement>).clientY;
     
     const deltaX = clientX - dragStart.x;
     const deltaY = clientY - dragStart.y;

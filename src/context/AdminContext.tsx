@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/src/context/AuthContext";
@@ -7,8 +7,9 @@ interface AdminContextType {
   isAdmin: boolean;
   isLoading: boolean;
   loginError: string | null;
+  sessionToken: string | null;
   adminLogin: (email: string, password: string) => Promise<void>;
-  adminLogout: () => void;
+  adminLogout: () => Promise<void>;
   checkAdminSession: () => boolean;
 }
 
@@ -18,97 +19,80 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const adminLoginMutation = useMutation(api.adminAuth.login);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [hasCheckedStoredSession, setHasCheckedStoredSession] = useState(false);
 
-  // Check for existing admin session on mount
+  const adminLoginMutation = useMutation(api.adminAuth.login);
+  const adminLogoutMutation = useMutation(api.adminAuth.logout);
+  const { isLoading: authLoading, signOut } = useAuth();
+  const currentUser = useQuery(api.users.currentUser);
+
   useEffect(() => {
     const adminSession = localStorage.getItem("adminSession");
     if (adminSession) {
       try {
         const session = JSON.parse(adminSession);
-        // Optional: Verify session hasn't expired
-        const sessionAge = Date.now() - session.timestamp;
-        const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
-        
-        if (sessionAge < SESSION_TIMEOUT) {
+        const expiresAt = typeof session.expiresAt === "number"
+          ? session.expiresAt
+          : (typeof session.timestamp === "number" ? session.timestamp + (24 * 60 * 60 * 1000) : 0);
+
+        if (typeof session.token === "string" && session.token && expiresAt > Date.now()) {
+          setSessionToken(session.token);
           setIsAdmin(true);
         } else {
-          // Session expired
           localStorage.removeItem("adminSession");
-          setIsAdmin(false);
         }
-      } catch (error) {
+      } catch {
         localStorage.removeItem("adminSession");
-        setIsAdmin(false);
       }
     }
-    setIsLoading(false);
+    setHasCheckedStoredSession(true);
   }, []);
 
-  // Also accept platform-authenticated admins: if the logged-in user (via AuthContext)
-  // has an `admin` role in the users table, consider them an admin for the admin panel
-  const { convexUserId, isLoading: authLoading } = useAuth();
-  const allUsers = useQuery(api.admin.getAllUsers);
-
   useEffect(() => {
-    // Wait until AuthProvider finished loading and users are available
-    if (isLoading || authLoading) return;
-    if (!convexUserId || !allUsers) return;
-
-    try {
-      const current = allUsers.find((u: any) => String(u._id) === String(convexUserId));
-      if (current && current.role === "admin") {
-        // create the same adminSession shape used by adminLogin
-        const session = {
-          isAdmin: true,
-          email: current.email,
-          timestamp: Date.now(),
-        };
-        localStorage.setItem("adminSession", JSON.stringify(session));
-        setIsAdmin(true);
-      }
-    } catch (err) {
-      // ignore
+    if (!hasCheckedStoredSession || authLoading || currentUser === undefined) {
+      return;
     }
-  }, [convexUserId, authLoading, allUsers, isLoading]);
+
+    if (currentUser?.role === "admin") {
+      setIsAdmin(true);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsAdmin(!!sessionToken);
+    setIsLoading(false);
+  }, [authLoading, currentUser, hasCheckedStoredSession, sessionToken]);
 
   const adminLogin = async (email: string, password: string) => {
-    console.log("🔐 [AdminContext] Login attempt:", { email });
     setIsLoading(true);
     setLoginError(null);
 
     try {
-      console.log("🔐 [AdminContext] Calling backend adminAuth.login mutation...");
       const result = await adminLoginMutation({
         email,
         password,
       });
-      console.log("✅ [AdminContext] Backend returned result:", result);
 
-      if (result.success) {
-        console.log("✅ [AdminContext] Login successful. Setting admin session...");
-        // Store admin session in localStorage
-        const session = {
-          isAdmin: true,
-          email: result.adminEmail,
-          timestamp: result.timestamp,
-        };
-        localStorage.setItem("adminSession", JSON.stringify(session));
-        setIsAdmin(true);
-        console.log("✅ [AdminContext] Admin session stored in localStorage");
-      } else {
-        console.warn("⚠️ [AdminContext] Login result success=false");
+      if (!result.success) {
         setLoginError("Login failed: Invalid response");
         setIsAdmin(false);
+        return;
       }
+
+      const session = {
+        isAdmin: true,
+        email: result.adminEmail,
+        timestamp: result.timestamp,
+        expiresAt: result.expiresAt,
+        token: result.token,
+      };
+
+      localStorage.setItem("adminSession", JSON.stringify(session));
+      setSessionToken(result.token);
+      setIsAdmin(true);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Login failed";
-      console.error("❌ [AdminContext] Login error:", {
-        error,
-        errorMessage,
-        errorType: error instanceof Error ? error.constructor.name : typeof error,
-        stack: error instanceof Error ? error.stack : undefined,
-      });
       setLoginError(errorMessage);
       setIsAdmin(false);
     } finally {
@@ -116,28 +100,41 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const adminLogout = () => {
+  const adminLogout = async () => {
+    const tokenToRevoke = sessionToken;
+
     localStorage.removeItem("adminSession");
+    setSessionToken(null);
     setIsAdmin(false);
     setLoginError(null);
+
+    if (tokenToRevoke) {
+      try {
+        await adminLogoutMutation({ token: tokenToRevoke });
+      } catch {
+        // Best-effort cleanup; the local session has already been cleared.
+      }
+    }
+
+    if (currentUser?.role === "admin") {
+      await signOut();
+    }
   };
 
-  const checkAdminSession = (): boolean => {
-    const session = localStorage.getItem("adminSession");
-    return !!session && isAdmin;
-  };
-
-  const value: AdminContextType = {
-    isAdmin,
-    isLoading,
-    loginError,
-    adminLogin,
-    adminLogout,
-    checkAdminSession,
-  };
+  const checkAdminSession = (): boolean => isAdmin;
 
   return (
-    <AdminContext.Provider value={value}>
+    <AdminContext.Provider
+      value={{
+        isAdmin,
+        isLoading,
+        loginError,
+        sessionToken,
+        adminLogin,
+        adminLogout,
+        checkAdminSession,
+      }}
+    >
       {children}
     </AdminContext.Provider>
   );

@@ -23,7 +23,7 @@ interface WishlistTabProps {
     description: string;
     targetAmount: number;
     isRenewable: boolean;
-  }) => Promise<void>;
+  }) => Promise<Id<"wishlists">>;
   updateWishlist: (args: {
     wishlistId: Id<"wishlists">;
     title?: string;

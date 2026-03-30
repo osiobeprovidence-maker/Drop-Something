@@ -7,8 +7,15 @@ export default defineSchema({
     email: v.string(),
     image: v.optional(v.string()),
     tokenIdentifier: v.string(), // For Firebase/Clerk/etc
-    role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
+    role: v.optional(v.union(v.literal("user"), v.literal("admin"), v.literal("banned"))),
   }).index("by_token", ["tokenIdentifier"]),
+
+  adminSessions: defineTable({
+    token: v.string(),
+    email: v.string(),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+  }).index("by_token", ["token"]),
 
   creators: defineTable({
     userId: v.id("users"),
@@ -114,6 +121,24 @@ export default defineSchema({
     expiresAt: v.number(), // Unix timestamp
     paystackReference: v.optional(v.string()),
   }).index("by_userId", ["userId"]),
+
+  paymentReceipts: defineTable({
+    reference: v.string(),
+    type: v.union(
+      v.literal("tip"),
+      v.literal("membership"),
+      v.literal("product"),
+      v.literal("wishlist"),
+      v.literal("subscription"),
+    ),
+    amount: v.number(),
+    email: v.string(),
+    userId: v.id("users"),
+    creatorId: v.optional(v.id("creators")),
+    itemId: v.optional(v.string()),
+    subscriptionPlan: v.optional(v.union(v.literal("shop"), v.literal("premium"))),
+    fulfilledAt: v.number(),
+  }).index("by_reference", ["reference"]),
 
   // User delivery addresses
   addresses: defineTable({

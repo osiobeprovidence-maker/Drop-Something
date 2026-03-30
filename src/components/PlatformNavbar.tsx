@@ -32,13 +32,10 @@ export const PlatformNavbar = () => {
     if (currentUser) {
       const isAdmin = currentUser.role === "admin" || currentUser.email?.toLowerCase() === "riderezzy@gmail.com";
       setShowAdminButton(isAdmin);
-
-      console.log('🔐 Admin Access Check:', {
-        email: currentUser.email,
-        role: currentUser.role,
-        isSuperAdmin: isAdmin,
-      });
+      return;
     }
+
+    setShowAdminButton(false);
   }, [currentUser]);
 
   const navLinks = [
