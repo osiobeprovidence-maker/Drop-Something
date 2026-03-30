@@ -78,6 +78,7 @@ export const PlatformNavbar = () => {
     currentUser?.name ||
     user?.displayName ||
     "My dashboard";
+  const profileHandle = profileName.startsWith("@") ? profileName : `@${profileName}`;
 
   const profileAvatar =
     creatorProfile?.avatar ||
@@ -128,15 +129,19 @@ export const PlatformNavbar = () => {
             {isSignedIn ? (
               <Link
                 to="/dashboard"
-                className="flex items-center gap-3 rounded-full border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-black transition-all hover:border-black/20 hover:bg-black/5"
+                className="group flex h-11 items-center gap-2.5 rounded-full border border-black/10 bg-white pl-1.5 pr-4 text-black shadow-[0_1px_0_rgba(0,0,0,0.04)] transition-all hover:-translate-y-px hover:border-black/20 hover:shadow-md"
               >
                 <img
                   src={profileAvatar}
                   alt={profileName}
-                  className="h-8 w-8 rounded-full object-cover"
+                  className="h-8 w-8 rounded-full object-cover ring-1 ring-black/10"
                   referrerPolicy="no-referrer"
                 />
-                <span className="max-w-[140px] truncate">@{profileName}</span>
+                <div className="min-w-0">
+                  <span className="block max-w-[132px] truncate text-[15px] font-semibold leading-none">
+                    {profileHandle}
+                  </span>
+                </div>
               </Link>
             ) : (
               <>
@@ -242,17 +247,17 @@ export const PlatformNavbar = () => {
                   {isSignedIn ? (
                     <Link
                       to="/dashboard"
-                      className="flex items-center gap-3 rounded-xl border border-black/10 bg-white px-4 py-3 text-base font-semibold text-black"
+                      className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 py-3 text-base text-black shadow-[0_1px_0_rgba(0,0,0,0.04)]"
                       onClick={() => setIsOpen(false)}
                     >
                       <img
                         src={profileAvatar}
                         alt={profileName}
-                        className="h-10 w-10 rounded-full object-cover"
+                        className="h-11 w-11 rounded-full object-cover ring-1 ring-black/10"
                         referrerPolicy="no-referrer"
                       />
                       <div className="min-w-0 text-left">
-                        <p className="truncate text-sm font-bold">@{profileName}</p>
+                        <p className="truncate text-sm font-bold">{profileHandle}</p>
                         <p className="text-xs text-black/50">Open dashboard</p>
                       </div>
                     </Link>
