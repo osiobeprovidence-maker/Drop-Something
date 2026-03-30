@@ -92,7 +92,10 @@ export const getPublicSlates = query({
 
 // Get ALL slates for explore (including old posts, no pagination limit for small datasets)
 export const getAllPublicSlates = query({
-  handler: async (ctx) => {
+  args: {
+    userId: v.optional(v.id("users")),
+  },
+  handler: async (ctx, args) => {
     // Collect all public slates
     let allSlates = await ctx.db
       .query("slates")
@@ -138,6 +141,14 @@ export const getAllPublicSlates = query({
           .query("slateComments")
           .withIndex("by_slateId", (q) => q.eq("slateId", slate._id))
           .collect()).length;
+        const likedByViewer = args.userId
+          ? !!(await ctx.db
+              .query("slateLikes")
+              .withIndex("by_userId_and_slateId", (q) =>
+                q.eq("userId", args.userId!).eq("slateId", slate._id)
+              )
+              .first())
+          : false;
 
         return {
           ...slate,
@@ -147,6 +158,7 @@ export const getAllPublicSlates = query({
           creatorAvatar: avatar,
           likeCount,
           commentCount,
+          likedByViewer,
         };
       })
     );
@@ -288,6 +300,12 @@ export const getFollowingSlates = query({
           .query("slateComments")
           .withIndex("by_slateId", (q) => q.eq("slateId", slate._id))
           .collect()).length;
+        const likedByViewer = !!(await ctx.db
+          .query("slateLikes")
+          .withIndex("by_userId_and_slateId", (q) =>
+            q.eq("userId", args.userId).eq("slateId", slate._id)
+          )
+          .first());
 
         return {
           ...slate,
@@ -297,6 +315,7 @@ export const getFollowingSlates = query({
           creatorAvatar: avatar,
           likeCount,
           commentCount,
+          likedByViewer,
         };
       })
     );
@@ -575,10 +594,25 @@ export const getComments = query({
     const resolvedComments = await Promise.all(
       comments.map(async (comment) => {
         const user = await ctx.db.get(comment.userId);
+        const creatorProfile = await ctx.db
+          .query("creators")
+          .withIndex("by_userId", (q) => q.eq("userId", comment.userId))
+          .unique();
+
+        let userAvatar = creatorProfile?.avatar || user?.image;
+        if (userAvatar && !userAvatar.startsWith("http") && !userAvatar.startsWith("data:")) {
+          try {
+            const url = await ctx.storage.getUrl(userAvatar);
+            if (url) userAvatar = url;
+          } catch (e) {
+            // Not a valid storageId, keep original
+          }
+        }
+
         return {
           ...comment,
-          userName: user?.name || "Anonymous",
-          userAvatar: user?.image,
+          userName: creatorProfile?.username || user?.name || "Anonymous",
+          userAvatar,
         };
       })
     );

@@ -24,6 +24,7 @@ interface SlatePost {
   creatorId: Id<"creators">;
   likeCount: number;
   commentCount: number;
+  likedByViewer?: boolean;
   _creationTime: number;
 }
 
@@ -52,7 +53,9 @@ export default function Explore() {
   const addComment = useMutation(api.slates.addComment);
 
   // Get ALL public slates (no pagination, shows all posts)
-  const allSlates = useQuery(api.slates.getAllPublicSlates);
+  const allSlates = useQuery(api.slates.getAllPublicSlates, {
+    userId: convexUserId ? (convexUserId as Id<"users">) : undefined,
+  });
   const followingSlatesResult = useQuery(
     api.slates.getFollowingSlates,
     convexUserId ? { userId: convexUserId as Id<"users">, limit: 50 } : "skip"
@@ -107,7 +110,11 @@ export default function Explore() {
             ? post.likeCount + 1
             : Math.max(0, post.likeCount - 1);
 
-          return { ...post, likeCount: newLikeCount };
+          return {
+            ...post,
+            likeCount: newLikeCount,
+            likedByViewer: result.liked,
+          };
         });
 
       setExplorePosts((prev) => updatePostLikes(prev));
@@ -623,6 +630,7 @@ function PostCard({
   const displayLikeCount = formatCount(post.likeCount);
   const displayCreatorName = getDisplayName(post.creatorName, post.creatorUsername);
   const displayUsername = post.creatorUsername || "anonymous";
+  const isLiked = !!post.likedByViewer;
 
   return (
     <motion.article
@@ -704,9 +712,18 @@ function PostCard({
       <div className="flex items-center gap-6 px-4 sm:px-6">
         <button
           onClick={() => onLike(post._id)}
-          className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors group"
+          className={cn(
+            "flex items-center gap-2 transition-colors group",
+            isLiked ? "text-red-500" : "text-gray-600 hover:text-red-500"
+          )}
         >
-          <Heart size={20} className="group-hover:scale-110 transition-transform" />
+          <Heart
+            size={20}
+            className={cn(
+              "group-hover:scale-110 transition-transform",
+              isLiked && "fill-current"
+            )}
+          />
           <span className="text-sm font-medium">{displayLikeCount}</span>
         </button>
         <button
