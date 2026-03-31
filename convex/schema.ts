@@ -172,6 +172,25 @@ export default defineSchema({
     coverImage: v.optional(v.string()),
   }).index("by_creatorId", ["creatorId"]),
 
+  showcases: defineTable({
+    creatorId: v.id("creators"),
+    role: v.optional(v.string()),
+    location: v.optional(v.string()),
+    about: v.optional(v.string()),
+    hireLink: v.optional(v.string()),
+    messageLink: v.optional(v.string()),
+    skills: v.array(v.string()),
+    featuredSlateIds: v.array(v.id("slates")),
+    projects: v.array(v.object({
+      id: v.string(),
+      title: v.string(),
+      story: v.string(),
+      timeframe: v.optional(v.string()),
+    })),
+    sectionOrder: v.array(v.string()),
+    hiddenSections: v.array(v.string()),
+  }).index("by_creatorId", ["creatorId"]),
+
   slates: defineTable({
     creatorId: v.id("creators"),
     title: v.optional(v.string()),
@@ -185,6 +204,7 @@ export default defineSchema({
     seriesId: v.optional(v.id("slateSeries")),
     entryType: v.optional(v.union(v.literal("episode"), v.literal("chapter"))),
     sequence: v.optional(v.number()),
+    updatedAt: v.optional(v.number()),
   }).index("by_creatorId", ["creatorId"])
     .index("by_seriesId", ["seriesId"]),
 
