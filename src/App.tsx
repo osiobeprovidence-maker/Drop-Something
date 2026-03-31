@@ -14,6 +14,7 @@ import Explore from "./pages/Explore";
 import HowItWorks from "./pages/HowItWorks";
 import CreatorsInfo from "./pages/CreatorsInfo";
 import FAQ from "./pages/FAQ";
+import SeriesPage from "./pages/SeriesPage";
 import { ThemeProvider } from "./context/ThemeContext";
 import { FollowProvider } from "./context/FollowContext";
 import { DataProvider } from "./context/DataContext";
@@ -46,7 +47,9 @@ function AppContent() {
   const isSettingsPage = firstSegment === "settings";
 
   // A creator page is a single segment path that is NOT a reserved platform path
-  const isCreatorPage = segments.length === 1 && !reservedPaths.includes(firstSegment);
+  const isCreatorPage =
+    !reservedPaths.includes(firstSegment) &&
+    (segments.length === 1 || (segments.length === 3 && segments[1] === "series"));
 
   // Determine which navbar to show
   let navbar = null;
@@ -98,6 +101,7 @@ function AppContent() {
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute />} />
+          <Route path="/:username/series/:seriesId" element={<SeriesPage />} />
           <Route path="/:username" element={<CreatorPage />} />
         </Routes>
       </main>

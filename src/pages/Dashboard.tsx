@@ -93,19 +93,41 @@ export default function Dashboard() {
   const generateUploadUrl = useMutation(api.creators.generateUploadUrl);
 
   // Slate mutations
+  const createSeriesMutation = useMutation(api.slates.createSeries);
   const createSlateMutation = useMutation(api.slates.createSlate);
   const deleteSlateMutation = useMutation(api.slates.deleteSlate);
+  const slateSeries = useQuery(api.slates.getSeriesByCreator, {
+    creatorId: convexCreator?._id as Id<"creators"> | undefined
+  });
   const slates = useQuery(api.slates.getSlatesByCreator, {
     creatorId: convexCreator?._id as Id<"creators"> | undefined
   });
 
+  const createSeries = async (args: {
+    creatorId: Id<"creators">;
+    title: string;
+    description?: string;
+    coverImage?: string;
+  }) => {
+    return await createSeriesMutation({
+      ...args,
+      tokenIdentifier: user?.uid,
+    });
+  };
+
   const createSlate = async (args: {
     creatorId: Id<"creators">;
+    title?: string;
+    description?: string;
     type: "text" | "image" | "video" | "audio";
     content?: string;
     mediaUrl?: string;
     playbackId?: string;
+    thumbnailImage?: string;
     visibility: "public" | "followers" | "supporters" | "members";
+    seriesId?: Id<"slateSeries">;
+    entryType?: "episode" | "chapter";
+    sequence?: number;
   }) => {
     return await createSlateMutation({
       ...args,
@@ -1227,6 +1249,8 @@ export default function Dashboard() {
             {activeTab === "slate" && (
               <SlateTab
                 convexCreator={convexCreator}
+                slateSeries={slateSeries || []}
+                createSeries={createSeries}
                 createSlate={createSlate}
                 deleteSlate={deleteSlate}
                 slates={slates || []}

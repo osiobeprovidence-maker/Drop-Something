@@ -35,6 +35,9 @@ export default function CreatorPage() {
   const slates = useQuery(api.slates.getPublicSlatesByCreator, {
     creatorId: convexCreator?._id as Id<"creators"> | undefined
   });
+  const slateSeries = useQuery(api.slates.getPublicSeriesWithEntriesByCreator, {
+    creatorId: convexCreator?._id as Id<"creators"> | undefined
+  });
 
   // Get wishlist for this creator
   const wishlists = useQuery(api.wishlist.getWishlistsByCreator, {
@@ -392,7 +395,7 @@ export default function CreatorPage() {
 
   const showHome = true;
   const showAbout = true;
-  const showSlate = slates && slates.length > 0;
+  const showSlate = Boolean((slates && slates.length > 0) || (slateSeries && slateSeries.length > 0));
   const showWishlist = wishlists && wishlists.length > 0;
   const showMembership = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "support") && displayCreator.memberships.length > 0;
   const showGoals = (displayCreator?.pageStyle === "hybrid" || displayCreator?.pageStyle === "goal") && displayCreator.goals.length > 0;
@@ -406,6 +409,77 @@ export default function CreatorPage() {
     { id: "shop", label: "Shop", icon: ShoppingBag, show: showShop },
     { id: "goals", label: "Goals", icon: Target, show: showGoals },
   ].filter(tab => tab.show);
+
+  const renderSlateBody = (slate: any) => {
+    if (slate.type === "text" && slate.content) {
+      return (
+        <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-black/80">
+          {slate.content}
+        </p>
+      );
+    }
+
+    if (slate.type === "image" && slate.mediaUrl) {
+      return (
+        <div className="space-y-3">
+          <img
+            src={slate.mediaUrl}
+            alt="Slate image"
+            className="max-h-96 w-full rounded-2xl object-cover"
+          />
+          {slate.content ? (
+            <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-black/80">
+              {slate.content}
+            </p>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (slate.type === "video" && (slate.playbackId || slate.mediaUrl)) {
+      return (
+        <div className="space-y-3">
+          <div className="relative overflow-hidden rounded-2xl bg-black">
+            <video controls className="w-full max-h-96 object-cover">
+              <source
+                src={slate.playbackId ? `https://stream.mux.com/${slate.playbackId}.m3u8` : slate.mediaUrl}
+                type={slate.playbackId ? "application/x-mpegURL" : "video/mp4"}
+              />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          {slate.content ? (
+            <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-black/80">
+              {slate.content}
+            </p>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (slate.type === "audio" && (slate.playbackId || slate.mediaUrl)) {
+      return (
+        <div className="space-y-3">
+          {slate.thumbnailImage ? (
+            <img src={slate.thumbnailImage} alt="" className="h-56 w-full rounded-2xl object-cover" />
+          ) : null}
+          <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
+            <audio controls className="w-full">
+              <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />
+              Your browser does not support the audio tag.
+            </audio>
+          </div>
+          {slate.content ? (
+            <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-black/80">
+              {slate.content}
+            </p>
+          ) : null}
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-20">
@@ -722,6 +796,102 @@ export default function CreatorPage() {
               >
                 <section>
                   <div className="space-y-4">
+                    {slateSeries && slateSeries.length > 0 && (
+                      <div className="space-y-4">
+                        {slateSeries.map((series) => (
+                          <div key={series._id} className="overflow-hidden rounded-[2rem] border border-gray-200 bg-white">
+                            <div className="grid gap-0 md:grid-cols-[280px_minmax(0,1fr)]">
+                              <div className="h-52 bg-black/5">
+                                {series.coverImage ? (
+                                  <img src={series.coverImage} alt={series.title} className="h-full w-full object-cover" />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center text-sm font-bold uppercase tracking-[0.2em] text-black/30">
+                                    Series
+                                  </div>
+                                )}
+                              </div>
+                              <div className="p-6">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="rounded-full bg-black text-[10px] font-bold uppercase tracking-[0.2em] text-white px-3 py-1">
+                                    Series
+                                  </span>
+                                  <span className="rounded-full bg-black/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-black/50">
+                                    {series.entries.length} entries
+                                  </span>
+                                </div>
+                                <h3 className="mt-4 text-2xl font-black text-black">{series.title}</h3>
+                                {series.description ? (
+                                  <p className="mt-2 text-sm leading-relaxed text-black/60">{series.description}</p>
+                                ) : null}
+                                <div className="mt-5">
+                                  <Link
+                                    to={`/${displayCreator.username}/series/${series._id}`}
+                                    className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-bold text-white"
+                                  >
+                                    Open Series
+                                    <ChevronRight size={16} />
+                                  </Link>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-black/5 p-4 sm:p-6">
+                              <div className="space-y-4">
+                                {series.entries.map((entry: any) => {
+                                  const isLocked = entry.visibility !== "public";
+                                  const lockMessage = entry.visibility === "followers"
+                                    ? "Follow to unlock this content"
+                                    : entry.visibility === "supporters"
+                                    ? "Support to unlock this content"
+                                    : "Become a member to unlock this content";
+
+                                  return (
+                                    <div key={entry._id} className="rounded-2xl border border-black/5 bg-[#FAFAFA] p-5">
+                                      <div className="mb-4 flex flex-wrap items-center gap-2">
+                                        <span className="rounded-full bg-black/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-black/60">
+                                          {entry.entryType} {entry.sequence}
+                                        </span>
+                                        <span className={cn(
+                                          "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider",
+                                          entry.type === "text" ? "bg-blue-50 text-blue-600" :
+                                          entry.type === "image" ? "bg-purple-50 text-purple-600" :
+                                          entry.type === "video" ? "bg-pink-50 text-pink-600" :
+                                          "bg-emerald-50 text-emerald-600"
+                                        )}>
+                                          {entry.type}
+                                        </span>
+                                      </div>
+
+                                      {entry.title ? (
+                                        <div className="mb-4">
+                                          <h4 className="text-lg font-bold text-black">{entry.title}</h4>
+                                          {entry.description ? (
+                                            <p className="mt-1 text-sm text-black/50">{entry.description}</p>
+                                          ) : null}
+                                        </div>
+                                      ) : null}
+
+                                      {isLocked ? (
+                                        <div className="flex flex-col items-center justify-center py-10 text-center">
+                                          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-black/5 text-black/40">
+                                            <Lock size={28} />
+                                          </div>
+                                          <p className="text-sm font-bold text-black">{lockMessage}</p>
+                                          <p className="mt-1 text-xs text-black/40">Support or join to unlock this content</p>
+                                        </div>
+                                      ) : (
+                                        renderSlateBody(entry)
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {slates && slates.map((slate) => {
                       // Check if content is locked for this viewer
                       const isLocked = slate.visibility !== "public";
@@ -770,66 +940,7 @@ export default function CreatorPage() {
                               <p className="text-xs text-black/40 mt-1">Support or join to unlock this content</p>
                             </div>
                           ) : (
-                            <>
-                              {slate.type === "text" && slate.content && (
-                                <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
-                                  {slate.content}
-                                </p>
-                              )}
-
-                              {slate.type === "image" && slate.mediaUrl && (
-                                <div className="space-y-3">
-                                  <img
-                                    src={slate.mediaUrl}
-                                    alt="Slate image"
-                                    className="w-full rounded-2xl object-cover max-h-96"
-                                  />
-                                  {slate.content && (
-                                    <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
-                                      {slate.content}
-                                    </p>
-                                  )}
-                                </div>
-                              )}
-
-                              {slate.type === "video" && (slate.playbackId || slate.mediaUrl) && (
-                                <div className="space-y-3">
-                                  <div className="relative rounded-2xl overflow-hidden bg-black">
-                                    <video
-                                      controls
-                                      className="w-full max-h-96 object-cover"
-                                    >
-                                      <source
-                                        src={slate.playbackId ? `https://stream.mux.com/${slate.playbackId}.m3u8` : slate.mediaUrl}
-                                        type={slate.playbackId ? "application/x-mpegURL" : "video/mp4"}
-                                      />
-                                      Your browser does not support the video tag.
-                                    </video>
-                                  </div>
-                                  {slate.content && (
-                                    <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
-                                      {slate.content}
-                                    </p>
-                                  )}
-                                </div>
-                              )}
-
-                              {slate.type === "audio" && (slate.playbackId || slate.mediaUrl) && (
-                                <div className="space-y-3">
-                                  <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
-                                    <audio controls className="w-full">
-                                      <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />
-                                      Your browser does not support the audio tag.
-                                    </audio>
-                                  </div>
-                                  {slate.content && (
-                                    <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
-                                      {slate.content}
-                                    </p>
-                                  )}
-                                </div>
-                              )}
-                            </>
+                            renderSlateBody(slate)
                           )}
                         </div>
                       );

@@ -10,22 +10,49 @@ import { useScrollLock } from "@/src/hooks/useScrollLock";
 
 interface Slate {
   _id: Id<"slates">;
+  title?: string;
+  description?: string;
   type: "text" | "image" | "video" | "audio";
   content?: string;
   mediaUrl?: string;
   playbackId?: string;
+  thumbnailImage?: string;
   visibility: "public" | "followers" | "supporters" | "members";
+  seriesId?: Id<"slateSeries">;
+  entryType?: "episode" | "chapter";
+  sequence?: number;
+}
+
+interface SlateSeries {
+  _id: Id<"slateSeries">;
+  title: string;
+  description?: string;
+  coverImage?: string;
+  entryCount?: number;
 }
 
 interface SlateTabProps {
   convexCreator: any;
+  slateSeries: SlateSeries[];
+  createSeries: (args: {
+    creatorId: Id<"creators">;
+    title: string;
+    description?: string;
+    coverImage?: string;
+  }) => Promise<Id<"slateSeries">>;
   createSlate: (args: {
     creatorId: Id<"creators">;
+    title?: string;
+    description?: string;
     type: "text" | "image" | "video" | "audio";
     content?: string;
     mediaUrl?: string;
     playbackId?: string;
+    thumbnailImage?: string;
     visibility: "public" | "followers" | "supporters" | "members";
+    seriesId?: Id<"slateSeries">;
+    entryType?: "episode" | "chapter";
+    sequence?: number;
   }) => Promise<Id<"slates">>;
   deleteSlate: (args: { slateId: Id<"slates"> }) => Promise<boolean>;
   slates: Slate[];
@@ -37,6 +64,8 @@ interface SlateTabProps {
 
 export default function SlateTab({
   convexCreator,
+  slateSeries,
+  createSeries,
   createSlate,
   deleteSlate,
   slates,
@@ -53,7 +82,20 @@ export default function SlateTab({
   const [videoPreview, setVideoPreview] = useState<string>("");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioPreview, setAudioPreview] = useState<string>("");
+  const [audioCoverFile, setAudioCoverFile] = useState<File | null>(null);
+  const [audioCoverPreview, setAudioCoverPreview] = useState<string>("");
   const [visibility, setVisibility] = useState<"public" | "followers" | "supporters" | "members">("public");
+  const [publishMode, setPublishMode] = useState<"standalone" | "series">("standalone");
+  const [selectedSeriesId, setSelectedSeriesId] = useState<string>("");
+  const [entryType, setEntryType] = useState<"episode" | "chapter">("episode");
+  const [entryTitle, setEntryTitle] = useState("");
+  const [entryDescription, setEntryDescription] = useState("");
+  const [entrySequence, setEntrySequence] = useState("1");
+  const [seriesTitle, setSeriesTitle] = useState("");
+  const [seriesDescription, setSeriesDescription] = useState("");
+  const [seriesCoverPreview, setSeriesCoverPreview] = useState("");
+  const [seriesCoverStorageId, setSeriesCoverStorageId] = useState("");
+  const [isCreatingSeries, setIsCreatingSeries] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -94,6 +136,12 @@ export default function SlateTab({
     return storageId as string;
   };
 
+  const readPreview = (file: File, callback: (value: string) => void) => {
+    const reader = new FileReader();
+    reader.onloadend = () => callback(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -104,11 +152,7 @@ export default function SlateTab({
     }
 
     setImageFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    readPreview(file, setImagePreview);
   };
 
   const handleVideoSelect = (e: ChangeEvent<HTMLInputElement>) => {
@@ -122,11 +166,7 @@ export default function SlateTab({
 
     // All users can upload videos, no Pro check needed
     setVideoFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setVideoPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    readPreview(file, setVideoPreview);
   };
 
   const handleAudioSelect = (e: ChangeEvent<HTMLInputElement>) => {
@@ -151,11 +191,73 @@ export default function SlateTab({
     }
 
     setAudioFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setAudioPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    readPreview(file, setAudioPreview);
+  };
+
+  const handleAudioCoverSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Cover image size must be less than 10MB.");
+      return;
+    }
+
+    setAudioCoverFile(file);
+    readPreview(file, setAudioCoverPreview);
+  };
+
+  const handleSeriesCoverUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Series cover image size must be less than 10MB.");
+      return;
+    }
+
+    try {
+      setIsCreatingSeries(true);
+      const storageId = await uploadFileToStorage(file);
+      setSeriesCoverStorageId(storageId);
+      readPreview(file, setSeriesCoverPreview);
+    } catch (error) {
+      console.error("Series cover upload failed:", error);
+      setErrorMessage("Failed to upload the series cover image.");
+    } finally {
+      setIsCreatingSeries(false);
+    }
+  };
+
+  const handleCreateSeries = async () => {
+    if (!convexCreator) return;
+    if (!seriesTitle.trim()) {
+      alert("Give your series a title.");
+      return;
+    }
+
+    try {
+      setIsCreatingSeries(true);
+      const createdSeriesId = await createSeries({
+        creatorId: convexCreator._id,
+        title: seriesTitle.trim(),
+        description: seriesDescription.trim() || undefined,
+        coverImage: seriesCoverStorageId || undefined,
+      });
+
+      setPublishMode("series");
+      setSelectedSeriesId(createdSeriesId);
+      setSeriesTitle("");
+      setSeriesDescription("");
+      setSeriesCoverPreview("");
+      setSeriesCoverStorageId("");
+      setErrorMessage(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create series.";
+      setErrorMessage(message);
+    } finally {
+      setIsCreatingSeries(false);
+    }
   };
 
   const handleVisibilityChange = (value: "public" | "followers" | "supporters" | "members") => {
@@ -172,6 +274,9 @@ export default function SlateTab({
   const handleSubmit = async () => {
     if (!convexCreator) return;
     const trimmedTextContent = textContent.trim();
+    const trimmedEntryTitle = entryTitle.trim();
+    const trimmedEntryDescription = entryDescription.trim();
+    const parsedSequence = parseInt(entrySequence, 10);
 
     // Validation
     if (activeType === "text" && !trimmedTextContent) {
@@ -199,11 +304,29 @@ export default function SlateTab({
       return;
     }
 
+    if (publishMode === "series") {
+      if (!selectedSeriesId) {
+        alert("Choose a series for this entry.");
+        return;
+      }
+
+      if (!trimmedEntryTitle) {
+        alert("Series entries need a title.");
+        return;
+      }
+
+      if (!Number.isFinite(parsedSequence) || parsedSequence < 1) {
+        alert("Enter a valid episode or chapter number.");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
       let mediaUrl: string | undefined;
       let playbackId: string | undefined;
+      let thumbnailImage: string | undefined;
 
       if (activeType === "image" && imageFile) {
         setIsUploading(true);
@@ -270,6 +393,9 @@ export default function SlateTab({
         try {
           mediaUrl = await uploadFileToStorage(audioFile);
           playbackId = mediaUrl;
+          if (audioCoverFile) {
+            thumbnailImage = await uploadFileToStorage(audioCoverFile);
+          }
         } finally {
           setIsUploading(false);
         }
@@ -277,6 +403,8 @@ export default function SlateTab({
 
       await createSlate({
         creatorId: convexCreator._id,
+        title: publishMode === "series" ? trimmedEntryTitle : undefined,
+        description: publishMode === "series" ? trimmedEntryDescription || undefined : undefined,
         type: activeType,
         content:
           activeType === "text" || activeType === "image" || activeType === "video" || activeType === "audio"
@@ -284,7 +412,11 @@ export default function SlateTab({
             : undefined,
         mediaUrl,
         playbackId,
+        thumbnailImage,
         visibility,
+        seriesId: publishMode === "series" ? (selectedSeriesId as Id<"slateSeries">) : undefined,
+        entryType: publishMode === "series" ? entryType : undefined,
+        sequence: publishMode === "series" ? parsedSequence : undefined,
       });
 
       // ✅ Success - Reset form and error
@@ -297,7 +429,15 @@ export default function SlateTab({
       setVideoPreview("");
       setAudioFile(null);
       setAudioPreview("");
+      setAudioCoverFile(null);
+      setAudioCoverPreview("");
       setVisibility("public");
+      setPublishMode("standalone");
+      setSelectedSeriesId("");
+      setEntryType("episode");
+      setEntryTitle("");
+      setEntryDescription("");
+      setEntrySequence("1");
       if (imageInputRef.current) imageInputRef.current.value = "";
       if (videoInputRef.current) videoInputRef.current.value = "";
       if (audioInputRef.current) audioInputRef.current.value = "";
@@ -379,6 +519,94 @@ export default function SlateTab({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-black">Series</h3>
+            <p className="mt-1 text-sm text-black/40">Create organized content journeys with ordered episodes or chapters.</p>
+          </div>
+          <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-bold text-black/50">
+            {slateSeries.length} series
+          </span>
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-4">
+            <input
+              value={seriesTitle}
+              onChange={(e) => setSeriesTitle(e.target.value)}
+              placeholder="Series title"
+              className="h-12 w-full rounded-2xl border border-black/10 bg-black/5 px-4 text-sm font-medium text-black placeholder:text-black/30 focus:border-black/20 focus:outline-none"
+            />
+            <textarea
+              value={seriesDescription}
+              onChange={(e) => setSeriesDescription(e.target.value)}
+              placeholder="What is this series about?"
+              rows={3}
+              className="w-full rounded-2xl border border-black/10 bg-black/5 p-4 text-sm font-medium text-black placeholder:text-black/30 focus:border-black/20 focus:outline-none"
+            />
+            <div className="rounded-2xl border border-dashed border-black/15 bg-black/[0.03] p-4">
+              <label className="flex cursor-pointer items-center justify-center rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-bold text-black">
+                Upload cover image
+                <input type="file" accept="image/*" className="hidden" onChange={handleSeriesCoverUpload} />
+              </label>
+              {seriesCoverPreview && (
+                <img src={seriesCoverPreview} alt="" className="mt-3 h-40 w-full rounded-2xl object-cover" />
+              )}
+            </div>
+            <button
+              onClick={handleCreateSeries}
+              disabled={isCreatingSeries}
+              className="flex h-12 w-full items-center justify-center rounded-full bg-black text-sm font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+            >
+              {isCreatingSeries ? "Creating..." : "Create Series"}
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {slateSeries.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-black/10 p-6 text-sm text-black/40">
+                No series yet. Create one, then publish episodes or chapters into it.
+              </div>
+            ) : (
+              slateSeries.map((series) => (
+                <button
+                  key={series._id}
+                  onClick={() => {
+                    setPublishMode("series");
+                    setSelectedSeriesId(series._id);
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-all",
+                    selectedSeriesId === series._id && publishMode === "series"
+                      ? "border-black bg-black/[0.03]"
+                      : "border-black/10 bg-white hover:border-black/20"
+                  )}
+                >
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-black/5">
+                    {series.coverImage ? (
+                      <img src={series.coverImage} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[10px] font-bold uppercase text-black/30">
+                        Series
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-black">{series.title}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-black/40">{series.description || "No description yet"}</p>
+                  </div>
+                  <span className="rounded-full bg-black/5 px-2 py-1 text-[10px] font-bold text-black/50">
+                    {series.entryCount || 0}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
         <div className="flex gap-2 mb-6 flex-wrap">
           <button
@@ -429,6 +657,95 @@ export default function SlateTab({
             <Music size={16} />
             Audio
           </button>
+        </div>
+
+        <div className="mb-6 space-y-4 rounded-2xl border border-black/5 bg-black/[0.02] p-4">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setPublishMode("standalone")}
+              className={cn(
+                "rounded-full px-4 py-2 text-sm font-bold transition-all",
+                publishMode === "standalone" ? "bg-black text-white" : "bg-white text-black/60 hover:bg-black/5"
+              )}
+            >
+              Standalone Post
+            </button>
+            <button
+              onClick={() => setPublishMode("series")}
+              className={cn(
+                "rounded-full px-4 py-2 text-sm font-bold transition-all",
+                publishMode === "series" ? "bg-black text-white" : "bg-white text-black/60 hover:bg-black/5"
+              )}
+            >
+              Add To Series
+            </button>
+          </div>
+
+          {publishMode === "series" && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-black/40">Series</label>
+                <select
+                  value={selectedSeriesId}
+                  onChange={(e) => setSelectedSeriesId(e.target.value)}
+                  className="h-12 w-full rounded-2xl border border-black/10 bg-white px-4 text-sm font-medium text-black focus:border-black/20 focus:outline-none"
+                >
+                  <option value="">Choose a series</option>
+                  {slateSeries.map((series) => (
+                    <option key={series._id} value={series._id}>{series.title}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-black/40">Entry Type</label>
+                <div className="flex gap-2">
+                  {(["episode", "chapter"] as const).map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => setEntryType(option)}
+                      className={cn(
+                        "flex-1 rounded-full px-4 py-2 text-sm font-bold transition-all",
+                        entryType === option ? "bg-black text-white" : "bg-white text-black/60 hover:bg-black/5"
+                      )}
+                    >
+                      {option === "episode" ? "Episode" : "Chapter"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-black/40">Order</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={entrySequence}
+                  onChange={(e) => setEntrySequence(e.target.value)}
+                  className="h-12 w-full rounded-2xl border border-black/10 bg-white px-4 text-sm font-medium text-black focus:border-black/20 focus:outline-none"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-black/40">
+                  {entryType === "episode" ? "Episode Title" : "Chapter Title"}
+                </label>
+                <input
+                  value={entryTitle}
+                  onChange={(e) => setEntryTitle(e.target.value)}
+                  placeholder={entryType === "episode" ? "Episode 1: The Beginning" : "Chapter 1: First Steps"}
+                  className="h-12 w-full rounded-2xl border border-black/10 bg-white px-4 text-sm font-medium text-black focus:border-black/20 focus:outline-none"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-black/40">Entry Description</label>
+                <textarea
+                  value={entryDescription}
+                  onChange={(e) => setEntryDescription(e.target.value)}
+                  placeholder="Optional summary for this episode or chapter"
+                  rows={3}
+                  className="w-full rounded-2xl border border-black/10 bg-white p-4 text-sm font-medium text-black focus:border-black/20 focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Content Input */}
@@ -599,6 +916,21 @@ export default function SlateTab({
                 </button>
               )}
 
+              <div className="mt-4 rounded-2xl border border-black/10 bg-black/[0.03] p-4">
+                <label className="text-xs font-bold uppercase tracking-wider text-black/40">
+                  Audio Cover Art
+                </label>
+                <label className="mt-3 flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-black/20 bg-white px-4 py-3 text-sm font-bold text-black/60 hover:border-black/40 hover:text-black">
+                  Upload optional album cover
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAudioCoverSelect} />
+                </label>
+                {audioCoverPreview && (
+                  <div className="mt-3 overflow-hidden rounded-2xl">
+                    <img src={audioCoverPreview} alt="" className="h-40 w-full object-cover" />
+                  </div>
+                )}
+              </div>
+
               <div className="mt-4">
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-wider text-black/40">
@@ -670,7 +1002,9 @@ export default function SlateTab({
             ) : (
               <>
                 <Plus size={18} />
-                Post to Slate
+                {publishMode === "series"
+                  ? `Publish ${entryType === "episode" ? "Episode" : "Chapter"}`
+                  : "Post to Slate"}
               </>
             )}
           </button>
@@ -679,7 +1013,7 @@ export default function SlateTab({
 
       {/* Slates Feed */}
       <div className="space-y-4">
-        <h3 className="text-sm font-bold text-black/40 uppercase tracking-wider">Your Posts</h3>
+        <h3 className="text-sm font-bold text-black/40 uppercase tracking-wider">Your Slate Library</h3>
         {slates.length === 0 ? (
           <div className="rounded-3xl border-2 border-dashed border-black/10 p-12 text-center">
             <FileText size={40} className="text-black/20 mx-auto" />
@@ -712,6 +1046,11 @@ export default function SlateTab({
                   )}>
                     {slate.visibility}
                   </span>
+                  {slate.entryType && slate.sequence ? (
+                    <span className="rounded-full bg-black/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-black/60">
+                      {slate.entryType} {slate.sequence}
+                    </span>
+                  ) : null}
                 </div>
                 <button
                   onClick={() => openDeleteModal(slate._id)}
@@ -720,6 +1059,15 @@ export default function SlateTab({
                   <Trash2 size={16} />
                 </button>
               </div>
+
+              {slate.title && (
+                <div className="mb-4">
+                  <h4 className="text-lg font-bold text-black">{slate.title}</h4>
+                  {slate.description ? (
+                    <p className="mt-1 text-sm text-black/50">{slate.description}</p>
+                  ) : null}
+                </div>
+              )}
 
               {slate.type === "text" && (
                 <p className="text-sm font-medium text-black whitespace-pre-wrap">{slate.content}</p>
@@ -761,6 +1109,13 @@ export default function SlateTab({
 
               {slate.type === "audio" && (slate.playbackId || slate.mediaUrl) && (
                 <div className="space-y-3">
+                  {slate.thumbnailImage ? (
+                    <img
+                      src={slate.thumbnailImage}
+                      alt=""
+                      className="h-56 w-full rounded-2xl object-cover"
+                    />
+                  ) : null}
                   <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
                     <audio controls className="w-full">
                       <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />

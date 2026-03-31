@@ -53,6 +53,146 @@ const userHasProSlateCaptions = async (ctx: any, userId: Id<"users">) => {
   );
 };
 
+const resolveStorageUrl = async (ctx: any, value?: string | null) => {
+  if (!value || value.startsWith("http") || value.startsWith("data:")) {
+    return value || undefined;
+  }
+
+  try {
+    const url = await ctx.storage.getUrl(value);
+    return url || value;
+  } catch {
+    return value;
+  }
+};
+
+const resolveSlateAssets = async (ctx: any, slate: any) => {
+  const mediaUrl = await resolveStorageUrl(ctx, slate.mediaUrl);
+  const thumbnailImage = await resolveStorageUrl(ctx, slate.thumbnailImage);
+  return { ...slate, mediaUrl, thumbnailImage };
+};
+
+export const createSeries = mutation({
+  args: {
+    creatorId: v.id("creators"),
+    tokenIdentifier: v.optional(v.string()),
+    title: v.string(),
+    description: v.optional(v.string()),
+    coverImage: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await resolveSlateActor(ctx, args.tokenIdentifier);
+    const creator = await ctx.db.get(args.creatorId);
+
+    if (!creator || creator.userId !== user._id) {
+      throw new Error("You can only create series for your own creator profile.");
+    }
+
+    return await ctx.db.insert("slateSeries", {
+      creatorId: args.creatorId,
+      title: args.title.trim(),
+      description: args.description?.trim() || undefined,
+      coverImage: args.coverImage,
+    });
+  },
+});
+
+export const getSeriesByCreator = query({
+  args: { creatorId: v.id("creators") },
+  handler: async (ctx, args) => {
+    const series = await ctx.db
+      .query("slateSeries")
+      .withIndex("by_creatorId", (q) => q.eq("creatorId", args.creatorId))
+      .collect();
+
+    const withCounts = await Promise.all(
+      series.map(async (item) => {
+        const coverImage = await resolveStorageUrl(ctx, item.coverImage);
+        const entries = await ctx.db
+          .query("slates")
+          .withIndex("by_seriesId", (q) => q.eq("seriesId", item._id))
+          .collect();
+
+        return {
+          ...item,
+          coverImage,
+          entryCount: entries.length,
+        };
+      }),
+    );
+
+    return withCounts.sort((a, b) => b._creationTime - a._creationTime);
+  },
+});
+
+export const getPublicSeriesWithEntriesByCreator = query({
+  args: { creatorId: v.id("creators") },
+  handler: async (ctx, args) => {
+    const series = await ctx.db
+      .query("slateSeries")
+      .withIndex("by_creatorId", (q) => q.eq("creatorId", args.creatorId))
+      .collect();
+
+    const structuredSeries = await Promise.all(
+      series.map(async (item) => {
+        const entries = await ctx.db
+          .query("slates")
+          .withIndex("by_seriesId", (q) => q.eq("seriesId", item._id))
+          .collect();
+
+        const orderedEntries = await Promise.all(
+          entries
+            .sort((a, b) => {
+              const sequenceDelta = (a.sequence ?? Number.MAX_SAFE_INTEGER) - (b.sequence ?? Number.MAX_SAFE_INTEGER);
+              return sequenceDelta !== 0 ? sequenceDelta : a._creationTime - b._creationTime;
+            })
+            .map((entry) => resolveSlateAssets(ctx, entry)),
+        );
+
+        return {
+          ...item,
+          coverImage: await resolveStorageUrl(ctx, item.coverImage),
+          entries: orderedEntries,
+        };
+      }),
+    );
+
+    return structuredSeries
+      .filter((item) => item.entries.length > 0)
+      .sort((a, b) => b._creationTime - a._creationTime);
+  },
+});
+
+export const getPublicSeriesById = query({
+  args: { seriesId: v.id("slateSeries") },
+  handler: async (ctx, args) => {
+    const series = await ctx.db.get(args.seriesId);
+    if (!series) {
+      return null;
+    }
+
+    const entries = await ctx.db
+      .query("slates")
+      .withIndex("by_seriesId", (q) => q.eq("seriesId", args.seriesId))
+      .collect();
+
+    const orderedEntries = await Promise.all(
+      entries
+        .sort((a, b) => {
+          const sequenceDelta = (a.sequence ?? Number.MAX_SAFE_INTEGER) - (b.sequence ?? Number.MAX_SAFE_INTEGER);
+          return sequenceDelta !== 0 ? sequenceDelta : a._creationTime - b._creationTime;
+        })
+        .map((entry) => resolveSlateAssets(ctx, entry)),
+    );
+
+    return {
+      ...series,
+      coverImage: await resolveStorageUrl(ctx, series.coverImage),
+      entries: orderedEntries,
+    };
+  },
+});
+
 // Get all public slates for explore feed (paginated)
 export const getPublicSlates = query({
   args: {
@@ -84,15 +224,7 @@ export const getPublicSlates = query({
     // Resolve mediaUrl and add creator info
     const resolvedSlates = await Promise.all(
       paginatedItems.map(async (slate) => {
-        let mediaUrl = slate.mediaUrl;
-        if (mediaUrl && !mediaUrl.startsWith("http") && !mediaUrl.startsWith("data:")) {
-          try {
-            const url = await ctx.storage.getUrl(mediaUrl);
-            if (url) mediaUrl = url;
-          } catch (e) {
-            // Not a valid storageId
-          }
-        }
+        const resolvedSlate = await resolveSlateAssets(ctx, slate);
 
         const creator = await ctx.db.get(slate.creatorId);
         let avatar = creator?.avatar;
@@ -120,8 +252,7 @@ export const getPublicSlates = query({
         const { creatorName, creatorUsername } = resolveCreatorIdentity(creator);
 
         return {
-          ...slate,
-          mediaUrl,
+          ...resolvedSlate,
           creatorName,
           creatorUsername,
           creatorAvatar: avatar,
@@ -158,15 +289,7 @@ export const getAllPublicSlates = query({
     // Resolve mediaUrl and add creator info
     const resolvedSlates = await Promise.all(
       allSlates.map(async (slate) => {
-        let mediaUrl = slate.mediaUrl;
-        if (mediaUrl && !mediaUrl.startsWith("http") && !mediaUrl.startsWith("data:")) {
-          try {
-            const url = await ctx.storage.getUrl(mediaUrl);
-            if (url) mediaUrl = url;
-          } catch (e) {
-            // Not a valid storageId
-          }
-        }
+        const resolvedSlate = await resolveSlateAssets(ctx, slate);
 
         const creator = await ctx.db.get(slate.creatorId);
         let avatar = creator?.avatar;
@@ -198,8 +321,7 @@ export const getAllPublicSlates = query({
           : false;
 
         return {
-          ...slate,
-          mediaUrl,
+          ...resolvedSlate,
           creatorName,
           creatorUsername,
           creatorAvatar: avatar,
@@ -227,16 +349,7 @@ export const getSlatesByCreator = query({
     // Resolve mediaUrl if it's a storageId
     const resolvedSlates = await Promise.all(
       slates.map(async (slate) => {
-        let mediaUrl = slate.mediaUrl;
-        if (mediaUrl && !mediaUrl.startsWith("http") && !mediaUrl.startsWith("data:")) {
-          try {
-            const url = await ctx.storage.getUrl(mediaUrl);
-            if (url) mediaUrl = url;
-          } catch (e) {
-            // Not a valid storageId, keep original
-          }
-        }
-        return { ...slate, mediaUrl };
+        return await resolveSlateAssets(ctx, slate);
       })
     );
 
@@ -254,20 +367,10 @@ export const getPublicSlatesByCreator = query({
       .order("desc")
       .collect();
 
-    // Resolve mediaUrl if it's a storageId
     const resolvedSlates = await Promise.all(
-      slates.map(async (slate) => {
-        let mediaUrl = slate.mediaUrl;
-        if (mediaUrl && !mediaUrl.startsWith("http") && !mediaUrl.startsWith("data:")) {
-          try {
-            const url = await ctx.storage.getUrl(mediaUrl);
-            if (url) mediaUrl = url;
-          } catch (e) {
-            // Not a valid storageId, keep original
-          }
-        }
-        return { ...slate, mediaUrl };
-      })
+      slates
+        .filter((slate) => !slate.seriesId)
+        .map(async (slate) => resolveSlateAssets(ctx, slate))
     );
 
     return resolvedSlates;
@@ -379,11 +482,17 @@ export const createSlate = mutation({
   args: {
     creatorId: v.id("creators"),
     tokenIdentifier: v.optional(v.string()),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
     type: v.union(v.literal("text"), v.literal("image"), v.literal("video"), v.literal("audio")),
     content: v.optional(v.string()),
     mediaUrl: v.optional(v.string()),
     playbackId: v.optional(v.string()),
+    thumbnailImage: v.optional(v.string()),
     visibility: v.union(v.literal("public"), v.literal("followers"), v.literal("supporters"), v.literal("members")),
+    seriesId: v.optional(v.id("slateSeries")),
+    entryType: v.optional(v.union(v.literal("episode"), v.literal("chapter"))),
+    sequence: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     try {
@@ -409,6 +518,25 @@ export const createSlate = mutation({
       if (args.type === "text" && !args.content) {
         console.error("❌ [createSlate] Text slate without content");
         throw new Error("Text slates require content");
+      }
+
+      if (args.seriesId) {
+        const series = await ctx.db.get(args.seriesId);
+        if (!series || series.creatorId !== args.creatorId) {
+          throw new Error("Selected series was not found for this creator.");
+        }
+
+        if (!args.title?.trim()) {
+          throw new Error("Series entries need a title.");
+        }
+
+        if (!args.entryType) {
+          throw new Error("Series entries must be marked as an episode or chapter.");
+        }
+
+        if (!args.sequence || args.sequence < 1) {
+          throw new Error("Series entries need a valid order number.");
+        }
       }
 
       if (args.type === "image" && !args.mediaUrl) {

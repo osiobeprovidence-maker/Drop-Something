@@ -165,14 +165,28 @@ export default defineSchema({
   }).index("by_userId", ["userId"]),
 
   // Slate content posts
+  slateSeries: defineTable({
+    creatorId: v.id("creators"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    coverImage: v.optional(v.string()),
+  }).index("by_creatorId", ["creatorId"]),
+
   slates: defineTable({
     creatorId: v.id("creators"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
     type: v.union(v.literal("text"), v.literal("image"), v.literal("video"), v.literal("audio")),
     content: v.optional(v.string()), // text content
     mediaUrl: v.optional(v.string()), // for images/audio (storageId or URL)
     playbackId: v.optional(v.string()), // for Mux video/audio playback
+    thumbnailImage: v.optional(v.string()),
     visibility: v.union(v.literal("public"), v.literal("followers"), v.literal("supporters"), v.literal("members")),
-  }).index("by_creatorId", ["creatorId"]),
+    seriesId: v.optional(v.id("slateSeries")),
+    entryType: v.optional(v.union(v.literal("episode"), v.literal("chapter"))),
+    sequence: v.optional(v.number()),
+  }).index("by_creatorId", ["creatorId"])
+    .index("by_seriesId", ["seriesId"]),
 
   // Slate likes
   slateLikes: defineTable({
