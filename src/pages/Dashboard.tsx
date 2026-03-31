@@ -209,7 +209,7 @@ export default function Dashboard() {
   const [isProductUploading, setIsProductUploading] = useState(false);
   const [productFile, setProductFile] = useState<string>("");
   const [productFileLabel, setProductFileLabel] = useState("");
-  const [productType, setProductType] = useState<"digital" | "physical">("digital");
+  const [productType, setProductType] = useState<"digital" | "physical" | "ticket">("digital");
   const [hasExistingDigitalFile, setHasExistingDigitalFile] = useState(false);
   const [isProductFileUploading, setIsProductFileUploading] = useState(false);
 
@@ -596,10 +596,15 @@ export default function Dashboard() {
     title: string;
     description: string;
     price: number;
-    type: "digital" | "physical";
+    type: "digital" | "physical" | "ticket";
     stock?: number;
     image?: string;
     fileUrl?: string;
+    eventDate?: string;
+    eventTime?: string;
+    venue?: string;
+    locationAddress?: string;
+    ticketType?: string;
   }) => {
     if (!convexCreator) return;
     await addProduct({ creatorId: convexCreator._id, ...data });
@@ -609,10 +614,15 @@ export default function Dashboard() {
     title?: string;
     description?: string;
     price?: number;
-    type?: "digital" | "physical";
+    type?: "digital" | "physical" | "ticket";
     stock?: number;
     image?: string;
     fileUrl?: string;
+    eventDate?: string;
+    eventTime?: string;
+    venue?: string;
+    locationAddress?: string;
+    ticketType?: string;
   }) => {
     await updateProduct({ productId: id as Id<"products">, ...data });
   };
@@ -1291,11 +1301,15 @@ export default function Dashboard() {
                         throw new Error("Upload the digital product file before listing it.");
                       }
 
+                      if (data.type === "ticket" && (!data.eventDate || !data.eventTime || !data.venue || !data.locationAddress || !data.ticketType)) {
+                        throw new Error("Tickets need event date, time, venue, address, and ticket type.");
+                      }
+
                       const productData = {
                         ...data,
                         image: productImage || undefined,
                         fileUrl: data.type === "digital" ? productFile || undefined : undefined,
-                        stock: data.type === "physical" ? data.stock : undefined,
+                        stock: data.type === "physical" || data.type === "ticket" ? data.stock : undefined,
                       };
                       if (editingItem) {
                         await handleUpdateProduct(editingItem._id, productData);
@@ -1394,12 +1408,16 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-bold uppercase text-black/40">Product Name</label>
+                      <label className="text-xs font-bold uppercase text-black/40">
+                        {productType === "ticket" ? "Event Name" : "Product Name"}
+                      </label>
                       <input name="title" defaultValue={editingItem?.title} required className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-bold uppercase text-black/40">Price (₦)</label>
+                        <label className="text-xs font-bold uppercase text-black/40">
+                          {productType === "ticket" ? "Price Per Ticket (₦)" : "Price (₦)"}
+                        </label>
                         <input name="price" type="number" defaultValue={editingItem?.price} required className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
                       </div>
                       <div>
@@ -1407,16 +1425,19 @@ export default function Dashboard() {
                         <select
                           name="type"
                           value={productType}
-                          onChange={(e) => setProductType(e.target.value as "digital" | "physical")}
+                          onChange={(e) => setProductType(e.target.value as "digital" | "physical" | "ticket")}
                           className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none"
                         >
                           <option value="digital">Digital</option>
                           <option value="physical">Physical</option>
+                          <option value="ticket">Ticket</option>
                         </select>
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-bold uppercase text-black/40">Description</label>
+                      <label className="text-xs font-bold uppercase text-black/40">
+                        {productType === "ticket" ? "Event Description" : "Description"}
+                      </label>
                       <textarea name="description" defaultValue={editingItem?.description} required rows={2} className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
                     </div>
                     {productType === "digital" ? (
@@ -1447,6 +1468,37 @@ export default function Dashboard() {
                           </p>
                         </div>
                       </div>
+                    ) : productType === "ticket" ? (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs font-bold uppercase text-black/40">Event Date</label>
+                            <input name="eventDate" type="date" defaultValue={editingItem?.eventDate || ""} required className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold uppercase text-black/40">Event Time</label>
+                            <input name="eventTime" type="time" defaultValue={editingItem?.eventTime || ""} required className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs font-bold uppercase text-black/40">Ticket Type</label>
+                            <input name="ticketType" defaultValue={editingItem?.ticketType || ""} required placeholder="General Admission" className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold uppercase text-black/40">Available Quantity</label>
+                            <input name="stock" type="number" defaultValue={editingItem?.stock || 0} required className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" placeholder="100" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold uppercase text-black/40">Venue</label>
+                          <input name="venue" defaultValue={editingItem?.venue || ""} required placeholder="Landmark Event Centre" className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold uppercase text-black/40">Venue Address</label>
+                          <textarea name="locationAddress" defaultValue={editingItem?.locationAddress || ""} required rows={2} placeholder="Full event address" className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
+                        </div>
+                      </>
                     ) : (
                       <div>
                         <label className="text-xs font-bold uppercase text-black/40">Stock</label>

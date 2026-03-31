@@ -17,6 +17,8 @@ interface PaystackPaymentProps {
   subscriptionPlan?: SubscriptionPlan;
   supporterName?: string;
   message?: string;
+  buyerPhone?: string;
+  quantity?: number;
   onSuccess?: (reference: string, details?: { deliveryRequired?: boolean }) => void;
   onError?: (error: string) => void;
   children: (props: { loading: boolean; handlePayment: () => void }) => React.ReactNode;
@@ -35,6 +37,8 @@ interface PendingPaymentPayload {
   subscriptionPlan?: SubscriptionPlan;
   supporterName?: string;
   message?: string;
+  buyerPhone?: string;
+  quantity?: number;
 }
 
 const PENDING_PAYMENT_KEY = "dropsomething.pendingPaystackPayment";
@@ -118,6 +122,8 @@ export function PaystackPayment({
   subscriptionPlan,
   supporterName,
   message,
+  buyerPhone,
+  quantity,
   onSuccess,
   onError,
   children,
@@ -142,6 +148,8 @@ export function PaystackPayment({
     subscriptionPlan,
     supporterName,
     message,
+    buyerPhone,
+    quantity,
   });
 
   const matchesComponent = (pendingPayment: PendingPaymentPayload) =>
@@ -169,6 +177,8 @@ export function PaystackPayment({
         subscriptionPlan: pendingPayment.subscriptionPlan,
         supporterName: pendingPayment.supporterName,
         message: pendingPayment.message,
+        buyerPhone: pendingPayment.buyerPhone,
+        quantity: pendingPayment.quantity,
       });
 
       onSuccess?.(reference, { deliveryRequired: fulfillment.deliveryRequired });

@@ -328,15 +328,26 @@ export const createProduct = mutation({
     title: v.string(),
     description: v.string(),
     price: v.number(),
-    type: v.union(v.literal("digital"), v.literal("physical")),
+    type: v.union(v.literal("digital"), v.literal("physical"), v.literal("ticket")),
     image: v.optional(v.string()),
     fileUrl: v.optional(v.string()),
     stock: v.optional(v.number()),
     deliveryInfo: v.optional(v.string()),
+    eventDate: v.optional(v.string()),
+    eventTime: v.optional(v.string()),
+    venue: v.optional(v.string()),
+    locationAddress: v.optional(v.string()),
+    ticketType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (args.type === "digital" && !args.fileUrl) {
       throw new Error("Digital products require an uploaded file.");
+    }
+
+    if (args.type === "ticket") {
+      if (!args.eventDate || !args.eventTime || !args.venue || !args.locationAddress || !args.ticketType) {
+        throw new Error("Tickets require date, time, venue, address, and ticket type.");
+      }
     }
 
     return await ctx.db.insert("products", args);
@@ -349,11 +360,16 @@ export const updateProduct = mutation({
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     price: v.optional(v.number()),
-    type: v.optional(v.union(v.literal("digital"), v.literal("physical"))),
+    type: v.optional(v.union(v.literal("digital"), v.literal("physical"), v.literal("ticket"))),
     image: v.optional(v.string()),
     fileUrl: v.optional(v.string()),
     stock: v.optional(v.number()),
     deliveryInfo: v.optional(v.string()),
+    eventDate: v.optional(v.string()),
+    eventTime: v.optional(v.string()),
+    venue: v.optional(v.string()),
+    locationAddress: v.optional(v.string()),
+    ticketType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { productId, ...updates } = args;
@@ -368,6 +384,18 @@ export const updateProduct = mutation({
 
     if (nextType === "digital" && !nextFileUrl) {
       throw new Error("Digital products require an uploaded file.");
+    }
+
+    if (nextType === "ticket") {
+      const nextEventDate = updates.eventDate ?? currentProduct.eventDate;
+      const nextEventTime = updates.eventTime ?? currentProduct.eventTime;
+      const nextVenue = updates.venue ?? currentProduct.venue;
+      const nextLocationAddress = updates.locationAddress ?? currentProduct.locationAddress;
+      const nextTicketType = updates.ticketType ?? currentProduct.ticketType;
+
+      if (!nextEventDate || !nextEventTime || !nextVenue || !nextLocationAddress || !nextTicketType) {
+        throw new Error("Tickets require date, time, venue, address, and ticket type.");
+      }
     }
 
     return await ctx.db.patch(productId, updates);

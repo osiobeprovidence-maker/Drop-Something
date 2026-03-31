@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { 
   Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, ArrowLeft, 
   FileText, Lock, Music, Twitter, Facebook, Instagram, Linkedin, Youtube, Globe, 
-  Mail, Link as LinkIcon, Twitch, Disc, Send, BookOpen, Gamepad2, Radio, Smartphone
+  Mail, Link as LinkIcon, Twitch, Disc, Send, BookOpen, Gamepad2, Radio, Smartphone,
+  Calendar, MapPin, Ticket, User
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
@@ -49,6 +50,11 @@ export default function CreatorPage() {
   const [activeTab, setActiveTab] = useState("home");
   const [successMessage, setSuccessMessage] = useState("Payment successful");
   const [pendingDigitalDownload, setPendingDigitalDownload] = useState<{ reference: string; email: string } | null>(null);
+  const [selectedTicketProduct, setSelectedTicketProduct] = useState<any>(null);
+  const [ticketBuyerName, setTicketBuyerName] = useState("");
+  const [ticketBuyerEmail, setTicketBuyerEmail] = useState("");
+  const [ticketBuyerPhone, setTicketBuyerPhone] = useState("");
+  const [ticketQuantity, setTicketQuantity] = useState(1);
 
   // Derived values from hooks (still part of hook section)
   const displayCreator = convexCreator;
@@ -76,6 +82,12 @@ export default function CreatorPage() {
       setCheckoutEmail(userEmail);
     }
   }, [checkoutEmail, userEmail]);
+
+  useEffect(() => {
+    if (checkoutEmail && !ticketBuyerEmail) {
+      setTicketBuyerEmail(checkoutEmail);
+    }
+  }, [checkoutEmail, ticketBuyerEmail]);
 
   useEffect(() => {
     if (!pendingDigitalDownload) {
@@ -266,7 +278,7 @@ export default function CreatorPage() {
   const handlePurchaseSuccess = (
     reference: string,
     details?: { deliveryRequired?: boolean },
-    product?: { title?: string; type?: "digital" | "physical" } | null
+    product?: { title?: string; type?: "digital" | "physical" | "ticket" } | null
   ) => {
     if (details?.deliveryRequired) {
       beginDeliverySetup(reference, product?.title);
@@ -278,6 +290,14 @@ export default function CreatorPage() {
         reference,
         email: checkoutEmail.trim(),
       });
+      return;
+    }
+
+    if (product?.type === "ticket") {
+      setSuccessMessage(`Ticket purchase confirmed for ${product.title}`);
+      setShowSuccess(true);
+      closeTicketCheckout();
+      setTimeout(() => setShowSuccess(false), 3000);
       return;
     }
 
@@ -302,6 +322,39 @@ export default function CreatorPage() {
       return false;
     }
 
+    return true;
+  };
+
+  const openTicketCheckout = (product: any) => {
+    setSelectedTicketProduct(product);
+    setTicketBuyerName("");
+    setTicketBuyerEmail(checkoutEmail.trim() || userEmail || "");
+    setTicketBuyerPhone("");
+    setTicketQuantity(1);
+  };
+
+  const closeTicketCheckout = () => {
+    setSelectedTicketProduct(null);
+    setTicketBuyerName("");
+    setTicketBuyerEmail("");
+    setTicketBuyerPhone("");
+    setTicketQuantity(1);
+  };
+
+  const validateTicketCheckout = () => {
+    if (!selectedTicketProduct) return false;
+    if (!ticketBuyerName.trim()) {
+      alert("Please enter your full name.");
+      return false;
+    }
+    if (!ticketBuyerEmail.trim()) {
+      alert("Please enter your email address.");
+      return false;
+    }
+    if (ticketQuantity < 1) {
+      alert("Please choose at least one ticket.");
+      return false;
+    }
     return true;
   };
 
@@ -908,7 +961,11 @@ export default function CreatorPage() {
                               <div className="flex items-center justify-between mb-2">
                                 <span className={cn(
                                   "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                                  product.type === "digital" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
+                                  product.type === "digital"
+                                    ? "bg-emerald-50 text-emerald-600"
+                                    : product.type === "ticket"
+                                    ? "bg-pink-50 text-pink-600"
+                                    : "bg-blue-50 text-blue-600"
                                 )}>
                                   {product.type}
                                 </span>
@@ -916,9 +973,25 @@ export default function CreatorPage() {
                               </div>
                               <h4 className="text-lg font-bold text-black mb-2">{product.title}</h4>
                               <p className="text-sm text-black/60 line-clamp-2 flex-1 mb-6">{product.description}</p>
+                              {product.type === "ticket" && (
+                                <div className="mb-6 space-y-2 rounded-2xl bg-pink-50 p-4 text-xs text-pink-900">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar size={14} />
+                                    <span>{product.eventDate} {product.eventTime ? `at ${product.eventTime}` : ""}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Ticket size={14} />
+                                    <span>{product.ticketType || "General Admission"}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <MapPin size={14} />
+                                    <span>{product.venue || product.locationAddress}</span>
+                                  </div>
+                                </div>
+                              )}
                               <button
-                                onClick={handlePayment}
-                                disabled={loading || !checkoutEmail.trim()}
+                                onClick={product.type === "ticket" ? () => openTicketCheckout(product) : handlePayment}
+                                disabled={loading || (product.type !== "ticket" && !checkoutEmail.trim())}
                                 className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
                               >
                                 {loading ? (
@@ -928,7 +1001,7 @@ export default function CreatorPage() {
                                   </>
                                 ) : (
                                   <>
-                                    Buy Now
+                                    {product.type === "ticket" ? "Get Ticket" : "Buy Now"}
                                     <ChevronRight size={16} />
                                   </>
                                 )}
@@ -1109,6 +1182,153 @@ export default function CreatorPage() {
           </AnimatePresence>
         </div>
       </div>
+
+      <AnimatePresence>
+        {selectedTicketProduct && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeTicketCheckout}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className="relative w-full max-w-xl overflow-hidden rounded-[2rem] bg-white shadow-2xl"
+            >
+              <div className="border-b border-black/5 p-6">
+                <h3 className="text-2xl font-black text-black">Get Ticket</h3>
+                <p className="mt-1 text-sm text-black/50">Complete the event details below before payment.</p>
+              </div>
+
+              <div className="space-y-6 p-6">
+                <div className="rounded-2xl bg-black/5 p-4">
+                  <h4 className="text-lg font-bold text-black">{selectedTicketProduct.title}</h4>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div className="flex items-center gap-2 text-sm text-black/70">
+                      <Calendar size={16} />
+                      <span>{selectedTicketProduct.eventDate} {selectedTicketProduct.eventTime ? `at ${selectedTicketProduct.eventTime}` : ""}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-black/70">
+                      <Ticket size={16} />
+                      <span>{selectedTicketProduct.ticketType || "General Admission"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-black/70 sm:col-span-2">
+                      <MapPin size={16} />
+                      <span>{selectedTicketProduct.venue}{selectedTicketProduct.locationAddress ? `, ${selectedTicketProduct.locationAddress}` : ""}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-black/40">Buyer Full Name</label>
+                    <div className="relative mt-2">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 text-black/20" size={16} />
+                      <input
+                        type="text"
+                        value={ticketBuyerName}
+                        onChange={(e) => setTicketBuyerName(e.target.value)}
+                        placeholder="Your full name"
+                        className="h-12 w-full rounded-xl border border-black/10 bg-black/5 pl-11 pr-4 text-sm focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-black/40">Email Address</label>
+                      <div className="relative mt-2">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-black/20" size={16} />
+                        <input
+                          type="email"
+                          value={ticketBuyerEmail}
+                          onChange={(e) => setTicketBuyerEmail(e.target.value)}
+                          placeholder="name@example.com"
+                          className="h-12 w-full rounded-xl border border-black/10 bg-black/5 pl-11 pr-4 text-sm focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-black/40">Phone Number</label>
+                      <input
+                        type="tel"
+                        value={ticketBuyerPhone}
+                        onChange={(e) => setTicketBuyerPhone(e.target.value)}
+                        placeholder="Optional"
+                        className="mt-2 h-12 w-full rounded-xl border border-black/10 bg-black/5 px-4 text-sm focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-black/40">Quantity</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={selectedTicketProduct.stock || undefined}
+                        value={ticketQuantity}
+                        onChange={(e) => setTicketQuantity(Math.max(1, Number(e.target.value) || 1))}
+                        className="mt-2 h-12 w-full rounded-xl border border-black/10 bg-black/5 px-4 text-sm focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-black/40">Total Cost</label>
+                      <div className="mt-2 flex h-12 items-center rounded-xl border border-black/10 bg-black/5 px-4 text-sm font-bold text-black">
+                        ₦{(selectedTicketProduct.price * ticketQuantity).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <PaystackPayment
+                  email={ticketBuyerEmail.trim()}
+                  amount={selectedTicketProduct.price * ticketQuantity}
+                  type="product"
+                  creatorId={displayCreator._id as Id<"creators">}
+                  userId={convexUserId as Id<"users"> | undefined}
+                  itemId={selectedTicketProduct._id}
+                  itemName={selectedTicketProduct.title}
+                  supporterName={ticketBuyerName}
+                  buyerPhone={ticketBuyerPhone}
+                  quantity={ticketQuantity}
+                  onSuccess={(reference, details) => handlePurchaseSuccess(reference, details, selectedTicketProduct)}
+                  onError={handlePurchaseError}
+                >
+                  {({ loading, handlePayment }) => (
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={closeTicketCheckout}
+                        className="flex-1 rounded-xl border border-black/10 py-3 text-sm font-bold text-black"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!validateTicketCheckout()) {
+                            return;
+                          }
+                          handlePayment();
+                        }}
+                        disabled={loading}
+                        className="flex-1 rounded-xl bg-black py-3 text-sm font-bold text-white disabled:opacity-50"
+                      >
+                        {loading ? "Processing..." : "Pay for Ticket"}
+                      </button>
+                    </div>
+                  )}
+                </PaystackPayment>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

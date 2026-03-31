@@ -378,7 +378,11 @@ function ShopTab() {
                   <span
                     className={cn(
                       "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
-                      product.type === "digital" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
+                      product.type === "digital"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : product.type === "ticket"
+                        ? "bg-pink-100 text-pink-700"
+                        : "bg-blue-100 text-blue-700"
                     )}
                   >
                     {product.type}

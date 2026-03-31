@@ -43,10 +43,15 @@ export interface Product {
   creatorId: string;
   name: string;
   price: number;
-  type: "digital" | "physical";
+  type: "digital" | "physical" | "ticket";
   description: string;
   stock?: number;
   fileUrl?: string; // for digital
+  eventDate?: string;
+  eventTime?: string;
+  venue?: string;
+  locationAddress?: string;
+  ticketType?: string;
 }
 
 export interface Link {

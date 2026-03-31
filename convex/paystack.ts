@@ -296,6 +296,8 @@ export const fulfillPayment = mutation({
     subscriptionPlan: v.optional(SUBSCRIPTION_PLAN),
     supporterName: v.optional(v.string()),
     message: v.optional(v.string()),
+    buyerPhone: v.optional(v.string()),
+    quantity: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const existingReceipt = await ctx.db
@@ -389,6 +391,8 @@ export const fulfillPayment = mutation({
       subscriptionPlan: args.subscriptionPlan,
       supporterName: args.supporterName?.trim() || undefined,
       message: args.message?.trim() || undefined,
+      buyerPhone: args.buyerPhone?.trim() || undefined,
+      quantity: args.quantity,
       deliveryRequired,
       fulfilledAt: Date.now(),
     });

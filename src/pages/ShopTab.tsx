@@ -13,9 +13,15 @@ interface Product {
   title: string;
   description: string;
   price: number;
-  type: "digital" | "physical";
+  type: "digital" | "physical" | "ticket";
   image?: string;
   stock?: number;
+  eventDate?: string;
+  eventTime?: string;
+  venue?: string;
+  locationAddress?: string;
+  ticketType?: string;
+  hasDigitalFile?: boolean;
 }
 
 interface ShopTabProps {
@@ -75,7 +81,7 @@ export default function ShopTab({
     {
       id: "event",
       type: "event",
-      title: "Event Ticket",
+      title: "Ticket Sale",
       description: "Sell access to events or webinars",
       icon: Ticket,
       color: "bg-pink-50 text-pink-600",
@@ -128,7 +134,7 @@ export default function ShopTab({
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-2xl font-black text-black">Start selling to your audience</h2>
-          <p className="text-sm text-black/60 mt-1">Create digital products, services, or physical goods and earn directly</p>
+          <p className="text-sm text-black/60 mt-1">Create digital products, ticket sales, or physical goods and earn directly</p>
         </div>
         <button
           onClick={() => openModal("product")}
@@ -210,6 +216,8 @@ export default function ShopTab({
                       "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
                       product.type === "digital"
                         ? "bg-emerald-100 text-emerald-700"
+                        : product.type === "ticket"
+                        ? "bg-pink-100 text-pink-700"
                         : "bg-blue-100 text-blue-700"
                     )}
                   >
@@ -237,7 +245,7 @@ export default function ShopTab({
                     ₦{product.price.toLocaleString()}
                   </span>
                   <span className="text-xs font-medium text-black/40">
-                    {product.type === "physical"
+                    {product.type === "physical" || product.type === "ticket"
                       ? `${product.stock || 0} in stock`
                       : "Digital"}
                   </span>

@@ -25,11 +25,16 @@ export interface Product {
   title: string;
   description: string;
   price: number;
-  type: "digital" | "physical";
+  type: "digital" | "physical" | "ticket";
   image?: string;
   fileUrl?: string; // for digital
   stock?: number; // for physical
   deliveryInfo?: string; // for physical
+  eventDate?: string;
+  eventTime?: string;
+  venue?: string;
+  locationAddress?: string;
+  ticketType?: string;
 }
 
 export interface Tip {
