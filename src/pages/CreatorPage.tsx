@@ -1151,30 +1151,91 @@ export default function CreatorPage() {
                     <Target size={18} />
                     <h2 className="font-bold text-black">Active Goals</h2>
                   </div>
+                  <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">Checkout email</p>
+                    <p className="mt-1 text-sm text-black/60">Enter your email once to support any goal on this page.</p>
+                    <input
+                      type="email"
+                      placeholder="name@example.com"
+                      value={checkoutEmail}
+                      onChange={(e) => setCheckoutEmail(e.target.value)}
+                      className="mt-3 h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-black focus:border-black focus:outline-none"
+                    />
+                  </div>
                   <div className="space-y-4">
-                    {displayCreator.goals.map((goal) => (
-                      <div key={goal._id} className="rounded-[2rem] bg-white p-8 shadow-sm border border-black/5">
-                        <h3 className="text-lg font-bold text-black text-center">{goal.title}</h3>
-                        <div className="mt-6">
-                          <div className="flex items-end justify-between text-xs mb-2">
-                            <span className="font-bold text-black">₦{goal.currentAmount.toLocaleString()}</span>
-                            <span className="text-black/40">₦{goal.targetAmount.toLocaleString()}</span>
+                    {displayCreator.goals.map((goal) => {
+                      const remainingAmount = Math.max(0, goal.targetAmount - goal.currentAmount);
+                      const progress = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
+                      const isCompleted = remainingAmount === 0;
+
+                      return (
+                        <div key={goal._id} className="rounded-[2rem] border border-black/5 bg-white p-8 shadow-sm">
+                          <h3 className="text-lg font-bold text-black text-center">{goal.title}</h3>
+                          <div className="mt-6">
+                            <div className="mb-2 flex items-end justify-between text-xs">
+                              <span className={cn("font-bold", isCompleted ? "text-emerald-700" : "text-black")}>
+                                ₦{goal.currentAmount.toLocaleString()}
+                              </span>
+                              <span className="text-black/40">₦{goal.targetAmount.toLocaleString()}</span>
+                            </div>
+                            <div className="h-4 w-full overflow-hidden rounded-full bg-zinc-100">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                whileInView={{ width: `${progress}%` }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 1, ease: "easeOut" }}
+                                className={cn("h-full", isCompleted ? "bg-emerald-500" : "bg-black")}
+                              />
+                            </div>
+                            <p className="mt-3 text-center text-xs font-bold text-black/40">
+                              {Math.round(progress)}% reached
+                            </p>
+                            {!isCompleted ? (
+                              <PaystackPayment
+                                email={checkoutEmail.trim()}
+                                amount={remainingAmount}
+                                type="goal"
+                                creatorId={displayCreator._id as Id<"creators">}
+                                userId={convexUserId as Id<"users"> | undefined}
+                                itemId={goal._id}
+                                itemName={goal.title}
+                                supporterName={supporterName || "Anonymous Supporter"}
+                                message={message}
+                                onSuccess={(reference, details) => handlePurchaseSuccess(reference, details, { title: goal.title })}
+                                onError={handlePurchaseError}
+                              >
+                                {({ loading, handlePayment }) => (
+                                  <button
+                                    onClick={() => {
+                                      if (!checkoutEmail.trim()) {
+                                        alert("Please enter your email address.");
+                                        return;
+                                      }
+                                      handlePayment();
+                                    }}
+                                    disabled={loading || !checkoutEmail.trim()}
+                                    className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                                  >
+                                    {loading ? (
+                                      <>
+                                        <div className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                        Processing...
+                                      </>
+                                    ) : (
+                                      `Support Goal with ₦${remainingAmount.toLocaleString()}`
+                                    )}
+                                  </button>
+                                )}
+                              </PaystackPayment>
+                            ) : (
+                              <div className="mt-6 rounded-full bg-emerald-50 px-4 py-3 text-center text-sm font-bold text-emerald-700">
+                                Goal reached
+                              </div>
+                            )}
                           </div>
-                          <div className="h-4 w-full overflow-hidden rounded-full bg-zinc-100">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              whileInView={{ width: `${Math.min(100, (goal.currentAmount / goal.targetAmount) * 100)}%` }}
-                              viewport={{ once: true }}
-                              transition={{ duration: 1, ease: "easeOut" }}
-                              className="h-full bg-black"
-                            />
-                          </div>
-                          <p className="mt-3 text-center text-xs font-bold text-black/40">
-                            {Math.round((goal.currentAmount / goal.targetAmount) * 100)}% reached
-                          </p>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </section>
               </motion.div>

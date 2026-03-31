@@ -410,19 +410,19 @@ export default function Explore() {
                         </div>
                       </div>
 
-                      <div className="flex-1 min-w-0 z-10 w-full">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
+                      <div className="z-10 w-full min-w-0 flex-1">
+                        <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4">
+                          <div className="min-w-0">
                             <h3 className="text-lg font-black text-black">@{creator.username}</h3>
-                            <p className="line-clamp-1 text-sm text-black/60 mt-1">{creator.bio}</p>
+                            <p className="mt-1 line-clamp-1 text-sm text-black/60">{creator.bio}</p>
                           </div>
-                          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                          <div className="flex items-center gap-2 sm:flex-nowrap sm:justify-end sm:shrink-0">
                             <a
                               href={`/${creator.username}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-bold text-black transition-all hover:bg-black/5 active:scale-95"
+                              className="inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full border border-black/10 bg-white px-4 text-xs font-bold text-black transition-all hover:bg-black/5 active:scale-95"
                             >
                               <span>View Profile</span>
                               <ExternalLink size={14} />
@@ -434,7 +434,7 @@ export default function Explore() {
                                   handleFollow(creator._id);
                                 }}
                                 className={cn(
-                                  "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all active:scale-95",
+                                  "inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-xs font-bold transition-all active:scale-95",
                                   isFollowing(creator._id)
                                     ? "bg-black/5 text-black hover:bg-black/10"
                                     : "bg-black text-white hover:bg-black/90"

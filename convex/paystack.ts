@@ -8,6 +8,7 @@ const PAYSTACK_PAYMENT_TYPE = v.union(
   v.literal("tip"),
   v.literal("membership"),
   v.literal("product"),
+  v.literal("goal"),
   v.literal("wishlist"),
   v.literal("subscription"),
 );
@@ -96,6 +97,27 @@ async function applyWishlistContribution(
   await ctx.db.patch(wishlist._id, {
     currentAmount: newAmount,
     status: newStatus,
+  });
+
+  return { success: true };
+}
+
+async function applyGoalContribution(
+  ctx: MutationCtx,
+  args: {
+    goalId: Id<"goals">;
+    amount: number;
+  },
+) {
+  const goal = await ctx.db.get(args.goalId);
+  if (!goal) {
+    throw new Error("Goal not found");
+  }
+
+  const nextAmount = Math.min(goal.targetAmount, goal.currentAmount + args.amount);
+
+  await ctx.db.patch(goal._id, {
+    currentAmount: nextAmount,
   });
 
   return { success: true };
@@ -352,6 +374,15 @@ export const fulfillPayment = mutation({
         }
         await applyWishlistContribution(ctx, {
           wishlistId: args.itemId as Id<"wishlists">,
+          amount: args.amount,
+        });
+        break;
+      case "goal":
+        if (!args.itemId) {
+          throw new Error("Goal is required");
+        }
+        await applyGoalContribution(ctx, {
+          goalId: args.itemId as Id<"goals">,
           amount: args.amount,
         });
         break;

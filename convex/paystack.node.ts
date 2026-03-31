@@ -14,7 +14,7 @@ export const initializePayment = action({
     amount: v.number(),
     reference: v.string(),
     metadata: v.object({
-      type: v.union(v.literal("tip"), v.literal("membership"), v.literal("product"), v.literal("wishlist")),
+      type: v.union(v.literal("tip"), v.literal("membership"), v.literal("product"), v.literal("goal"), v.literal("wishlist")),
       creatorId: v.string(),
       userId: v.string(),
       itemId: v.optional(v.string()),

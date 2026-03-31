@@ -3,7 +3,7 @@ import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 
-type PaymentType = "tip" | "membership" | "product" | "wishlist" | "subscription";
+type PaymentType = "tip" | "membership" | "product" | "goal" | "wishlist" | "subscription";
 type SubscriptionPlan = "shop" | "premium";
 
 interface PaystackPaymentProps {
@@ -87,7 +87,7 @@ const getCallbackUrl = () => {
 };
 
 const requiresCreator = (type: PaymentType) => type === "tip" || type === "membership";
-const requiresItem = (type: PaymentType) => type === "product" || type === "wishlist";
+const requiresItem = (type: PaymentType) => type === "product" || type === "goal" || type === "wishlist";
 
 declare global {
   interface Window {
