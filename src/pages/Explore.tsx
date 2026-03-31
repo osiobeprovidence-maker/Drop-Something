@@ -408,49 +408,43 @@ export default function Explore() {
                             referrerPolicy="no-referrer"
                           />
                         </div>
-                        {/* Mobile Follow Button - Hide for own profile */}
-                        {!isOwnProfile && (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleFollow(creator._id);
-                            }}
-                            className={cn(
-                              "sm:hidden flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-95",
-                              isFollowing(creator._id)
-                                ? "bg-black text-white"
-                                : "bg-black/5 text-black hover:bg-black/10"
-                            )}
-                          >
-                            <UserPlus size={18} />
-                          </button>
-                        )}
                       </div>
 
                       <div className="flex-1 min-w-0 z-10 w-full">
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <h3 className="text-lg font-black text-black">@{creator.username}</h3>
                             <p className="line-clamp-1 text-sm text-black/60 mt-1">{creator.bio}</p>
                           </div>
-                          {/* Desktop Follow Button - Hide for own profile */}
-                          {!isOwnProfile && (
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleFollow(creator._id);
-                              }}
-                              className={cn(
-                                "hidden sm:flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition-all active:scale-95",
-                                isFollowing(creator._id)
-                                  ? "bg-black/5 text-black hover:bg-black/10"
-                                  : "bg-black text-white hover:bg-black/90"
-                              )}
+                          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                            <a
+                              href={`/${creator.username}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-bold text-black transition-all hover:bg-black/5 active:scale-95"
                             >
-                              <UserPlus size={14} />
-                              {isFollowing(creator._id) ? "Following" : "Follow"}
-                            </button>
-                          )}
+                              <span>View Profile</span>
+                              <ExternalLink size={14} />
+                            </a>
+                            {!isOwnProfile && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleFollow(creator._id);
+                                }}
+                                className={cn(
+                                  "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all active:scale-95",
+                                  isFollowing(creator._id)
+                                    ? "bg-black/5 text-black hover:bg-black/10"
+                                    : "bg-black text-white hover:bg-black/90"
+                                )}
+                              >
+                                <UserPlus size={14} />
+                                {isFollowing(creator._id) ? "Following" : "Follow"}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
