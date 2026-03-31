@@ -15,6 +15,7 @@ import HowItWorks from "./pages/HowItWorks";
 import CreatorsInfo from "./pages/CreatorsInfo";
 import FAQ from "./pages/FAQ";
 import SeriesPage from "./pages/SeriesPage";
+import ShowcasePage from "./pages/ShowcasePage";
 import { ThemeProvider } from "./context/ThemeContext";
 import { FollowProvider } from "./context/FollowContext";
 import { DataProvider } from "./context/DataContext";
@@ -102,6 +103,7 @@ function AppContent() {
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute />} />
           <Route path="/:username/series/:seriesId" element={<SeriesPage />} />
+          <Route path="/:username/showcase" element={<ShowcasePage />} />
           <Route path="/:username" element={<CreatorPage />} />
         </Routes>
       </main>

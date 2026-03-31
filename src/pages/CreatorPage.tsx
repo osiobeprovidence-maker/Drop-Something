@@ -1,11 +1,11 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
-import { 
-  Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, ArrowLeft, 
-  FileText, Lock, Music, Twitter, Facebook, Instagram, Linkedin, Youtube, Globe, 
+import {
+  Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, ArrowLeft,
+  FileText, Lock, Music, Twitter, Facebook, Instagram, Linkedin, Youtube, Globe,
   Mail, Link as LinkIcon, Twitch, Disc, Send, BookOpen, Gamepad2, Radio, Smartphone,
-  Calendar, MapPin, Ticket, User
+  Calendar, MapPin, Ticket, User, Sparkles
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
@@ -406,6 +406,7 @@ export default function CreatorPage() {
 
   const tabs = [
     { id: "home", label: "Home", icon: Heart, show: true },
+    { id: "showcase", label: "Showcase", icon: Sparkles, show: true },
     { id: "slate", label: "Slate", icon: FileText, show: showSlate },
     { id: "wishlist", label: "Wishlist", icon: Target, show: showWishlist },
     { id: "membership", label: "Memberships", icon: Users, show: showMembership },
@@ -1022,6 +1023,32 @@ export default function CreatorPage() {
                     ))}
                   </div>
                 </section>
+              </motion.div>
+            )}
+
+            {activeTab === "showcase" && (
+              <motion.div
+                key="showcase"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mb-4">
+                    <Sparkles size={32} className="text-purple-600" />
+                  </div>
+                  <h2 className="text-2xl font-black text-black">Showcase</h2>
+                  <p className="text-black/60 mt-2 max-w-md mx-auto">
+                    A beautiful portfolio built from {displayCreator?.name}'s work on DropSomething.
+                  </p>
+                  <a
+                    href={`/${displayCreator?.username}/showcase`}
+                    className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white font-bold text-sm hover:bg-gray-900 transition-colors"
+                  >
+                    <ExternalLink size={16} />
+                    View Full Showcase
+                  </a>
+                </div>
               </motion.div>
             )}
 
