@@ -686,29 +686,50 @@ function PostCard({
         )}
 
         {post.type === "image" && post.mediaUrl && (
-          <img
-            src={post.mediaUrl}
-            alt="Post"
-            className="w-full rounded-2xl object-cover max-h-[500px]"
-          />
+          <div className="space-y-3">
+            <img
+              src={post.mediaUrl}
+              alt="Post"
+              className="w-full rounded-2xl object-cover max-h-[500px]"
+            />
+            {post.content && (
+              <p className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap">
+                {post.content}
+              </p>
+            )}
+          </div>
         )}
 
         {post.type === "video" && (post.playbackId || post.mediaUrl) && (
-          <div className="relative rounded-2xl overflow-hidden bg-black">
-            <video controls className="w-full max-h-[500px] object-cover">
-              <source
-                src={post.playbackId ? `https://stream.mux.com/${post.playbackId}.m3u8` : post.mediaUrl}
-                type={post.playbackId ? "application/x-mpegURL" : "video/mp4"}
-              />
-            </video>
+          <div className="space-y-3">
+            <div className="relative rounded-2xl overflow-hidden bg-black">
+              <video controls className="w-full max-h-[500px] object-cover">
+                <source
+                  src={post.playbackId ? `https://stream.mux.com/${post.playbackId}.m3u8` : post.mediaUrl}
+                  type={post.playbackId ? "application/x-mpegURL" : "video/mp4"}
+                />
+              </video>
+            </div>
+            {post.content && (
+              <p className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap">
+                {post.content}
+              </p>
+            )}
           </div>
         )}
 
         {post.type === "audio" && (post.playbackId || post.mediaUrl) && (
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <audio controls className="w-full">
-              <source src={post.mediaUrl || `https://stream.mux.com/${post.playbackId}.m3u8`} />
-            </audio>
+          <div className="space-y-3">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <audio controls className="w-full">
+                <source src={post.mediaUrl || `https://stream.mux.com/${post.playbackId}.m3u8`} />
+              </audio>
+            </div>
+            {post.content && (
+              <p className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap">
+                {post.content}
+              </p>
+            )}
           </div>
         )}
       </div>

@@ -48,6 +48,7 @@ export default function CreatorPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [successMessage, setSuccessMessage] = useState("Payment successful");
+  const [pendingDigitalDownload, setPendingDigitalDownload] = useState<{ reference: string; email: string } | null>(null);
 
   // Derived values from hooks (still part of hook section)
   const displayCreator = convexCreator;
@@ -65,11 +66,44 @@ export default function CreatorPage() {
     return displayCreator.tips.slice(0, 5);
   }, [displayCreator]);
 
+  const purchasedDigitalProduct = useQuery(
+    api.paystack.getPurchasedProductDownload,
+    pendingDigitalDownload ? pendingDigitalDownload : "skip"
+  );
+
   useEffect(() => {
     if (userEmail && !checkoutEmail) {
       setCheckoutEmail(userEmail);
     }
   }, [checkoutEmail, userEmail]);
+
+  useEffect(() => {
+    if (!pendingDigitalDownload) {
+      return;
+    }
+
+    if (!purchasedDigitalProduct?.downloadUrl) {
+      if (purchasedDigitalProduct === null) {
+        alert("Payment was successful, but this digital file is not available for download yet.");
+        setPendingDigitalDownload(null);
+      }
+      return;
+    }
+
+    const downloadLink = document.createElement("a");
+    downloadLink.href = purchasedDigitalProduct.downloadUrl;
+    downloadLink.target = "_blank";
+    downloadLink.rel = "noopener noreferrer";
+    downloadLink.download = purchasedDigitalProduct.title;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+
+    setSuccessMessage(`Download ready for ${purchasedDigitalProduct.title}`);
+    setShowSuccess(true);
+    setPendingDigitalDownload(null);
+    setTimeout(() => setShowSuccess(false), 3000);
+  }, [pendingDigitalDownload, purchasedDigitalProduct]);
 
   // Get social links from creator's links
   const socialLinks = useMemo(() => {
@@ -229,9 +263,21 @@ export default function CreatorPage() {
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
-  const handlePurchaseSuccess = (reference: string, details?: { deliveryRequired?: boolean }, itemName?: string) => {
+  const handlePurchaseSuccess = (
+    reference: string,
+    details?: { deliveryRequired?: boolean },
+    product?: { title?: string; type?: "digital" | "physical" } | null
+  ) => {
     if (details?.deliveryRequired) {
-      beginDeliverySetup(reference, itemName);
+      beginDeliverySetup(reference, product?.title);
+      return;
+    }
+
+    if (product?.type === "digital") {
+      setPendingDigitalDownload({
+        reference,
+        email: checkoutEmail.trim(),
+      });
       return;
     }
 
@@ -678,34 +724,55 @@ export default function CreatorPage() {
                               )}
 
                               {slate.type === "image" && slate.mediaUrl && (
-                                <img
-                                  src={slate.mediaUrl}
-                                  alt="Slate image"
-                                  className="w-full rounded-2xl object-cover max-h-96"
-                                />
+                                <div className="space-y-3">
+                                  <img
+                                    src={slate.mediaUrl}
+                                    alt="Slate image"
+                                    className="w-full rounded-2xl object-cover max-h-96"
+                                  />
+                                  {slate.content && (
+                                    <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
+                                      {slate.content}
+                                    </p>
+                                  )}
+                                </div>
                               )}
 
                               {slate.type === "video" && (slate.playbackId || slate.mediaUrl) && (
-                                <div className="relative rounded-2xl overflow-hidden bg-black">
-                                  <video
-                                    controls
-                                    className="w-full max-h-96 object-cover"
-                                  >
-                                    <source
-                                      src={slate.playbackId ? `https://stream.mux.com/${slate.playbackId}.m3u8` : slate.mediaUrl}
-                                      type={slate.playbackId ? "application/x-mpegURL" : "video/mp4"}
-                                    />
-                                    Your browser does not support the video tag.
-                                  </video>
+                                <div className="space-y-3">
+                                  <div className="relative rounded-2xl overflow-hidden bg-black">
+                                    <video
+                                      controls
+                                      className="w-full max-h-96 object-cover"
+                                    >
+                                      <source
+                                        src={slate.playbackId ? `https://stream.mux.com/${slate.playbackId}.m3u8` : slate.mediaUrl}
+                                        type={slate.playbackId ? "application/x-mpegURL" : "video/mp4"}
+                                      />
+                                      Your browser does not support the video tag.
+                                    </video>
+                                  </div>
+                                  {slate.content && (
+                                    <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
+                                      {slate.content}
+                                    </p>
+                                  )}
                                 </div>
                               )}
 
                               {slate.type === "audio" && (slate.playbackId || slate.mediaUrl) && (
-                                <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
-                                  <audio controls className="w-full">
-                                    <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />
-                                    Your browser does not support the audio tag.
-                                  </audio>
+                                <div className="space-y-3">
+                                  <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
+                                    <audio controls className="w-full">
+                                      <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />
+                                      Your browser does not support the audio tag.
+                                    </audio>
+                                  </div>
+                                  {slate.content && (
+                                    <p className="text-sm font-medium text-black/80 whitespace-pre-wrap leading-relaxed">
+                                      {slate.content}
+                                    </p>
+                                  )}
                                 </div>
                               )}
                             </>
@@ -754,7 +821,7 @@ export default function CreatorPage() {
                         itemName={tier.title}
                         supporterName={supporterName || "Anonymous Supporter"}
                         message={message}
-                        onSuccess={(reference, details) => handlePurchaseSuccess(reference, details, tier.title)}
+                        onSuccess={(reference, details) => handlePurchaseSuccess(reference, details, { title: tier.title })}
                         onError={handlePurchaseError}
                       >
                         {({ loading, handlePayment }) => (
@@ -824,7 +891,7 @@ export default function CreatorPage() {
                         userId={convexUserId as Id<"users"> | undefined}
                         itemId={product._id}
                         itemName={product.title}
-                        onSuccess={(reference, details) => handlePurchaseSuccess(reference, details, product.title)}
+                        onSuccess={(reference, details) => handlePurchaseSuccess(reference, details, product)}
                         onError={handlePurchaseError}
                       >
                         {({ loading, handlePayment }) => (
@@ -963,7 +1030,7 @@ export default function CreatorPage() {
                                 itemName={item.title}
                                 supporterName={supporterName || "Anonymous Supporter"}
                                 message={message}
-                                onSuccess={(reference, details) => handlePurchaseSuccess(reference, details, item.title)}
+                                onSuccess={(reference, details) => handlePurchaseSuccess(reference, details, { title: item.title })}
                                 onError={handlePurchaseError}
                               >
                                 {({ loading, handlePayment }) => (

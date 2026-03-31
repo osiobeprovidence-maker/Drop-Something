@@ -82,7 +82,12 @@ async function getCreatorDetails(ctx: any, creator: any) {
         // Not a valid storageId, keep original
       }
     }
-    return { ...p, image };
+    return {
+      ...p,
+      image,
+      fileUrl: undefined,
+      hasDigitalFile: Boolean(p.fileUrl),
+    };
   }));
 
   const tips = await ctx.db
@@ -330,6 +335,10 @@ export const createProduct = mutation({
     deliveryInfo: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (args.type === "digital" && !args.fileUrl) {
+      throw new Error("Digital products require an uploaded file.");
+    }
+
     return await ctx.db.insert("products", args);
   },
 });
@@ -348,6 +357,19 @@ export const updateProduct = mutation({
   },
   handler: async (ctx, args) => {
     const { productId, ...updates } = args;
+    const currentProduct = await ctx.db.get(productId);
+
+    if (!currentProduct) {
+      throw new Error("Product not found");
+    }
+
+    const nextType = updates.type ?? currentProduct.type;
+    const nextFileUrl = updates.fileUrl ?? currentProduct.fileUrl;
+
+    if (nextType === "digital" && !nextFileUrl) {
+      throw new Error("Digital products require an uploaded file.");
+    }
+
     return await ctx.db.patch(productId, updates);
   },
 });

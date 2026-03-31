@@ -39,6 +39,20 @@ const resolveSlateActor = async (
   return user;
 };
 
+const userHasProSlateCaptions = async (ctx: any, userId: Id<"users">) => {
+  const subscription = await ctx.db
+    .query("subscriptions")
+    .withIndex("by_userId", (q: any) => q.eq("userId", userId))
+    .unique();
+
+  return Boolean(
+    subscription &&
+    subscription.status === "active" &&
+    subscription.expiresAt > Date.now() &&
+    (subscription.plan === "premium" || subscription.plan === "shop")
+  );
+};
+
 // Get all public slates for explore feed (paginated)
 export const getPublicSlates = query({
   args: {
@@ -400,6 +414,18 @@ export const createSlate = mutation({
       if (args.type === "image" && !args.mediaUrl) {
         console.error("❌ [createSlate] Image slate without mediaUrl");
         throw new Error("Image slates require mediaUrl");
+      }
+
+      if (args.type === "image" || args.type === "video" || args.type === "audio") {
+        const caption = args.content?.trim();
+        if (caption) {
+          const hasProCaptions = await userHasProSlateCaptions(ctx, user._id);
+          const captionLimit = hasProCaptions ? 700 : 300;
+
+          if (caption.length > captionLimit) {
+            throw new Error(`Captions are limited to ${captionLimit} characters on your current plan.`);
+          }
+        }
       }
 
       if (args.type === "video" && !args.playbackId && !args.mediaUrl) {

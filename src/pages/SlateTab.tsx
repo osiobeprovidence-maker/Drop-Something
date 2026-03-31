@@ -61,6 +61,7 @@ export default function SlateTab({
   const [showProModal, setShowProModal] = useState(false);
   const [proFeatureType, setProFeatureType] = useState<"video" | "audio" | "locked" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const mediaCaptionLimit = hasProFeatures ? 700 : 300;
 
   // Lock body scroll when modals are open
   useScrollLock(deleteModalOpen);
@@ -170,15 +171,21 @@ export default function SlateTab({
 
   const handleSubmit = async () => {
     if (!convexCreator) return;
+    const trimmedTextContent = textContent.trim();
 
     // Validation
-    if (activeType === "text" && !textContent.trim()) {
+    if (activeType === "text" && !trimmedTextContent) {
       alert("Please enter some content");
       return;
     }
 
     if (activeType === "image" && !imageFile) {
       alert("Please select an image");
+      return;
+    }
+
+    if ((activeType === "image" || activeType === "video" || activeType === "audio") && trimmedTextContent.length > mediaCaptionLimit) {
+      alert(`Captions are limited to ${mediaCaptionLimit} characters on your current plan.`);
       return;
     }
 
@@ -271,7 +278,10 @@ export default function SlateTab({
       await createSlate({
         creatorId: convexCreator._id,
         type: activeType,
-        content: activeType === "text" ? textContent : undefined,
+        content:
+          activeType === "text" || activeType === "image" || activeType === "video" || activeType === "audio"
+            ? trimmedTextContent || undefined
+            : undefined,
         mediaUrl,
         playbackId,
         visibility,
@@ -466,6 +476,31 @@ export default function SlateTab({
                   <span className="text-xs">PNG, JPG up to 10MB</span>
                 </button>
               )}
+
+              <div className="mt-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-black/40">
+                    Image Caption
+                  </label>
+                  <span className={cn(
+                    "text-[11px] font-bold",
+                    textContent.length > mediaCaptionLimit ? "text-red-500" : "text-black/40"
+                  )}>
+                    {textContent.length}/{mediaCaptionLimit}
+                  </span>
+                </div>
+                <textarea
+                  value={textContent}
+                  onChange={(e) => setTextContent(e.target.value)}
+                  placeholder="Add an optional caption for this image..."
+                  rows={4}
+                  maxLength={mediaCaptionLimit}
+                  className="w-full rounded-2xl border border-black/10 bg-black/5 p-4 text-sm font-medium text-black placeholder:text-black/30 focus:border-black/20 focus:outline-none focus:ring-2 focus:ring-black/5"
+                />
+                <p className="mt-2 text-xs text-black/40">
+                  Optional caption. Free plan: 300 characters. Pro: 700 characters.
+                </p>
+              </div>
             </div>
           )}
 
@@ -502,6 +537,31 @@ export default function SlateTab({
                   <span className="text-xs text-center px-4">MP4 up to 100MB, max 15 min (Free for all users)</span>
                 </button>
               )}
+
+              <div className="mt-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-black/40">
+                    Video Caption
+                  </label>
+                  <span className={cn(
+                    "text-[11px] font-bold",
+                    textContent.length > mediaCaptionLimit ? "text-red-500" : "text-black/40"
+                  )}>
+                    {textContent.length}/{mediaCaptionLimit}
+                  </span>
+                </div>
+                <textarea
+                  value={textContent}
+                  onChange={(e) => setTextContent(e.target.value)}
+                  placeholder="Add an optional caption for this video..."
+                  rows={4}
+                  maxLength={mediaCaptionLimit}
+                  className="w-full rounded-2xl border border-black/10 bg-black/5 p-4 text-sm font-medium text-black placeholder:text-black/30 focus:border-black/20 focus:outline-none focus:ring-2 focus:ring-black/5"
+                />
+                <p className="mt-2 text-xs text-black/40">
+                  Optional caption. Free plan: 300 characters. Pro: 700 characters.
+                </p>
+              </div>
             </div>
           )}
 
@@ -538,6 +598,31 @@ export default function SlateTab({
                   <span className="text-xs">MP3, WAV, OGG up to 50MB (Pro feature)</span>
                 </button>
               )}
+
+              <div className="mt-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-black/40">
+                    Audio Caption
+                  </label>
+                  <span className={cn(
+                    "text-[11px] font-bold",
+                    textContent.length > mediaCaptionLimit ? "text-red-500" : "text-black/40"
+                  )}>
+                    {textContent.length}/{mediaCaptionLimit}
+                  </span>
+                </div>
+                <textarea
+                  value={textContent}
+                  onChange={(e) => setTextContent(e.target.value)}
+                  placeholder="Add an optional caption for this audio..."
+                  rows={4}
+                  maxLength={mediaCaptionLimit}
+                  className="w-full rounded-2xl border border-black/10 bg-black/5 p-4 text-sm font-medium text-black placeholder:text-black/30 focus:border-black/20 focus:outline-none focus:ring-2 focus:ring-black/5"
+                />
+                <p className="mt-2 text-xs text-black/40">
+                  Optional caption. Free plan: 300 characters. Pro: 700 characters.
+                </p>
+              </div>
             </div>
           )}
 
@@ -641,35 +726,50 @@ export default function SlateTab({
               )}
 
               {slate.type === "image" && slate.mediaUrl && (
-                <img
-                  src={slate.mediaUrl}
-                  alt="Slate image"
-                  className="w-full rounded-2xl object-cover max-h-96"
-                />
+                <div className="space-y-3">
+                  <img
+                    src={slate.mediaUrl}
+                    alt="Slate image"
+                    className="w-full rounded-2xl object-cover max-h-96"
+                  />
+                  {slate.content && (
+                    <p className="text-sm font-medium text-black whitespace-pre-wrap">{slate.content}</p>
+                  )}
+                </div>
               )}
 
               {slate.type === "video" && (slate.playbackId || slate.mediaUrl) && (
-                <div className="relative rounded-2xl overflow-hidden bg-black">
-                  <video
-                    controls
-                    className="w-full max-h-96 object-cover"
-                    poster=""
-                  >
-                    <source
-                      src={slate.playbackId ? `https://stream.mux.com/${slate.playbackId}.m3u8` : slate.mediaUrl}
-                      type={slate.playbackId ? "application/x-mpegURL" : "video/mp4"}
-                    />
-                    Your browser does not support the video tag.
-                  </video>
+                <div className="space-y-3">
+                  <div className="relative rounded-2xl overflow-hidden bg-black">
+                    <video
+                      controls
+                      className="w-full max-h-96 object-cover"
+                      poster=""
+                    >
+                      <source
+                        src={slate.playbackId ? `https://stream.mux.com/${slate.playbackId}.m3u8` : slate.mediaUrl}
+                        type={slate.playbackId ? "application/x-mpegURL" : "video/mp4"}
+                      />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                  {slate.content && (
+                    <p className="text-sm font-medium text-black whitespace-pre-wrap">{slate.content}</p>
+                  )}
                 </div>
               )}
 
               {slate.type === "audio" && (slate.playbackId || slate.mediaUrl) && (
-                <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
-                  <audio controls className="w-full">
-                    <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />
-                    Your browser does not support the audio tag.
-                  </audio>
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-black/10 bg-black/5 p-4">
+                    <audio controls className="w-full">
+                      <source src={slate.mediaUrl || `https://stream.mux.com/${slate.playbackId}.m3u8`} />
+                      Your browser does not support the audio tag.
+                    </audio>
+                  </div>
+                  {slate.content && (
+                    <p className="text-sm font-medium text-black whitespace-pre-wrap">{slate.content}</p>
+                  )}
                 </div>
               )}
             </div>

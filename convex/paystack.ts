@@ -418,3 +418,47 @@ export const getPaymentHistory = query({
     }));
   },
 });
+
+export const getPurchasedProductDownload = query({
+  args: {
+    reference: v.string(),
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const receipt = await ctx.db
+      .query("paymentReceipts")
+      .withIndex("by_reference", (q) => q.eq("reference", args.reference))
+      .unique();
+
+    if (!receipt || receipt.type !== "product") {
+      return null;
+    }
+
+    if (receipt.email.toLowerCase() !== args.email.trim().toLowerCase()) {
+      return null;
+    }
+
+    if (!receipt.itemId) {
+      return null;
+    }
+
+    const product = await ctx.db.get(receipt.itemId as Id<"products">);
+    if (!product || product.type !== "digital" || !product.fileUrl) {
+      return null;
+    }
+
+    let downloadUrl = product.fileUrl;
+    if (!downloadUrl.startsWith("http")) {
+      const resolvedUrl = await ctx.storage.getUrl(downloadUrl);
+      if (!resolvedUrl) {
+        return null;
+      }
+      downloadUrl = resolvedUrl;
+    }
+
+    return {
+      downloadUrl,
+      title: product.title,
+    };
+  },
+});

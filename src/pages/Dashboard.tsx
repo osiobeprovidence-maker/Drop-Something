@@ -207,6 +207,11 @@ export default function Dashboard() {
   const [productImage, setProductImage] = useState<string>("");
   const [productImagePreview, setProductImagePreview] = useState<string>("");
   const [isProductUploading, setIsProductUploading] = useState(false);
+  const [productFile, setProductFile] = useState<string>("");
+  const [productFileLabel, setProductFileLabel] = useState("");
+  const [productType, setProductType] = useState<"digital" | "physical">("digital");
+  const [hasExistingDigitalFile, setHasExistingDigitalFile] = useState(false);
+  const [isProductFileUploading, setIsProductFileUploading] = useState(false);
 
   // Delete confirmation states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -281,6 +286,10 @@ export default function Dashboard() {
     if (type === "product") {
       setProductImage(item?.image || "");
       setProductImagePreview(item?.image || "");
+      setProductFile("");
+      setProductType(item?.type || "digital");
+      setHasExistingDigitalFile(Boolean(item?.hasDigitalFile));
+      setProductFileLabel(item?.hasDigitalFile ? "Digital file already uploaded" : "");
     }
     setIsModalOpen(true);
   };
@@ -291,7 +300,12 @@ export default function Dashboard() {
     setEditingItem(null);
     setProductImage("");
     setProductImagePreview("");
+    setProductFile("");
+    setProductFileLabel("");
+    setProductType("digital");
+    setHasExistingDigitalFile(false);
     setIsProductUploading(false);
+    setIsProductFileUploading(false);
   };
 
   const openDeleteModal = (type: string, id: string, title: string) => {
@@ -358,6 +372,38 @@ export default function Dashboard() {
       setProductImagePreview(editingItem?.image || "");
     } finally {
       setIsProductUploading(false);
+    }
+  };
+
+  const handleProductFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsProductFileUploading(true);
+    setProductFileLabel(file.name);
+
+    try {
+      const postUrl = await generateUploadUrl();
+      const result = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+
+      if (!result.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const { storageId } = await result.json();
+      setProductFile(storageId);
+    } catch (err) {
+      console.error("Digital product upload error:", err);
+      alert("Failed to upload digital product file. Please try again.");
+      setProductFile("");
+      setProductFileLabel(hasExistingDigitalFile ? "Digital file already uploaded" : "");
+    } finally {
+      setIsProductFileUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -553,6 +599,7 @@ export default function Dashboard() {
     type: "digital" | "physical";
     stock?: number;
     image?: string;
+    fileUrl?: string;
   }) => {
     if (!convexCreator) return;
     await addProduct({ creatorId: convexCreator._id, ...data });
@@ -565,6 +612,7 @@ export default function Dashboard() {
     type?: "digital" | "physical";
     stock?: number;
     image?: string;
+    fileUrl?: string;
   }) => {
     await updateProduct({ productId: id as Id<"products">, ...data });
   };
@@ -1239,9 +1287,14 @@ export default function Dashboard() {
                         await handleAddGoal(data);
                       }
                     } else if (modalType === "product") {
+                      if (data.type === "digital" && !productFile && !hasExistingDigitalFile) {
+                        throw new Error("Upload the digital product file before listing it.");
+                      }
+
                       const productData = {
                         ...data,
                         image: productImage || undefined,
+                        fileUrl: data.type === "digital" ? productFile || undefined : undefined,
                         stock: data.type === "physical" ? data.stock : undefined,
                       };
                       if (editingItem) {
@@ -1351,7 +1404,12 @@ export default function Dashboard() {
                       </div>
                       <div>
                         <label className="text-xs font-bold uppercase text-black/40">Type</label>
-                        <select name="type" defaultValue={editingItem?.type || "digital"} className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none">
+                        <select
+                          name="type"
+                          value={productType}
+                          onChange={(e) => setProductType(e.target.value as "digital" | "physical")}
+                          className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none"
+                        >
                           <option value="digital">Digital</option>
                           <option value="physical">Physical</option>
                         </select>
@@ -1361,10 +1419,40 @@ export default function Dashboard() {
                       <label className="text-xs font-bold uppercase text-black/40">Description</label>
                       <textarea name="description" defaultValue={editingItem?.description} required rows={2} className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" />
                     </div>
-                    <div>
-                      <label className="text-xs font-bold uppercase text-black/40">Stock</label>
-                      <input name="stock" type="number" defaultValue={editingItem?.stock || 0} className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" placeholder="Stock count (for physical products)" />
-                    </div>
+                    {productType === "digital" ? (
+                      <div>
+                        <label className="text-xs font-bold uppercase text-black/40">Digital Product File</label>
+                        <div className="mt-1 rounded-2xl border border-black/10 bg-black/5 p-4">
+                          <label className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-black/20 px-4 py-6 text-center text-sm font-bold text-black/50 transition-colors hover:border-black/40 hover:text-black/70">
+                            {isProductFileUploading ? (
+                              <span className="flex items-center gap-2">
+                                <Loader2 className="animate-spin" size={18} />
+                                Uploading file...
+                              </span>
+                            ) : (
+                              "Upload digital file"
+                            )}
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={handleProductFileUpload}
+                              disabled={isProductFileUploading}
+                            />
+                          </label>
+                          <p className="mt-3 text-sm font-medium text-black">
+                            {productFileLabel || "No digital file uploaded yet"}
+                          </p>
+                          <p className="mt-1 text-xs text-black/40">
+                            Buyers will get this file to download after payment. File type is unrestricted.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="text-xs font-bold uppercase text-black/40">Stock</label>
+                        <input name="stock" type="number" defaultValue={editingItem?.stock || 0} className="mt-1 w-full rounded-xl border border-black/10 bg-black/5 p-3 text-sm focus:outline-none" placeholder="Stock count (for physical products)" />
+                      </div>
+                    )}
                   </>
                 )}
 
