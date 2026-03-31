@@ -774,6 +774,7 @@ function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscripti
 
   const isExpired = subscription?.expiresAt && subscription.expiresAt < Date.now();
   const isActive = subscription?.status === "active" && !isExpired;
+  const hasActivePremium = isActive && subscription?.plan === "premium";
 
   const handleSubscribeSuccess = async (_reference: string) => {};
 
@@ -825,12 +826,12 @@ function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscripti
         )}
       </div>
 
-      {/* Shop Subscription Plan */}
+      {/* Pro Subscription Plan */}
       <div className="rounded-3xl border-2 border-black bg-black p-8 shadow-sm text-white">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-black">Shop Access</h2>
-            <p className="text-sm text-white/60 mt-1">All creators can now create products for free</p>
+            <h2 className="text-xl font-black">Pro Plan</h2>
+            <p className="text-sm text-white/60 mt-1">Unlock premium Slate monetization and higher caption limits</p>
           </div>
           <div className="text-right">
             <p className="text-3xl font-black">₦3,000</p>
@@ -840,11 +841,11 @@ function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscripti
 
         <ul className="space-y-3 mb-8">
           {[
-            "Create digital and physical products",
-            "Add prices, stock, and product images",
-            "Manage your shop from the dashboard",
-            "No subscription required",
-            "Available to every creator"
+            "Lock Slate posts to followers, supporters, or members",
+            "Upload audio posts",
+            "Use captions up to 700 characters",
+            "Keep premium monetization tools in one plan",
+            "Shop creation stays free for everyone"
           ].map((feature, i) => (
             <li key={i} className="flex items-center gap-3">
               <CheckCircle2 size={20} className="text-emerald-400" />
@@ -859,37 +860,53 @@ function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscripti
             amount={3000}
             type="subscription"
             userId={convexUserId as Id<"users">}
-            subscriptionPlan="shop"
+            subscriptionPlan="premium"
             onSuccess={handleSubscribeSuccess}
             onError={handleSubscribeError}
           >
             {({ loading, handlePayment }) => (
               <button
                 onClick={handlePayment}
-                disabled={true}
+                disabled={hasActivePremium || loading}
                 className={cn(
                   "flex h-14 w-full items-center justify-center rounded-full text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98]",
-                  true
+                  hasActivePremium || loading
                     ? "bg-white/20 text-white/60 cursor-not-allowed"
                     : "bg-white text-black hover:shadow-lg hover:shadow-white/20"
                 )}
               >
-                {false ? (
+                {loading ? (
                   <Loader2 size={20} className="animate-spin" />
+                ) : hasActivePremium ? (
+                  "Pro Is Active"
                 ) : (
-                  "Included For All Creators"
+                  "Upgrade to Pro"
                 )}
               </button>
             )}
           </PaystackPayment>
         ) : (
           <button
-            disabled={true}
-            className="flex h-14 w-full items-center justify-center rounded-full text-sm font-bold bg-white/20 text-white/60 cursor-not-allowed transition-all"
+            disabled
+            className="flex h-14 w-full items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white/60 cursor-not-allowed transition-all"
           >
-            Included For All Creators
+            Sign in to upgrade
           </button>
         )}
+      </div>
+
+      <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <CheckCircle2 size={20} />
+          </div>
+          <div>
+            <h3 className="font-bold text-black">Shop creation is already free</h3>
+            <p className="mt-1 text-sm text-black/50">
+              You do not need a subscription to create products, tickets, or digital downloads anymore.
+            </p>
+          </div>
+        </div>
       </div>
     </motion.div>
   );

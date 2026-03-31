@@ -1243,7 +1243,7 @@ export default function Dashboard() {
       {/* CRUD Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -1255,9 +1255,9 @@ export default function Dashboard() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl"
+              className="relative mx-auto my-4 flex w-full max-w-lg flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:my-8 sm:max-h-[calc(100vh-4rem)]"
             >
-              <div className="flex items-center justify-between border-b border-black/5 p-6">
+              <div className="flex shrink-0 items-center justify-between border-b border-black/5 p-6">
                 <h3 className="text-xl font-bold text-black">
                   {editingItem ? "Edit" : "Add New"} {modalType}
                 </h3>
@@ -1327,7 +1327,7 @@ export default function Dashboard() {
                     alert(errorMessage);
                   }
                 }}
-                className="p-6 space-y-4"
+                className="space-y-4 overflow-y-auto p-6"
               >
                 {modalType === "link" && (
                   <>

@@ -871,8 +871,8 @@ export default function SlateTab({
                   Maybe Later
                 </button>
                 <a
-                  href="/settings"
-                  className="flex-1 h-11 rounded-full bg-black text-sm font-bold text-white hover:bg-black/90 transition-colors flex items-center justify-center"
+                  href="/settings?tab=subscription"
+                  className="flex-1 flex h-11 items-center justify-center rounded-full bg-black text-sm font-bold text-white transition-colors hover:bg-black/90"
                 >
                   Upgrade Now
                 </a>
