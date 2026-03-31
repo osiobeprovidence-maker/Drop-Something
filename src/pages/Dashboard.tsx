@@ -93,11 +93,32 @@ export default function Dashboard() {
   const generateUploadUrl = useMutation(api.creators.generateUploadUrl);
 
   // Slate mutations
-  const createSlate = useMutation(api.slates.createSlate);
-  const deleteSlate = useMutation(api.slates.deleteSlate);
+  const createSlateMutation = useMutation(api.slates.createSlate);
+  const deleteSlateMutation = useMutation(api.slates.deleteSlate);
   const slates = useQuery(api.slates.getSlatesByCreator, {
     creatorId: convexCreator?._id as Id<"creators"> | undefined
   });
+
+  const createSlate = async (args: {
+    creatorId: Id<"creators">;
+    type: "text" | "image" | "video" | "audio";
+    content?: string;
+    mediaUrl?: string;
+    playbackId?: string;
+    visibility: "public" | "followers" | "supporters" | "members";
+  }) => {
+    return await createSlateMutation({
+      ...args,
+      tokenIdentifier: user?.uid,
+    });
+  };
+
+  const deleteSlate = async (args: { slateId: Id<"slates"> }) => {
+    return await deleteSlateMutation({
+      ...args,
+      tokenIdentifier: user?.uid,
+    });
+  };
 
   useEffect(() => {
     // If auth is done loading and we definitely don't have a creator profile in Convex

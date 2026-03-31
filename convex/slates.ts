@@ -16,6 +16,29 @@ const resolveCreatorIdentity = (creator?: { name?: string; username?: string; av
   };
 };
 
+const resolveSlateActor = async (
+  ctx: any,
+  tokenIdentifier?: string,
+) => {
+  const identity = await ctx.auth.getUserIdentity();
+  const resolvedTokenIdentifier = identity?.subject || tokenIdentifier;
+
+  if (!resolvedTokenIdentifier) {
+    throw new Error("User not authenticated. Please log in.");
+  }
+
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_token", (q: any) => q.eq("tokenIdentifier", resolvedTokenIdentifier))
+    .unique();
+
+  if (!user) {
+    throw new Error("User profile not found. Please try logging out and back in.");
+  }
+
+  return user;
+};
+
 // Get all public slates for explore feed (paginated)
 export const getPublicSlates = query({
   args: {
@@ -341,6 +364,7 @@ export const getFollowingSlates = query({
 export const createSlate = mutation({
   args: {
     creatorId: v.id("creators"),
+    tokenIdentifier: v.optional(v.string()),
     type: v.union(v.literal("text"), v.literal("image"), v.literal("video"), v.literal("audio")),
     content: v.optional(v.string()),
     mediaUrl: v.optional(v.string()),
@@ -349,27 +373,9 @@ export const createSlate = mutation({
   },
   handler: async (ctx, args) => {
     try {
-      // ✅ STEP 1: Verify user is authenticated
-      const identity = await ctx.auth.getUserIdentity();
-      if (!identity) {
-        console.error("❌ [createSlate] User not authenticated");
-        throw new Error("User not authenticated. Please log in.");
-      }
-      console.log("✅ [createSlate] User authenticated:", identity.subject);
+      const user = await resolveSlateActor(ctx, args.tokenIdentifier);
 
-      // ✅ STEP 2: Look up the user in Convex database
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
-        .unique();
-      
-      if (!user) {
-        console.error("❌ [createSlate] User not found in database. Identity:", identity.subject);
-        throw new Error("User profile not found. Please try logging out and back in.");
-      }
-      console.log("✅ [createSlate] User found in database:", user._id);
-
-      // ✅ STEP 3: Verify user owns the creator profile
+      // ✅ STEP 2: Verify user owns the creator profile
       const creator = await ctx.db.get(args.creatorId);
       if (!creator) {
         console.error("❌ [createSlate] Creator not found:", args.creatorId);
@@ -385,9 +391,7 @@ export const createSlate = mutation({
         );
         throw new Error("You can only create slates for your own creator profile.");
       }
-      console.log("✅ [createSlate] User owns creator profile:", creator._id);
-
-      // ✅ STEP 4: Validate content based on type
+      // ✅ STEP 3: Validate content based on type
       if (args.type === "text" && !args.content) {
         console.error("❌ [createSlate] Text slate without content");
         throw new Error("Text slates require content");
@@ -408,8 +412,9 @@ export const createSlate = mutation({
         throw new Error("Audio slates require playbackId or mediaUrl");
       }
 
-      // ✅ STEP 5: Create the slate
-      const slateId = await ctx.db.insert("slates", args);
+      // ✅ STEP 4: Create the slate
+      const { tokenIdentifier, ...slateData } = args;
+      const slateId = await ctx.db.insert("slates", slateData);
       console.log("✅ [createSlate] Slate created successfully:", slateId, "Type:", args.type);
       
       return slateId;
@@ -423,28 +428,15 @@ export const createSlate = mutation({
 
 // Delete a slate - with authentication and ownership check
 export const deleteSlate = mutation({
-  args: { slateId: v.id("slates") },
+  args: {
+    slateId: v.id("slates"),
+    tokenIdentifier: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     try {
-      // ✅ STEP 1: Verify user is authenticated
-      const identity = await ctx.auth.getUserIdentity();
-      if (!identity) {
-        console.error("❌ [deleteSlate] User not authenticated");
-        throw new Error("User not authenticated. Please log in.");
-      }
+      const user = await resolveSlateActor(ctx, args.tokenIdentifier);
 
-      // ✅ STEP 2: Look up the user in Convex database
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
-        .unique();
-      
-      if (!user) {
-        console.error("❌ [deleteSlate] User not found in database");
-        throw new Error("User profile not found.");
-      }
-
-      // ✅ STEP 3: Get the slate and verify ownership
+      // ✅ STEP 2: Get the slate and verify ownership
       const slate = await ctx.db.get(args.slateId);
       if (!slate) {
         console.error("❌ [deleteSlate] Slate not found:", args.slateId);
@@ -459,7 +451,7 @@ export const deleteSlate = mutation({
         throw new Error("You can only delete your own slates.");
       }
 
-      // ✅ STEP 4: Delete the slate
+      // ✅ STEP 3: Delete the slate
       await ctx.db.delete(args.slateId);
       console.log("✅ [deleteSlate] Slate deleted successfully:", args.slateId);
       
@@ -476,6 +468,7 @@ export const deleteSlate = mutation({
 export const updateSlate = mutation({
   args: {
     slateId: v.id("slates"),
+    tokenIdentifier: v.optional(v.string()),
     content: v.optional(v.string()),
     mediaUrl: v.optional(v.string()),
     playbackId: v.optional(v.string()),
@@ -483,25 +476,9 @@ export const updateSlate = mutation({
   },
   handler: async (ctx, args) => {
     try {
-      // ✅ STEP 1: Verify user is authenticated
-      const identity = await ctx.auth.getUserIdentity();
-      if (!identity) {
-        console.error("❌ [updateSlate] User not authenticated");
-        throw new Error("User not authenticated. Please log in.");
-      }
+      const user = await resolveSlateActor(ctx, args.tokenIdentifier);
 
-      // ✅ STEP 2: Look up the user in Convex database
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
-        .unique();
-      
-      if (!user) {
-        console.error("❌ [updateSlate] User not found in database");
-        throw new Error("User profile not found.");
-      }
-
-      // ✅ STEP 3: Get the slate and verify ownership
+      // ✅ STEP 2: Get the slate and verify ownership
       const slate = await ctx.db.get(args.slateId);
       if (!slate) {
         console.error("❌ [updateSlate] Slate not found:", args.slateId);
@@ -516,8 +493,8 @@ export const updateSlate = mutation({
         throw new Error("You can only update your own slates.");
       }
 
-      // ✅ STEP 4: Update the slate
-      const { slateId, ...updates } = args;
+      // ✅ STEP 3: Update the slate
+      const { slateId, tokenIdentifier, ...updates } = args;
       await ctx.db.patch(args.slateId, updates);
       console.log("✅ [updateSlate] Slate updated successfully:", args.slateId);
       
