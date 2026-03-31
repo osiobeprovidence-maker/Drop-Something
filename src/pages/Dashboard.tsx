@@ -184,6 +184,7 @@ export default function Dashboard() {
   const [modalType, setModalType] = useState<"link" | "membership" | "goal" | "product" | null>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [productImage, setProductImage] = useState<string>("");
+  const [productImagePreview, setProductImagePreview] = useState<string>("");
   const [isProductUploading, setIsProductUploading] = useState(false);
 
   // Delete confirmation states
@@ -258,6 +259,7 @@ export default function Dashboard() {
     setEditingItem(item);
     if (type === "product") {
       setProductImage(item?.image || "");
+      setProductImagePreview(item?.image || "");
     }
     setIsModalOpen(true);
   };
@@ -267,6 +269,7 @@ export default function Dashboard() {
     setModalType(null);
     setEditingItem(null);
     setProductImage("");
+    setProductImagePreview("");
     setIsProductUploading(false);
   };
 
@@ -310,7 +313,7 @@ export default function Dashboard() {
     // Immediate local feedback
     const reader = new FileReader();
     reader.onloadend = () => {
-      setProductImage(reader.result as string);
+      setProductImagePreview(reader.result as string);
     };
     reader.readAsDataURL(file);
 
@@ -331,6 +334,7 @@ export default function Dashboard() {
       console.error("Upload error:", err);
       alert("Failed to upload image. Please try again.");
       setProductImage(editingItem?.image || "");
+      setProductImagePreview(editingItem?.image || "");
     } finally {
       setIsProductUploading(false);
     }
@@ -1284,9 +1288,9 @@ export default function Dashboard() {
                   <>
                     <div className="flex flex-col items-center">
                       <div className="group relative h-40 w-full overflow-hidden rounded-2xl bg-black/5 border border-black/5">
-                        {productImage ? (
+                        {productImagePreview ? (
                           <img 
-                            src={productImage.startsWith("data:") ? productImage : (products.find(p => p.image === productImage)?.image || productImage)} 
+                            src={productImagePreview}
                             alt="" 
                             className="h-full w-full object-cover" 
                           />
