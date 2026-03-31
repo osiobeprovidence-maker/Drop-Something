@@ -1214,7 +1214,11 @@ export default function Dashboard() {
                         await handleAddGoal(data);
                       }
                     } else if (modalType === "product") {
-                      const productData = { ...data, image: productImage };
+                      const productData = {
+                        ...data,
+                        image: productImage || undefined,
+                        stock: data.type === "physical" ? data.stock : undefined,
+                      };
                       if (editingItem) {
                         await handleUpdateProduct(editingItem._id, productData);
                       } else {
@@ -1227,7 +1231,8 @@ export default function Dashboard() {
                     setTimeout(() => setShowSaved(false), 3000);
                   } catch (err) {
                     console.error("Save error:", err);
-                    alert("Failed to save. Please try again.");
+                    const errorMessage = err instanceof Error ? err.message : "Failed to save. Please try again.";
+                    alert(errorMessage);
                   }
                 }}
                 className="p-6 space-y-4"
