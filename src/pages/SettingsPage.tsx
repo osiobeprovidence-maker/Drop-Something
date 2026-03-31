@@ -21,7 +21,7 @@ const PENDING_DELIVERY_KEY = "dropsomething.pendingDeliverySignup";
 export default function SettingsPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut, convexUserId } = useAuth();
+  const { user, signOut, convexUserId, isLoading: isAuthLoading } = useAuth();
   const [isInitializing, setIsInitializing] = useState(true);
 
   const handleLogout = async () => {
@@ -36,37 +36,46 @@ export default function SettingsPage() {
   // Ensure creator profile exists for old accounts
   const ensureCreatorProfile = useMutation(api.creators.ensureCreatorProfile);
 
+  const currentUser = useQuery(api.users.currentUser);
+  const resolvedUserId = (convexUserId || currentUser?._id) as Id<"users"> | undefined;
+  const userEmail = currentUser?.email || user?.email || "";
+
   useEffect(() => {
     const initializeProfile = async () => {
-      if (convexUserId) {
-        try {
-          await ensureCreatorProfile({ userId: convexUserId as Id<"users"> });
-        } catch (err) {
-          console.error("Failed to initialize creator profile:", err);
-        } finally {
-          setIsInitializing(false);
-        }
+      if (isAuthLoading || currentUser === undefined) {
+        return;
+      }
+
+      if (!resolvedUserId) {
+        setIsInitializing(false);
+        return;
+      }
+
+      try {
+        await ensureCreatorProfile({ userId: resolvedUserId });
+      } catch (err) {
+        console.error("Failed to initialize creator profile:", err);
+      } finally {
+        setIsInitializing(false);
       }
     };
 
-    initializeProfile();
-  }, [convexUserId, ensureCreatorProfile]);
+    void initializeProfile();
+  }, [currentUser, ensureCreatorProfile, isAuthLoading, resolvedUserId]);
 
   // Fetch data from Convex
   const paymentDetails = useQuery(api.settings.getPaymentDetails,
-    convexUserId && !isInitializing ? { userId: convexUserId as Id<"users"> } : "skip"
+    resolvedUserId && !isInitializing ? { userId: resolvedUserId } : "skip"
   );
   const kyc = useQuery(api.settings.getKYC,
-    convexUserId && !isInitializing ? { userId: convexUserId as Id<"users"> } : "skip"
+    resolvedUserId && !isInitializing ? { userId: resolvedUserId } : "skip"
   );
   const subscription = useQuery(api.settings.getSubscription,
-    convexUserId && !isInitializing ? { userId: convexUserId as Id<"users"> } : "skip"
+    resolvedUserId && !isInitializing ? { userId: resolvedUserId } : "skip"
   );
   const addresses = useQuery(api.settings.getAddresses,
-    convexUserId && !isInitializing ? { userId: convexUserId as Id<"users"> } : "skip"
+    resolvedUserId && !isInitializing ? { userId: resolvedUserId } : "skip"
   );
-  const currentUser = useQuery(api.users.currentUser);
-  const userEmail = currentUser?.email || "";
   const pendingDeliveryPurchases = useQuery(api.settings.getPendingDeliveryPurchases,
     userEmail ? { email: userEmail } : "skip"
   );
@@ -182,15 +191,15 @@ export default function SettingsPage() {
 
         <div className="mx-auto max-w-4xl p-4 sm:p-8">
           <AnimatePresence mode="wait">
-            {activeTab === "profile" && <ProfileTab convexUserId={convexUserId} />}
-            {activeTab === "payment" && <PaymentTab paymentDetails={paymentDetails} convexUserId={convexUserId} />}
-            {activeTab === "kyc" && <KYCTab kyc={kyc} convexUserId={convexUserId} />}
-            {activeTab === "subscription" && <SubscriptionTab subscription={subscription} convexUserId={convexUserId} userEmail={userEmail} />}
+            {activeTab === "profile" && <ProfileTab convexUserId={resolvedUserId} />}
+            {activeTab === "payment" && <PaymentTab paymentDetails={paymentDetails} convexUserId={resolvedUserId} />}
+            {activeTab === "kyc" && <KYCTab kyc={kyc} convexUserId={resolvedUserId} />}
+            {activeTab === "subscription" && <SubscriptionTab subscription={subscription} convexUserId={resolvedUserId} userEmail={userEmail} />}
             {activeTab === "security" && <SecurityTab user={user} />}
             {activeTab === "delivery" && (
               <DeliveryTab
                 addresses={addresses}
-                convexUserId={convexUserId}
+                convexUserId={resolvedUserId}
                 userEmail={userEmail}
                 pendingDeliveryPurchases={pendingDeliveryPurchases}
               />
