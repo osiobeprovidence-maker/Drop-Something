@@ -4,7 +4,7 @@ import {
   Heart, Users, Target, ShoppingBag, ExternalLink, MapPin,
   Mail, MessageCircle, DollarSign, Star, Share2, Copy, Check,
   Image as ImageIcon, Video, Music, FileText, Link as LinkIcon,
-  Twitter, Facebook, Instagram, Linkedin, Youtube, Globe
+  Twitter, Facebook, Instagram, Linkedin, Youtube, Globe, Edit2
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Id } from "@/convex/_generated/dataModel";
