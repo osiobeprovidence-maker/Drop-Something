@@ -32,17 +32,20 @@ export default function CreatorPage() {
   const userEmail = currentUser?.email || "";
 
   // Get slates for this creator
-  const slates = useQuery(api.slates.getPublicSlatesByCreator, {
-    creatorId: convexCreator?._id as Id<"creators"> | undefined
-  });
-  const slateSeries = useQuery(api.slates.getPublicSeriesWithEntriesByCreator, {
-    creatorId: convexCreator?._id as Id<"creators"> | undefined
-  });
+  const slates = useQuery(
+    api.slates.getPublicSlatesByCreator,
+    convexCreator?._id ? { creatorId: convexCreator._id as Id<"creators"> } : "skip"
+  );
+  const slateSeries = useQuery(
+    api.slates.getPublicSeriesWithEntriesByCreator,
+    convexCreator?._id ? { creatorId: convexCreator._id as Id<"creators"> } : "skip"
+  );
 
   // Get wishlist for this creator
-  const wishlists = useQuery(api.wishlist.getWishlistsByCreator, {
-    creatorId: convexCreator?._id as Id<"creators"> | undefined
-  });
+  const wishlists = useQuery(
+    api.wishlist.getWishlistsByCreator,
+    convexCreator?._id ? { creatorId: convexCreator._id as Id<"creators"> } : "skip"
+  );
 
   const [tipAmount, setTipAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
