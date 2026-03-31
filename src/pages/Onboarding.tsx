@@ -8,6 +8,8 @@ import { api } from "@/convex/_generated/api";
 import { useAuth } from "../context/AuthContext";
 import { auth } from "@/src/lib/firebase";
 
+const PENDING_DELIVERY_KEY = "dropsomething.pendingDeliverySignup";
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const { convexUserId, user, reloadUser, signOut } = useAuth();
@@ -103,7 +105,11 @@ export default function Onboarding() {
         localStorage.removeItem("onboarding_bio");
         localStorage.removeItem("onboarding_avatarUrl");
 
-        navigate("/dashboard");
+        if (localStorage.getItem(PENDING_DELIVERY_KEY)) {
+          navigate("/settings?tab=delivery&source=checkout");
+        } else {
+          navigate("/dashboard");
+        }
       } catch (err: any) {
         console.error("Onboarding error:", err);
         setError(err.message || "Failed to complete setup. Username might be taken.");

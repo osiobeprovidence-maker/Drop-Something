@@ -1,6 +1,6 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { 
   Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, ArrowLeft, 
   FileText, Lock, Music, Twitter, Facebook, Instagram, Linkedin, Youtube, Globe, 
@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useFollow } from "@/src/context/FollowContext";
@@ -16,15 +16,17 @@ import { useAuth } from "@/src/context/AuthContext";
 import { useAdmin } from "@/src/context/AdminContext";
 import { PaystackPayment } from "@/src/lib/PaystackPayment";
 
+const PENDING_DELIVERY_KEY = "dropsomething.pendingDeliverySignup";
+
 export default function CreatorPage() {
   // === ALL HOOKS AT TOP - DO NOT ADD CONDITIONS BEFORE HOOKS ===
+  const navigate = useNavigate();
   const { username } = useParams();
   const { convexUserId } = useAuth();
   const { follow, unfollow, isFollowing } = useFollow();
   const convexCreator = useQuery(api.creators.getCreatorByUsername, {
     username: username || ""
   });
-  const addConvexTip = useMutation(api.creators.addTip);
   const currentUser = useQuery(api.users.currentUser);
   const userEmail = currentUser?.email || "";
 
@@ -40,14 +42,12 @@ export default function CreatorPage() {
 
   const [tipAmount, setTipAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState("");
+  const [checkoutEmail, setCheckoutEmail] = useState("");
   const [supporterName, setSupporterName] = useState("");
   const [message, setMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
-  const [isPurchasing, setIsPurchasing] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [selectedWishlist, setSelectedWishlist] = useState<Id<"wishlists"> | null>(null);
+  const [successMessage, setSuccessMessage] = useState("Payment successful");
 
   // Derived values from hooks (still part of hook section)
   const displayCreator = convexCreator;
@@ -64,6 +64,12 @@ export default function CreatorPage() {
     if (!displayCreator || !Array.isArray(displayCreator.tips)) return [];
     return displayCreator.tips.slice(0, 5);
   }, [displayCreator]);
+
+  useEffect(() => {
+    if (userEmail && !checkoutEmail) {
+      setCheckoutEmail(userEmail);
+    }
+  }, [checkoutEmail, userEmail]);
 
   // Get social links from creator's links
   const socialLinks = useMemo(() => {
@@ -191,54 +197,66 @@ export default function CreatorPage() {
     }
   };
 
-  const handleDropSomething = async () => {
-    if (!displayCreator || !convexUserId) return;
-    
-    const amount = tipAmount || parseFloat(customAmount);
-    if (isNaN(amount) || amount <= 0) {
-      alert("Please select or enter a valid amount.");
+  const beginDeliverySetup = (reference: string, itemName?: string) => {
+    const normalizedEmail = checkoutEmail.trim().toLowerCase();
+
+    localStorage.setItem(PENDING_DELIVERY_KEY, JSON.stringify({
+      email: normalizedEmail,
+      reference,
+      itemName: itemName || "your order",
+      username: displayCreator?.username || username || "",
+    }));
+
+    if (convexUserId) {
+      navigate("/settings?tab=delivery&source=checkout");
       return;
     }
 
-    if (!userEmail) {
-      alert("Please log in to make a payment.");
-      return;
-    }
-
-    // The PaystackPayment component will handle the actual payment
-    // This function is now just a fallback for direct tips
-    try {
-      await addConvexTip({
-        creatorId: displayCreator._id,
-        supporterName: supporterName || "Anonymous Supporter",
-        amount: amount,
-        message: message,
-        type: "tip"
-      });
-
-      setShowSuccess(true);
-      setTipAmount(null);
-      setCustomAmount("");
-      setSupporterName("");
-      setMessage("");
-      setTimeout(() => setShowSuccess(false), 3000);
-    } catch (err) {
-      console.error("Tip error:", err);
-      alert("Failed to send tip. Please try again.");
-    }
+    navigate(`/signup?intent=delivery&email=${encodeURIComponent(normalizedEmail)}`);
   };
 
-  const handlePurchaseSuccess = async (reference: string) => {
-    setIsPurchasing(false);
-    setSelectedProduct(null);
+  const handleSupportError = (error: string) => {
+    alert(`Payment failed: ${error}`);
+  };
+
+  const handleTipSuccess = (reference: string) => {
+    setSuccessMessage("Support received");
+    setShowSuccess(true);
+    setTipAmount(null);
+    setCustomAmount("");
+    setSupporterName("");
+    setMessage("");
+    setTimeout(() => setShowSuccess(false), 3000);
+  };
+
+  const handlePurchaseSuccess = (reference: string, details?: { deliveryRequired?: boolean }, itemName?: string) => {
+    if (details?.deliveryRequired) {
+      beginDeliverySetup(reference, itemName);
+      return;
+    }
+
+    setSuccessMessage("Payment successful");
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
   const handlePurchaseError = (error: string) => {
-    setIsPurchasing(false);
-    setSelectedProduct(null);
     alert(`Payment failed: ${error}`);
+  };
+
+  const validateSupportPayment = () => {
+    const amount = tipAmount || parseFloat(customAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please select or enter a valid amount.");
+      return false;
+    }
+
+    if (!checkoutEmail.trim()) {
+      alert("Please enter your email address.");
+      return false;
+    }
+
+    return true;
   };
 
   const finalAmount = tipAmount || (customAmount ? parseInt(customAmount) : 0);
@@ -417,7 +435,7 @@ export default function CreatorPage() {
                 className="space-y-8"
               >
                 {/* Support Card (PRIMARY FOCUS) */}
-                <section className="w-full">
+                <section id="support-section" className="w-full">
                   <div className="rounded-2xl bg-white p-6 sm:p-10 border border-gray-200">
                     <div className="flex flex-col items-center text-center mb-8">
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black text-white mb-4">
@@ -470,6 +488,13 @@ export default function CreatorPage() {
 
                       <div className="space-y-2">
                         <input
+                          type="email"
+                          placeholder="Your email"
+                          value={checkoutEmail}
+                          onChange={(e) => setCheckoutEmail(e.target.value)}
+                          className="h-11 w-full rounded-xl border-2 border-gray-200 bg-white px-4 text-xs font-medium text-black focus:border-gray-300 focus:outline-none transition-colors"
+                        />
+                        <input
                           type="text"
                           placeholder="Your name (optional)"
                           value={supporterName}
@@ -485,22 +510,45 @@ export default function CreatorPage() {
                         />
                       </div>
 
+                      <p className="text-[11px] font-medium text-gray-500">
+                        No account needed to support. We only ask you to create one later if a paid physical order needs delivery details.
+                      </p>
+
+                      <PaystackPayment
+                        email={checkoutEmail.trim()}
+                        amount={finalAmount}
+                        type="tip"
+                        creatorId={displayCreator._id as Id<"creators">}
+                        userId={convexUserId as Id<"users"> | undefined}
+                        supporterName={supporterName || "Anonymous Supporter"}
+                        message={message}
+                        onSuccess={handleTipSuccess}
+                        onError={handleSupportError}
+                      >
+                        {({ loading, handlePayment }) => (
                       <button
-                        onClick={handleDropSomething}
-                        disabled={finalAmount <= 0 || isSubmitting}
+                        onClick={() => {
+                          if (!validateSupportPayment()) {
+                            return;
+                          }
+                          handlePayment();
+                        }}
+                        disabled={loading || finalAmount <= 0}
                         className="flex h-14 w-full items-center justify-center rounded-xl bg-black text-sm font-black text-white transition-all hover:bg-gray-800 active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
                       >
-                        {isSubmitting ? (
+                        {loading ? (
                           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                         ) : showSuccess ? (
                           <div className="flex items-center gap-2">
                             <Check size={20} />
-                            Dropped!
+                            {successMessage}
                           </div>
                         ) : (
                           `Drop ₦${finalAmount || 0}`
                         )}
                       </button>
+                        )}
+                      </PaystackPayment>
                     </div>
                   </div>
                 </section>
@@ -682,18 +730,31 @@ export default function CreatorPage() {
                     <Users size={18} />
                     <h2 className="font-bold text-black">Membership Plans</h2>
                   </div>
+                  <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">Checkout email</p>
+                    <p className="mt-1 text-sm text-black/60">Use any email to join. No account is required before payment.</p>
+                    <input
+                      type="email"
+                      placeholder="name@example.com"
+                      value={checkoutEmail}
+                      onChange={(e) => setCheckoutEmail(e.target.value)}
+                      className="mt-3 h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-black focus:border-black focus:outline-none"
+                    />
+                  </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     {displayCreator.memberships.map((tier) => (
                       <PaystackPayment
                         key={tier._id}
-                        email={userEmail}
+                        email={checkoutEmail.trim()}
                         amount={tier.price}
                         type="membership"
                         creatorId={displayCreator._id as Id<"creators">}
-                        userId={convexUserId as Id<"users">}
+                        userId={convexUserId as Id<"users"> | undefined}
                         itemId={tier._id}
                         itemName={tier.title}
-                        onSuccess={handlePurchaseSuccess}
+                        supporterName={supporterName || "Anonymous Supporter"}
+                        message={message}
+                        onSuccess={(reference, details) => handlePurchaseSuccess(reference, details, tier.title)}
                         onError={handlePurchaseError}
                       >
                         {({ loading, handlePayment }) => (
@@ -705,7 +766,7 @@ export default function CreatorPage() {
                             <p className="flex-1 text-sm text-black/60 leading-relaxed mb-6">{tier.description}</p>
                             <button
                               onClick={handlePayment}
-                              disabled={loading || !userEmail}
+                              disabled={loading || !checkoutEmail.trim()}
                               className="flex h-12 w-full items-center justify-center rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
                             >
                               {loading ? (
@@ -741,18 +802,29 @@ export default function CreatorPage() {
                     <ShoppingBag size={18} />
                     <h2 className="font-bold text-black">Shop</h2>
                   </div>
+                  <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">Checkout email</p>
+                    <p className="mt-1 text-sm text-black/60">Buy without logging in. Physical orders will ask you to create an account after payment so you can add delivery details.</p>
+                    <input
+                      type="email"
+                      placeholder="name@example.com"
+                      value={checkoutEmail}
+                      onChange={(e) => setCheckoutEmail(e.target.value)}
+                      className="mt-3 h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-black focus:border-black focus:outline-none"
+                    />
+                  </div>
                   <div className="grid gap-6 sm:grid-cols-2">
                     {displayCreator.products.map((product) => (
                       <PaystackPayment
                         key={product._id}
-                        email={userEmail}
+                        email={checkoutEmail.trim()}
                         amount={product.price}
                         type="product"
                         creatorId={displayCreator._id as Id<"creators">}
-                        userId={convexUserId as Id<"users">}
+                        userId={convexUserId as Id<"users"> | undefined}
                         itemId={product._id}
                         itemName={product.title}
-                        onSuccess={handlePurchaseSuccess}
+                        onSuccess={(reference, details) => handlePurchaseSuccess(reference, details, product.title)}
                         onError={handlePurchaseError}
                       >
                         {({ loading, handlePayment }) => (
@@ -779,7 +851,7 @@ export default function CreatorPage() {
                               <p className="text-sm text-black/60 line-clamp-2 flex-1 mb-6">{product.description}</p>
                               <button
                                 onClick={handlePayment}
-                                disabled={loading || !userEmail}
+                                disabled={loading || !checkoutEmail.trim()}
                                 className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
                               >
                                 {loading ? (
@@ -815,6 +887,17 @@ export default function CreatorPage() {
                   <div className="flex items-center justify-start gap-2 mb-4">
                     <Target size={18} />
                     <h2 className="font-bold text-black">Wishlist</h2>
+                  </div>
+                  <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">Checkout email</p>
+                    <p className="mt-1 text-sm text-black/60">Guests can contribute too. Add your email once and continue.</p>
+                    <input
+                      type="email"
+                      placeholder="name@example.com"
+                      value={checkoutEmail}
+                      onChange={(e) => setCheckoutEmail(e.target.value)}
+                      className="mt-3 h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-black focus:border-black focus:outline-none"
+                    />
                   </div>
                   <div className="space-y-4">
                     {wishlists && wishlists.map((item) => {
@@ -869,22 +952,30 @@ export default function CreatorPage() {
                             </p>
 
                             {/* Contribute Button */}
-                            {!isCompleted && convexUserId && userEmail ? (
+                            {!isCompleted ? (
                               <PaystackPayment
-                                email={userEmail}
+                                email={checkoutEmail.trim()}
                                 amount={item.targetAmount - item.currentAmount}
                                 type="wishlist"
                                 creatorId={displayCreator._id as Id<"creators">}
-                                userId={convexUserId as Id<"users">}
+                                userId={convexUserId as Id<"users"> | undefined}
                                 itemId={item._id}
                                 itemName={item.title}
-                                onSuccess={handlePurchaseSuccess}
+                                supporterName={supporterName || "Anonymous Supporter"}
+                                message={message}
+                                onSuccess={(reference, details) => handlePurchaseSuccess(reference, details, item.title)}
                                 onError={handlePurchaseError}
                               >
                                 {({ loading, handlePayment }) => (
                                   <button
-                                    onClick={handlePayment}
-                                    disabled={loading}
+                                    onClick={() => {
+                                      if (!checkoutEmail.trim()) {
+                                        alert("Please enter your email address.");
+                                        return;
+                                      }
+                                      handlePayment();
+                                    }}
+                                    disabled={loading || !checkoutEmail.trim()}
                                     className="mt-6 w-full h-12 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
                                   >
                                     {loading ? (
@@ -898,19 +989,6 @@ export default function CreatorPage() {
                                   </button>
                                 )}
                               </PaystackPayment>
-                            ) : !isCompleted ? (
-                              <button
-                                onClick={() => {
-                                  // Scroll to support section
-                                  const supportSection = document.getElementById('support-section');
-                                  if (supportSection) {
-                                    supportSection.scrollIntoView({ behavior: 'smooth' });
-                                  }
-                                }}
-                                className="mt-6 w-full h-12 rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95"
-                              >
-                                Contribute to this goal
-                              </button>
                             ) : null}
                           </div>
                         </div>

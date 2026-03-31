@@ -2,6 +2,20 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 
+const GENERIC_CREATOR_NAMES = new Set(["anonymous", "unknown", "unnamed creator"]);
+
+const resolveCreatorIdentity = (creator?: { name?: string; username?: string; avatar?: string | null } | null) => {
+  const trimmedName = creator?.name?.trim();
+  const normalizedName = trimmedName?.toLowerCase();
+  const hasUsefulName = Boolean(trimmedName && normalizedName && !GENERIC_CREATOR_NAMES.has(normalizedName));
+  const creatorUsername = creator?.username?.trim() || "anonymous";
+
+  return {
+    creatorName: hasUsefulName ? trimmedName! : creatorUsername,
+    creatorUsername,
+  };
+};
+
 // Get all public slates for explore feed (paginated)
 export const getPublicSlates = query({
   args: {
@@ -66,9 +80,7 @@ export const getPublicSlates = query({
           .withIndex("by_slateId", (q) => q.eq("slateId", slate._id))
           .collect()).length;
 
-        // Safely resolve creator name with priority: name → username → "Anonymous"
-        const creatorName = creator?.name || creator?.username || "Anonymous";
-        const creatorUsername = creator?.username || "anonymous";
+        const { creatorName, creatorUsername } = resolveCreatorIdentity(creator);
 
         return {
           ...slate,
@@ -130,9 +142,7 @@ export const getAllPublicSlates = query({
           }
         }
 
-        // Safely resolve creator name with priority: name → username → "Anonymous"
-        const creatorName = creator?.name || creator?.username || "Anonymous";
-        const creatorUsername = creator?.username || "anonymous";
+        const { creatorName, creatorUsername } = resolveCreatorIdentity(creator);
         const likeCount = (await ctx.db
           .query("slateLikes")
           .withIndex("by_slateId", (q) => q.eq("slateId", slate._id))
@@ -279,8 +289,7 @@ export const getFollowingSlates = query({
 
         const creator = await ctx.db.get(slate.creatorId);
         let avatar = (creator as any)?.avatar;
-        let creatorName = (creator as any)?.name || "Unknown";
-        let creatorUsername = (creator as any)?.username || "unknown";
+        const { creatorName, creatorUsername } = resolveCreatorIdentity(creator as any);
         
         if (avatar && !avatar.startsWith("http") && !avatar.startsWith("data:")) {
           try {

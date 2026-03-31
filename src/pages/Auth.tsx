@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { Coffee, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/src/lib/utils";
@@ -14,8 +14,12 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Auth({ mode }: { mode: "login" | "signup" }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, hasProfile, isLoading } = useAuth();
-  const [email, setEmail] = useState("");
+  const searchParams = new URLSearchParams(location.search);
+  const deliveryIntent = searchParams.get("intent") === "delivery";
+  const prefillsEmail = searchParams.get("email") || "";
+  const [email, setEmail] = useState(prefillsEmail);
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [isAuthLoading, setIsAuthLoading] = useState(false);
@@ -25,6 +29,13 @@ export default function Auth({ mode }: { mode: "login" | "signup" }) {
   // If user is already logged in, redirect them away from auth page
   useEffect(() => {
     if (!isLoading && user) {
+      const hasPendingDelivery = Boolean(localStorage.getItem("dropsomething.pendingDeliverySignup"));
+
+      if (hasPendingDelivery && hasProfile) {
+        navigate("/settings?tab=delivery&source=checkout");
+        return;
+      }
+
       if (hasProfile) {
         navigate("/dashboard");
       } else {
@@ -125,11 +136,17 @@ export default function Auth({ mode }: { mode: "login" | "signup" }) {
             DropSomething
           </Link>
           <h2 className="mt-8 text-3xl font-extrabold text-black">
-            {mode === "login" ? "Welcome back" : "Join the hustle"}
+            {deliveryIntent && mode === "signup"
+              ? "Create your account"
+              : mode === "login"
+              ? "Welcome back"
+              : "Join the hustle"}
           </h2>
           <p className="mt-2 text-sm text-black/40">
-            {mode === "login" 
-              ? "Sign in to manage your page and support" 
+            {deliveryIntent && mode === "signup"
+              ? "Your payment went through. Create your account to add a delivery address for your order."
+              : mode === "login"
+              ? "Sign in to manage your page and support"
               : "Create your page and start receiving support today"}
           </p>
         </div>

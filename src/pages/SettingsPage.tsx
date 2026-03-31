@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -16,8 +16,11 @@ import { auth } from "@/src/lib/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { PaystackPayment } from "@/src/lib/PaystackPayment";
 
+const PENDING_DELIVERY_KEY = "dropsomething.pendingDeliverySignup";
+
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, signOut, convexUserId } = useAuth();
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -28,6 +31,7 @@ export default function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState("profile");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const requestedTab = new URLSearchParams(location.search).get("tab");
 
   // Ensure creator profile exists for old accounts
   const ensureCreatorProfile = useMutation(api.creators.ensureCreatorProfile);
@@ -63,6 +67,15 @@ export default function SettingsPage() {
   );
   const currentUser = useQuery(api.users.currentUser);
   const userEmail = currentUser?.email || "";
+  const pendingDeliveryPurchases = useQuery(api.settings.getPendingDeliveryPurchases,
+    userEmail ? { email: userEmail } : "skip"
+  );
+
+  useEffect(() => {
+    if (requestedTab) {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
 
   const menuItems = [
     { id: "profile", label: "Profile", icon: User },
@@ -174,7 +187,14 @@ export default function SettingsPage() {
             {activeTab === "kyc" && <KYCTab kyc={kyc} convexUserId={convexUserId} />}
             {activeTab === "subscription" && <SubscriptionTab subscription={subscription} convexUserId={convexUserId} userEmail={userEmail} />}
             {activeTab === "security" && <SecurityTab user={user} />}
-            {activeTab === "delivery" && <DeliveryTab addresses={addresses} convexUserId={convexUserId} />}
+            {activeTab === "delivery" && (
+              <DeliveryTab
+                addresses={addresses}
+                convexUserId={convexUserId}
+                userEmail={userEmail}
+                pendingDeliveryPurchases={pendingDeliveryPurchases}
+              />
+            )}
           </AnimatePresence>
         </div>
       </main>
@@ -980,12 +1000,24 @@ function SecurityTab({ user }: { user?: any }) {
 
 // ==================== DELIVERY TAB ====================
 
-function DeliveryTab({ addresses, convexUserId }: { addresses?: any[], convexUserId?: string }) {
+function DeliveryTab({
+  addresses,
+  convexUserId,
+  userEmail,
+  pendingDeliveryPurchases,
+}: {
+  addresses?: any[],
+  convexUserId?: string,
+  userEmail?: string,
+  pendingDeliveryPurchases?: any[],
+}) {
   const addAddress = useMutation(api.settings.addAddress);
   const updateAddress = useMutation(api.settings.updateAddress);
   const deleteAddress = useMutation(api.settings.deleteAddress);
+  const assignAddressToPendingPurchases = useMutation(api.settings.assignAddressToPendingPurchases);
 
   const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showSaved, setShowSaved] = useState(false);
 
@@ -1008,17 +1040,29 @@ function DeliveryTab({ addresses, convexUserId }: { addresses?: any[], convexUse
     }
 
     setIsAdding(true);
+    setIsSaving(true);
     try {
+      let savedAddressId = editingId as Id<"addresses"> | null;
+
       if (editingId) {
         await updateAddress({
           addressId: editingId as Id<"addresses">,
           ...formData,
         });
       } else {
-        await addAddress({
+        savedAddressId = await addAddress({
           userId: convexUserId as Id<"users">,
           ...formData,
         });
+      }
+
+      if (savedAddressId && userEmail && pendingDeliveryPurchases && pendingDeliveryPurchases.length > 0) {
+        await assignAddressToPendingPurchases({
+          email: userEmail,
+          userId: convexUserId as Id<"users">,
+          addressId: savedAddressId,
+        });
+        localStorage.removeItem(PENDING_DELIVERY_KEY);
       }
       
       setShowSaved(true);
@@ -1028,7 +1072,7 @@ function DeliveryTab({ addresses, convexUserId }: { addresses?: any[], convexUse
       console.error("Save error:", err);
       alert("Failed to save address.");
     } finally {
-      setIsAdding(false);
+      setIsSaving(false);
     }
   };
 
@@ -1087,6 +1131,21 @@ function DeliveryTab({ addresses, convexUserId }: { addresses?: any[], convexUse
       exit={{ opacity: 0, y: -10 }}
       className="space-y-8"
     >
+      {pendingDeliveryPurchases && pendingDeliveryPurchases.length > 0 && (
+        <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 size={20} className="mt-0.5 text-emerald-600" />
+            <div>
+              <h2 className="text-lg font-bold text-emerald-900">Delivery address needed</h2>
+              <p className="mt-1 text-sm text-emerald-800">
+                You have {pendingDeliveryPurchases.length} paid physical {pendingDeliveryPurchases.length === 1 ? "order" : "orders"} waiting for a delivery address.
+                Save an address below and we’ll attach it automatically.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Address Form */}
       <div className="rounded-3xl border border-black/5 bg-white p-8 shadow-sm">
         <div className="flex items-center justify-between mb-6">
@@ -1184,10 +1243,10 @@ function DeliveryTab({ addresses, convexUserId }: { addresses?: any[], convexUse
               </button>
               <button
                 type="submit"
-                disabled={isAdding}
+                disabled={isSaving}
                 className="flex-1 rounded-xl bg-black py-3 text-sm font-bold text-white disabled:opacity-50"
               >
-                {isAdding ? <Loader2 size={20} className="animate-spin mx-auto" /> : editingId ? "Update" : "Save Address"}
+                {isSaving ? <Loader2 size={20} className="animate-spin mx-auto" /> : editingId ? "Update" : "Save Address"}
               </button>
             </div>
           </form>

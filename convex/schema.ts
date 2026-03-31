@@ -133,12 +133,17 @@ export default defineSchema({
     ),
     amount: v.number(),
     email: v.string(),
-    userId: v.id("users"),
+    userId: v.optional(v.id("users")),
     creatorId: v.optional(v.id("creators")),
     itemId: v.optional(v.string()),
     subscriptionPlan: v.optional(v.union(v.literal("shop"), v.literal("premium"))),
+    supporterName: v.optional(v.string()),
+    message: v.optional(v.string()),
+    deliveryRequired: v.optional(v.boolean()),
+    deliveryAddressId: v.optional(v.id("addresses")),
     fulfilledAt: v.number(),
-  }).index("by_reference", ["reference"]),
+  }).index("by_reference", ["reference"])
+    .index("by_email", ["email"]),
 
   // User delivery addresses
   addresses: defineTable({

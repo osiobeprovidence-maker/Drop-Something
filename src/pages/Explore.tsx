@@ -35,7 +35,12 @@ const formatCount = (count: number | undefined | null): number => {
 
 // Safe formatter for creator names
 const getDisplayName = (name?: string | null, username?: string | null): string => {
-  return name || username || "Anonymous";
+  const normalizedName = name?.trim();
+  const lowered = normalizedName?.toLowerCase();
+  if (normalizedName && lowered !== "anonymous" && lowered !== "unknown" && lowered !== "unnamed creator") {
+    return normalizedName;
+  }
+  return username || "Anonymous";
 };
 
 export default function Explore() {

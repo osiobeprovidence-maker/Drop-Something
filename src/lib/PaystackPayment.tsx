@@ -11,11 +11,13 @@ interface PaystackPaymentProps {
   amount: number;
   type: PaymentType;
   creatorId?: Id<"creators">;
-  userId: Id<"users">;
+  userId?: Id<"users">;
   itemId?: string;
   itemName?: string;
   subscriptionPlan?: SubscriptionPlan;
-  onSuccess?: (reference: string) => void;
+  supporterName?: string;
+  message?: string;
+  onSuccess?: (reference: string, details?: { deliveryRequired?: boolean }) => void;
   onError?: (error: string) => void;
   children: (props: { loading: boolean; handlePayment: () => void }) => React.ReactNode;
   key?: React.Key;
@@ -26,11 +28,13 @@ interface PendingPaymentPayload {
   email: string;
   amount: number;
   type: PaymentType;
-  userId: string;
+  userId?: string;
   creatorId?: string;
   itemId?: string;
   itemName?: string;
   subscriptionPlan?: SubscriptionPlan;
+  supporterName?: string;
+  message?: string;
 }
 
 const PENDING_PAYMENT_KEY = "dropsomething.pendingPaystackPayment";
@@ -112,6 +116,8 @@ export function PaystackPayment({
   itemId,
   itemName,
   subscriptionPlan,
+  supporterName,
+  message,
   onSuccess,
   onError,
   children,
@@ -129,16 +135,18 @@ export function PaystackPayment({
     email,
     amount,
     type,
-    userId: userId.toString(),
+    userId: userId?.toString(),
     creatorId: creatorId?.toString(),
     itemId,
     itemName,
     subscriptionPlan,
+    supporterName,
+    message,
   });
 
   const matchesComponent = (pendingPayment: PendingPaymentPayload) =>
     pendingPayment.type === type &&
-    pendingPayment.userId === userId.toString() &&
+    pendingPayment.userId === userId?.toString() &&
     pendingPayment.creatorId === creatorId?.toString() &&
     pendingPayment.itemId === itemId &&
     pendingPayment.subscriptionPlan === subscriptionPlan;
@@ -150,7 +158,7 @@ export function PaystackPayment({
         throw new Error(verification.message || "Payment verification failed");
       }
 
-      await fulfillPayment({
+      const fulfillment = await fulfillPayment({
         reference,
         type: pendingPayment.type,
         amount: pendingPayment.amount,
@@ -159,9 +167,11 @@ export function PaystackPayment({
         creatorId,
         itemId: pendingPayment.itemId,
         subscriptionPlan: pendingPayment.subscriptionPlan,
+        supporterName: pendingPayment.supporterName,
+        message: pendingPayment.message,
       });
 
-      onSuccess?.(reference);
+      onSuccess?.(reference, { deliveryRequired: fulfillment.deliveryRequired });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Payment verification failed";
       onError?.(message);
@@ -214,7 +224,7 @@ export function PaystackPayment({
         metadata: {
           type,
           creatorId: creatorId?.toString(),
-          userId: userId.toString(),
+          userId: userId?.toString() || "",
           itemId,
           subscriptionPlan,
         },
@@ -255,7 +265,7 @@ export function PaystackPayment({
         custom_fields: [
           { display_name: "type", variable_name: "type", value: type },
           { display_name: "creatorId", variable_name: "creatorId", value: creatorId?.toString() || "" },
-          { display_name: "userId", variable_name: "userId", value: userId.toString() },
+          { display_name: "userId", variable_name: "userId", value: userId?.toString() || "" },
           { display_name: "itemId", variable_name: "itemId", value: itemId || "" },
           { display_name: "itemName", variable_name: "itemName", value: itemName || "" },
           { display_name: "subscriptionPlan", variable_name: "subscriptionPlan", value: subscriptionPlan || "" },
@@ -295,6 +305,11 @@ export function PaystackPayment({
 
     if (requiresItem(type) && !itemId) {
       onError?.("The selected item is missing");
+      return;
+    }
+
+    if (type === "subscription" && !userId) {
+      onError?.("Please sign in to manage your subscription");
       return;
     }
 

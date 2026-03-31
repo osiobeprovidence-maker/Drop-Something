@@ -196,6 +196,26 @@ export const getDefaultAddress = query({
   },
 });
 
+export const getPendingDeliveryPurchases = query({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    if (!args.email) {
+      return [];
+    }
+
+    const purchases = await ctx.db
+      .query("paymentReceipts")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .collect();
+
+    return purchases.filter((purchase) =>
+      purchase.type === "product" &&
+      purchase.deliveryRequired === true &&
+      !purchase.deliveryAddressId,
+    );
+  },
+});
+
 export const addAddress = mutation({
   args: {
     userId: v.id("users"),
@@ -222,6 +242,35 @@ export const addAddress = mutation({
     }
 
     return await ctx.db.insert("addresses", args);
+  },
+});
+
+export const assignAddressToPendingPurchases = mutation({
+  args: {
+    email: v.string(),
+    userId: v.id("users"),
+    addressId: v.id("addresses"),
+  },
+  handler: async (ctx, args) => {
+    const purchases = await ctx.db
+      .query("paymentReceipts")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .collect();
+
+    const pendingPurchases = purchases.filter((purchase) =>
+      purchase.type === "product" &&
+      purchase.deliveryRequired === true &&
+      !purchase.deliveryAddressId,
+    );
+
+    for (const purchase of pendingPurchases) {
+      await ctx.db.patch(purchase._id, {
+        userId: args.userId,
+        deliveryAddressId: args.addressId,
+      });
+    }
+
+    return pendingPurchases.length;
   },
 });
 

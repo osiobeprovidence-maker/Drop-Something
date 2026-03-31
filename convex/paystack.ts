@@ -113,7 +113,9 @@ async function applyProductPurchase(
     throw new Error("Product not found");
   }
 
-  if (product.type === "physical" && product.stock) {
+  const deliveryRequired = product.type === "physical";
+
+  if (deliveryRequired && product.stock) {
     await ctx.db.patch(product._id, {
       stock: Math.max(0, product.stock - 1),
     });
@@ -126,7 +128,7 @@ async function applyProductPurchase(
     });
   }
 
-  return { success: true };
+  return { success: true, deliveryRequired };
 }
 
 export const initializePayment = action({
@@ -288,10 +290,12 @@ export const fulfillPayment = mutation({
     type: PAYSTACK_PAYMENT_TYPE,
     amount: v.number(),
     email: v.string(),
-    userId: v.id("users"),
+    userId: v.optional(v.id("users")),
     creatorId: v.optional(v.id("creators")),
     itemId: v.optional(v.string()),
     subscriptionPlan: v.optional(SUBSCRIPTION_PLAN),
+    supporterName: v.optional(v.string()),
+    message: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existingReceipt = await ctx.db
@@ -300,8 +304,18 @@ export const fulfillPayment = mutation({
       .unique();
 
     if (existingReceipt) {
-      return { success: true, alreadyProcessed: true };
+      return {
+        success: true,
+        alreadyProcessed: true,
+        deliveryRequired: existingReceipt.deliveryRequired,
+      };
     }
+
+    const fallbackSupporterName =
+      args.supporterName?.trim() ||
+      args.email.split("@")[0] ||
+      "Anonymous Supporter";
+    let deliveryRequired = false;
 
     switch (args.type) {
       case "tip":
@@ -310,9 +324,9 @@ export const fulfillPayment = mutation({
         }
         await applyTipPayment(ctx, {
           creatorId: args.creatorId,
-          supporterName: args.userId,
+          supporterName: fallbackSupporterName,
           amount: args.amount,
-          message: "",
+          message: args.message?.trim() || undefined,
           type: "tip",
           paystackReference: args.reference,
         });
@@ -323,9 +337,9 @@ export const fulfillPayment = mutation({
         }
         await applyTipPayment(ctx, {
           creatorId: args.creatorId,
-          supporterName: args.userId,
+          supporterName: fallbackSupporterName,
           amount: args.amount,
-          message: "",
+          message: args.message?.trim() || undefined,
           type: "membership",
           paystackReference: args.reference,
         });
@@ -343,12 +357,18 @@ export const fulfillPayment = mutation({
         if (!args.itemId) {
           throw new Error("Product is required");
         }
-        await applyProductPurchase(ctx, {
+        {
+          const purchase = await applyProductPurchase(ctx, {
           productId: args.itemId as Id<"products">,
           amount: args.amount,
         });
+          deliveryRequired = purchase.deliveryRequired;
+        }
         break;
       case "subscription":
+        if (!args.userId) {
+          throw new Error("User is required for subscriptions");
+        }
         await applySubscription(ctx, {
           userId: args.userId,
           plan: args.subscriptionPlan || "shop",
@@ -367,10 +387,13 @@ export const fulfillPayment = mutation({
       creatorId: args.creatorId,
       itemId: args.itemId,
       subscriptionPlan: args.subscriptionPlan,
+      supporterName: args.supporterName?.trim() || undefined,
+      message: args.message?.trim() || undefined,
+      deliveryRequired,
       fulfilledAt: Date.now(),
     });
 
-    return { success: true, alreadyProcessed: false };
+    return { success: true, alreadyProcessed: false, deliveryRequired };
   },
 });
 
