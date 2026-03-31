@@ -55,6 +55,7 @@ export default function CreatorPage() {
   const [ticketBuyerEmail, setTicketBuyerEmail] = useState("");
   const [ticketBuyerPhone, setTicketBuyerPhone] = useState("");
   const [ticketQuantity, setTicketQuantity] = useState(1);
+  const [goalContributionAmounts, setGoalContributionAmounts] = useState<Record<string, string>>({});
 
   // Derived values from hooks (still part of hook section)
   const displayCreator = convexCreator;
@@ -1167,6 +1168,11 @@ export default function CreatorPage() {
                       const remainingAmount = Math.max(0, goal.targetAmount - goal.currentAmount);
                       const progress = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
                       const isCompleted = remainingAmount === 0;
+                      const goalContributionAmount = parseInt(goalContributionAmounts[goal._id] || "", 10);
+                      const hasValidContribution =
+                        Number.isFinite(goalContributionAmount) &&
+                        goalContributionAmount > 0 &&
+                        goalContributionAmount <= remainingAmount;
 
                       return (
                         <div key={goal._id} className="rounded-[2rem] border border-black/5 bg-white p-8 shadow-sm">
@@ -1193,7 +1199,7 @@ export default function CreatorPage() {
                             {!isCompleted ? (
                               <PaystackPayment
                                 email={checkoutEmail.trim()}
-                                amount={remainingAmount}
+                                amount={hasValidContribution ? goalContributionAmount : 0}
                                 type="goal"
                                 creatorId={displayCreator._id as Id<"creators">}
                                 userId={convexUserId as Id<"users"> | undefined}
@@ -1205,26 +1211,62 @@ export default function CreatorPage() {
                                 onError={handlePurchaseError}
                               >
                                 {({ loading, handlePayment }) => (
-                                  <button
-                                    onClick={() => {
-                                      if (!checkoutEmail.trim()) {
-                                        alert("Please enter your email address.");
-                                        return;
-                                      }
-                                      handlePayment();
-                                    }}
-                                    disabled={loading || !checkoutEmail.trim()}
-                                    className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
-                                  >
-                                    {loading ? (
-                                      <>
-                                        <div className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                                        Processing...
-                                      </>
-                                    ) : (
-                                      `Support Goal with ₦${remainingAmount.toLocaleString()}`
-                                    )}
-                                  </button>
+                                  <div className="mt-6 space-y-3">
+                                    <div>
+                                      <label className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">
+                                        Your contribution
+                                      </label>
+                                      <div className="mt-2 flex h-12 items-center rounded-xl border border-black/10 bg-black/5 px-4">
+                                        <span className="mr-2 text-sm font-bold text-black/40">NGN</span>
+                                        <input
+                                          type="number"
+                                          min={1}
+                                          max={remainingAmount}
+                                          inputMode="numeric"
+                                          placeholder={`Any amount up to NGN ${remainingAmount.toLocaleString()}`}
+                                          value={goalContributionAmounts[goal._id] || ""}
+                                          onChange={(e) =>
+                                            setGoalContributionAmounts((prev) => ({
+                                              ...prev,
+                                              [goal._id]: e.target.value,
+                                            }))
+                                          }
+                                          className="h-full w-full bg-transparent text-sm font-medium text-black focus:outline-none"
+                                        />
+                                      </div>
+                                      <p className="mt-2 text-xs text-black/40">
+                                        Supporters can add any amount. Remaining goal balance: {`NGN ${remainingAmount.toLocaleString()}`}.
+                                      </p>
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        if (!checkoutEmail.trim()) {
+                                          alert("Please enter your email address.");
+                                          return;
+                                        }
+                                        if (!goalContributionAmounts[goal._id] || !Number.isFinite(goalContributionAmount) || goalContributionAmount <= 0) {
+                                          alert("Enter how much you want to contribute.");
+                                          return;
+                                        }
+                                        if (goalContributionAmount > remainingAmount) {
+                                          alert(`Enter an amount up to NGN ${remainingAmount.toLocaleString()}.`);
+                                          return;
+                                        }
+                                        handlePayment();
+                                      }}
+                                      disabled={loading || !checkoutEmail.trim() || !hasValidContribution}
+                                      className="flex h-12 w-full items-center justify-center rounded-full bg-black text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
+                                    >
+                                      {loading ? (
+                                        <>
+                                          <div className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                          Processing...
+                                        </>
+                                      ) : (
+                                        `Contribute NGN ${goalContributionAmount.toLocaleString()}`
+                                      )}
+                                    </button>
+                                  </div>
                                 )}
                               </PaystackPayment>
                             ) : (
@@ -1393,3 +1435,5 @@ export default function CreatorPage() {
     </div>
   );
 }
+
+
