@@ -190,7 +190,6 @@ export default defineSchema({
     sectionOrder: v.array(v.string()),
     hiddenSections: v.array(v.string()),
   }).index("by_creatorId", ["creatorId"]),
-
   slates: defineTable({
     creatorId: v.id("creators"),
     title: v.optional(v.string()),

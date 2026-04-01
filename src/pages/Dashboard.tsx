@@ -41,16 +41,17 @@ export default function Dashboard() {
   const [showAdminButton, setShowAdminButton] = useState(false);
 
   useEffect(() => {
-    if (currentUser === undefined) {
+    if (currentUser === undefined && user === null) {
       return;
     }
 
     const isAdmin =
       currentUser?.role === "admin" ||
-      currentUser?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+      currentUser?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() ||
+      user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
 
     setShowAdminButton(!!isAdmin);
-  }, [currentUser]);
+  }, [currentUser, user]);
 
   // Fetch live data from Convex
   const convexCreator = useQuery(api.creators.getCreatorByUserId, {
