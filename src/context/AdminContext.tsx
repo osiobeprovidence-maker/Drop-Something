@@ -24,7 +24,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   const adminLoginMutation = useMutation(api.adminAuth.login);
   const adminLogoutMutation = useMutation(api.adminAuth.logout);
-  const { isLoading: authLoading, signOut } = useAuth();
+  const { isLoading: authLoading, signOut, user } = useAuth();
+  const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
   const currentUser = useQuery(api.users.currentUser);
 
   useEffect(() => {
@@ -55,6 +56,14 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (currentUser?.role === "admin") {
+      setIsAdmin(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // Allow the signed-in Firebase user with the super-admin email to access
+    // the admin dashboard without a separate admin login session.
+    if (user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
       setIsAdmin(true);
       setIsLoading(false);
       return;
