@@ -5,7 +5,7 @@ import {
   Heart, Users, Target, ShoppingBag, ExternalLink, Check, ChevronRight, ArrowLeft,
   FileText, Lock, Music, Twitter, Facebook, Instagram, Linkedin, Youtube, Globe,
   Mail, Link as LinkIcon, Twitch, Disc, Send, BookOpen, Gamepad2, Radio, Smartphone,
-  Calendar, MapPin, Ticket, User, Sparkles
+  Calendar, MapPin, Ticket, User
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/src/lib/utils";
@@ -406,7 +406,6 @@ export default function CreatorPage() {
 
   const tabs = [
     { id: "home", label: "Home", icon: Heart, show: true },
-    { id: "showcase", label: "Showcase", icon: Sparkles, show: true },
     { id: "slate", label: "Slate", icon: FileText, show: showSlate },
     { id: "wishlist", label: "Wishlist", icon: Target, show: showWishlist },
     { id: "membership", label: "Memberships", icon: Users, show: showMembership },
@@ -1023,29 +1022,6 @@ export default function CreatorPage() {
                     ))}
                   </div>
                 </section>
-              </motion.div>
-            )}
-
-            {activeTab === "showcase" && (
-              <motion.div
-                key="showcase"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                <div className="text-center py-16">
-                  <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mb-6">
-                    <Sparkles size={40} className="text-purple-600" />
-                  </div>
-                  <h2 className="text-2xl font-black text-black">Showcase</h2>
-                  <p className="text-black/60 mt-3 max-w-md mx-auto">
-                    A beautiful portfolio built from {displayCreator?.name}'s work on DropSomething.
-                  </p>
-                  <div className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black/5 text-black font-bold text-sm">
-                    <Sparkles size={16} />
-                    Coming Soon
-                  </div>
-                </div>
               </motion.div>
             )}
 
