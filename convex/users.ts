@@ -10,9 +10,11 @@ import {
 
 export const storeUser = mutation({
   args: {
+    email: v.optional(v.string()),
     username: v.optional(v.string()),
     name: v.optional(v.string()),
     image: v.optional(v.string()),
+    tokenIdentifier: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const result = await ensureUserFromIdentity(ctx, args);
