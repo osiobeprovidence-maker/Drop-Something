@@ -1044,21 +1044,18 @@ export default function CreatorPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mb-4">
-                    <Sparkles size={32} className="text-purple-600" />
+                <div className="text-center py-16">
+                  <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mb-6">
+                    <Sparkles size={40} className="text-purple-600" />
                   </div>
                   <h2 className="text-2xl font-black text-black">Showcase</h2>
-                  <p className="text-black/60 mt-2 max-w-md mx-auto">
+                  <p className="text-black/60 mt-3 max-w-md mx-auto">
                     A beautiful portfolio built from {displayCreator?.name}'s work on DropSomething.
                   </p>
-                  <a
-                    href={`/${displayCreator?.username}/showcase`}
-                    className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white font-bold text-sm hover:bg-gray-900 transition-colors"
-                  >
-                    <ExternalLink size={16} />
-                    View Full Showcase
-                  </a>
+                  <div className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black/5 text-black font-bold text-sm">
+                    <Sparkles size={16} />
+                    Coming Soon
+                  </div>
                 </div>
               </motion.div>
             )}
