@@ -786,7 +786,7 @@ export default function Dashboard() {
                     return;
                   }
                   if (item.id === "explore") {
-                    window.open("/explore", "_blank", "noopener,noreferrer");
+                    navigate("/explore");
                     return;
                   }
                   setActiveTab(item.id);
