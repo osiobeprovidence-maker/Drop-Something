@@ -37,7 +37,6 @@ export default function Dashboard() {
   };
 
   const currentUser = useQuery(api.users.currentUser);
-  const SUPER_ADMIN_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL || "riderezzy@gmail.com";
   const [showAdminButton, setShowAdminButton] = useState(false);
 
   useEffect(() => {
@@ -47,8 +46,7 @@ export default function Dashboard() {
 
     const isAdmin =
       currentUser?.role === "admin" ||
-      currentUser?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() ||
-      user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+      currentUser?.role === "super_admin";
 
     setShowAdminButton(!!isAdmin);
   }, [currentUser, user]);

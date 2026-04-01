@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireAdmin } from "./auth";
 
 export const getCreatorByUsername = query({
   args: { username: v.string() },
@@ -506,25 +507,12 @@ export const ensureCreatorProfile = mutation({
 export const assignCreatorToEmail = mutation({
   args: { username: v.string(), email: v.string() },
   handler: async (ctx, args) => {
-    // Require authenticated admin user
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const requestingUser = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
-      .unique();
-
-    if (!requestingUser || requestingUser.role !== "admin") {
-      throw new Error("Not authorized");
-    }
+    await requireAdmin(ctx);
 
     // Find the target user by email
     const targetUser = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("email"), args.email))
+      .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
       .unique();
 
     if (!targetUser) {

@@ -1,41 +1,38 @@
+import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { Doc } from "./_generated/dataModel";
+import {
+  findUserByUsername,
+  requireAdmin,
+  requireModerator,
+  requireSuperAdmin,
+  SUPER_ADMIN_USERNAME,
+  withEffectiveRole,
+} from "./auth";
 
-async function requireAdmin(ctx: any, sessionToken?: string) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (identity) {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
-      .unique();
+async function updateRoleByUsername(
+  ctx: MutationCtx,
+  username: string,
+  role: "admin" | "moderator" | "user",
+) {
+  const normalizedUsername = username.toLowerCase().trim();
+  const user = await findUserByUsername(ctx, normalizedUsername);
 
-    // Allow DB role-based admins or the configured super-admin email
-    const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || "riderezzy@gmail.com";
-    if (user?.role === "admin" || user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
-      return { user, session: null as Doc<"adminSessions"> | null };
-    }
+  if (!user) {
+    throw new Error(`User not found: ${normalizedUsername}`);
   }
 
-  if (!sessionToken) {
-    throw new Error("Unauthorized: Admin access required");
+  if (user.username?.toLowerCase() === SUPER_ADMIN_USERNAME) {
+    return withEffectiveRole(user);
   }
 
-  const session = await ctx.db
-    .query("adminSessions")
-    .withIndex("by_token", (q) => q.eq("token", sessionToken))
-    .unique();
-
-  if (!session) {
-    throw new Error("Unauthorized: Admin access required");
+  await ctx.db.patch(user._id, { role });
+  const updatedUser = await ctx.db.get(user._id);
+  if (!updatedUser) {
+    throw new Error("Failed to update user role");
   }
 
-  if (session.expiresAt <= Date.now()) {
-    await ctx.db.delete(session._id);
-    throw new Error("Unauthorized: Admin session expired");
-  }
-
-  return { user: null, session };
+  return withEffectiveRole(updatedUser);
 }
 
 export const getOverviewStats = query({
@@ -43,7 +40,8 @@ export const getOverviewStats = query({
     sessionToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
+    void args;
+    await requireAdmin(ctx);
 
     const users = await ctx.db.query("users").collect();
     const slates = await ctx.db.query("slates").collect();
@@ -70,8 +68,10 @@ export const getAllUsers = query({
     sessionToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
-    return await ctx.db.query("users").collect();
+    void args;
+    await requireAdmin(ctx);
+    const users = await ctx.db.query("users").collect();
+    return users.map(withEffectiveRole);
   },
 });
 
@@ -79,11 +79,62 @@ export const updateUserRole = mutation({
   args: {
     sessionToken: v.optional(v.string()),
     userId: v.id("users"),
-    role: v.union(v.literal("user"), v.literal("admin")),
+    role: v.union(v.literal("user"), v.literal("moderator"), v.literal("admin")),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
-    return await ctx.db.patch(args.userId, { role: args.role });
+    void args.sessionToken;
+    if (args.role === "admin") {
+      await requireSuperAdmin(ctx);
+    } else {
+      await requireAdmin(ctx);
+    }
+
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (user.username?.toLowerCase() === SUPER_ADMIN_USERNAME) {
+      throw new Error("Cannot change the super admin role");
+    }
+
+    await ctx.db.patch(args.userId, { role: args.role });
+    const updatedUser = await ctx.db.get(args.userId);
+    return updatedUser ? withEffectiveRole(updatedUser) : null;
+  },
+});
+
+export const addAdmin = mutation({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    await requireSuperAdmin(ctx);
+    return await updateRoleByUsername(ctx, args.username, "admin");
+  },
+});
+
+export const removeAdmin = mutation({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    await requireSuperAdmin(ctx);
+    if (args.username.toLowerCase().trim() === SUPER_ADMIN_USERNAME) {
+      throw new Error("Cannot remove the super admin");
+    }
+    return await updateRoleByUsername(ctx, args.username, "user");
+  },
+});
+
+export const addModerator = mutation({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    if (args.username.toLowerCase().trim() === SUPER_ADMIN_USERNAME) {
+      const user = await findUserByUsername(ctx, args.username);
+      if (!user) {
+        throw new Error(`User not found: ${args.username}`);
+      }
+      return withEffectiveRole(user);
+    }
+    return await updateRoleByUsername(ctx, args.username, "moderator");
   },
 });
 
@@ -94,9 +145,10 @@ export const banUser = mutation({
     reason: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
+    void args.sessionToken;
+    await requireModerator(ctx);
     return await ctx.db.patch(args.userId, {
-      role: "banned",
+      isBanned: true,
     });
   },
 });
@@ -106,7 +158,8 @@ export const getAllSlates = query({
     sessionToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
+    void args;
+    await requireAdmin(ctx);
     const slates = await ctx.db.query("slates").order("desc").collect();
 
     return await Promise.all(
@@ -129,17 +182,16 @@ export const deleteSlate = mutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const admin = await requireAdmin(ctx, args.sessionToken);
+    void args.sessionToken;
+    const admin = await requireAdmin(ctx);
 
-    if (admin.user) {
-      await ctx.db.insert("reports", {
-        reporterId: admin.user._id,
-        targetId: args.slateId,
-        type: "slate",
-        reason: args.reason || "Admin removed",
-        status: "resolved",
-      });
-    }
+    await ctx.db.insert("reports", {
+      reporterId: admin._id,
+      targetId: args.slateId,
+      type: "slate",
+      reason: args.reason || "Admin removed",
+      status: "resolved",
+    });
 
     return await ctx.db.delete(args.slateId);
   },
@@ -150,7 +202,8 @@ export const getAllComments = query({
     sessionToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
+    void args;
+    await requireAdmin(ctx);
     const comments = await ctx.db.query("slateComments").order("desc").collect();
 
     return await Promise.all(
@@ -172,7 +225,9 @@ export const deleteComment = mutation({
     reason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
+    void args.reason;
+    void args.sessionToken;
+    await requireModerator(ctx);
     return await ctx.db.delete(args.commentId);
   },
 });
@@ -182,7 +237,8 @@ export const getAllProducts = query({
     sessionToken: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
+    void args;
+    await requireAdmin(ctx);
     const products = await ctx.db.query("products").collect();
 
     return await Promise.all(
@@ -204,7 +260,8 @@ export const deleteProduct = mutation({
     productId: v.id("products"),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
+    void args.sessionToken;
+    await requireModerator(ctx);
     return await ctx.db.delete(args.productId);
   },
 });
@@ -215,7 +272,8 @@ export const getReports = query({
     status: v.optional(v.union(v.literal("pending"), v.literal("resolved"), v.literal("dismissed"))),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
+    void args.sessionToken;
+    await requireModerator(ctx);
 
     if (args.status) {
       return await ctx.db
@@ -235,7 +293,8 @@ export const updateReportStatus = mutation({
     status: v.union(v.literal("pending"), v.literal("resolved"), v.literal("dismissed")),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
+    void args.sessionToken;
+    await requireModerator(ctx);
     return await ctx.db.patch(args.reportId, { status: args.status });
   },
 });
@@ -262,7 +321,8 @@ export const updateUserPlan = mutation({
     plan: v.union(v.literal("free"), v.literal("pro"), v.literal("premium")),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.sessionToken);
+    void args.sessionToken;
+    await requireAdmin(ctx);
     console.log(`Admin updated user ${args.userId} plan to ${args.plan}`);
     return { success: true };
   },

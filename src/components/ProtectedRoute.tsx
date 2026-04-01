@@ -46,7 +46,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   }
 
   // Check admin access if required
-  if (requireAdmin && currentUser?.role !== "admin") {
+  if (
+    requireAdmin &&
+    currentUser?.role !== "admin" &&
+    currentUser?.role !== "super_admin"
+  ) {
     return <Navigate to="/" replace />;
   }
 

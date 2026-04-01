@@ -27,8 +27,8 @@ export const PlatformNavbar = () => {
 
   useEffect(() => {
     if (currentUser) {
-      const SUPER_ADMIN_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL || "riderezzy@gmail.com";
-      const isAdmin = currentUser.role === "admin" || currentUser.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+      const isAdmin =
+        currentUser.role === "admin" || currentUser.role === "super_admin";
       setShowAdminButton(isAdmin);
       return;
     }

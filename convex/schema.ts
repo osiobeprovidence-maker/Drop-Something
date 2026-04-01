@@ -4,11 +4,22 @@ import { v } from "convex/values";
 export default defineSchema({
   users: defineTable({
     name: v.string(),
+    username: v.optional(v.string()),
     email: v.string(),
     image: v.optional(v.string()),
     tokenIdentifier: v.string(), // For Firebase/Clerk/etc
-    role: v.optional(v.union(v.literal("user"), v.literal("admin"), v.literal("banned"))),
-  }).index("by_token", ["tokenIdentifier"]),
+    role: v.optional(
+      v.union(
+        v.literal("super_admin"),
+        v.literal("admin"),
+        v.literal("moderator"),
+        v.literal("user"),
+      ),
+    ),
+    isBanned: v.optional(v.boolean()),
+  }).index("by_token", ["tokenIdentifier"])
+    .index("by_email", ["email"])
+    .index("by_username", ["username"]),
 
   adminSessions: defineTable({
     token: v.string(),

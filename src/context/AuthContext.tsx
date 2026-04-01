@@ -63,10 +63,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 4. Sync with Convex in the background
       try {
         const result = await storeUser({
+          username: firebaseUser.displayName || undefined,
           name: firebaseUser.displayName || "Anonymous",
-          email: firebaseUser.email || "",
           image: firebaseUser.photoURL || undefined,
-          tokenIdentifier: firebaseUser.uid,
         });
         
         // storeUser now returns an object with id and isNew

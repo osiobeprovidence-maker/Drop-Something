@@ -12,7 +12,9 @@ export const seedMockData = mutation({
     // 1. Create a dummy user for the creators
     const dummyUserId = await ctx.db.insert("users", {
       name: "Admin User",
+      username: "admin_user",
       email: "admin@dropsomething.com",
+      role: "user",
       tokenIdentifier: "admin-token-123",
     });
 
