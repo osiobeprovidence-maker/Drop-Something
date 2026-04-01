@@ -14,8 +14,8 @@ export const storeUser = mutation({
       .withIndex("by_token", (q) => q.eq("tokenIdentifier", args.tokenIdentifier))
       .unique();
 
-    // Super admin email - automatically grant admin role
-    const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
+    // Super admin email - automatically grant admin role (read from env)
+    const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || "riderezzy@gmail.com";
     const isAdmin = args.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
 
     if (existingUser) {
@@ -54,8 +54,8 @@ export const currentUser = query({
 export const setAdminRole = mutation({
   args: { email: v.string() },
   handler: async (ctx, args) => {
-    // Only allow setting admin for super admin email
-    const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
+    // Only allow setting admin for super admin email (read from env)
+    const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || "riderezzy@gmail.com";
     if (args.email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
       throw new Error("Unauthorized: Only the super admin email can be set as admin");
     }
@@ -79,7 +79,7 @@ export const setAdminRoleMutation = mutation({
   args: { email: v.string() },
   handler: async (ctx, args) => {
     // This is kept for backward compatibility - redirects to setAdminRole logic
-    const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
+    const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || "riderezzy@gmail.com";
     if (args.email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
       throw new Error("Unauthorized: Only the super admin email can be set as admin");
     }

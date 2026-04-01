@@ -25,7 +25,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const adminLoginMutation = useMutation(api.adminAuth.login);
   const adminLogoutMutation = useMutation(api.adminAuth.logout);
   const { isLoading: authLoading, signOut, user } = useAuth();
-  const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
+  const SUPER_ADMIN_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL || "riderezzy@gmail.com";
   const currentUser = useQuery(api.users.currentUser);
 
   useEffect(() => {

@@ -37,7 +37,7 @@ export default function Dashboard() {
   };
 
   const currentUser = useQuery(api.users.currentUser);
-  const SUPER_ADMIN_EMAIL = "riderezzy@gmail.com";
+  const SUPER_ADMIN_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL || "riderezzy@gmail.com";
   const [showAdminButton, setShowAdminButton] = useState(false);
 
   useEffect(() => {
