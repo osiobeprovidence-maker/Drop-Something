@@ -10,7 +10,9 @@ async function requireAdmin(ctx: any, sessionToken?: string) {
       .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
       .unique();
 
-    if (user?.role === "admin") {
+    // Allow DB role-based admins or the configured super-admin email
+    const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || "riderezzy@gmail.com";
+    if (user?.role === "admin" || user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
       return { user, session: null as Doc<"adminSessions"> | null };
     }
   }
