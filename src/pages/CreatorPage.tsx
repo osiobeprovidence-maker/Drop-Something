@@ -506,17 +506,6 @@ export default function CreatorPage() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
-        <div className="py-4">
-          <a
-            href="/explore"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-black/10 bg-white px-4 py-2 text-sm font-bold text-black hover:bg-black/5 transition-colors"
-          >
-            <ArrowLeft size={16} />
-            Back to Explore
-          </a>
-        </div>
-
         {/* Profile Section */}
         <div className="relative -mt-12 mb-8 flex flex-col items-center">
           <div className="relative mx-auto h-20 w-20 sm:h-28 sm:w-28">
