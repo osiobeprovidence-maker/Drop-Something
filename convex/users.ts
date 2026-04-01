@@ -23,8 +23,8 @@ export const storeUser = mutation({
         name: args.name,
         email: args.email,
         image: args.image,
-        // Ensure admin role is set for super admin
-        role: existingUser.role || (isAdmin ? "admin" : "user"),
+        // Prioritize super-admin email; otherwise keep existing role or default to user
+        role: isAdmin ? "admin" : (existingUser.role || "user"),
       });
       return { id: existingUser._id, isNew: false };
     }
