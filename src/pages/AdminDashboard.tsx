@@ -4,14 +4,28 @@ import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, FileText, MessageCircle, ShoppingBag,
   Flag, Shield, Ban, Trash2, Check, X, AlertCircle,
-  Activity, Package
+  Activity, Package, DollarSign, CreditCard, TrendingUp, Repeat, Truck
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAdmin } from "@/src/context/AdminContext";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-type AdminTab = "overview" | "users" | "slate" | "comments" | "shop" | "reports";
+type AdminTab = "overview" | "users" | "slate" | "comments" | "shop" | "reports" | "finance";
+
+function formatCurrency(value: number) {
+  return `N${value.toLocaleString()}`;
+}
+
+function formatDateTime(timestamp: number) {
+  return new Date(timestamp).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 function useAdminQueryArgs() {
   const { sessionToken } = useAdmin();
@@ -47,6 +61,7 @@ export default function AdminDashboard() {
               { id: "comments", label: "Comments", icon: MessageCircle },
               { id: "shop", label: "Shop", icon: ShoppingBag },
               { id: "reports", label: "Reports", icon: Flag },
+              { id: "finance", label: "Finance", icon: DollarSign },
             ].map((item) => (
               <button
                 key={item.id}
@@ -103,6 +118,7 @@ export default function AdminDashboard() {
             {activeTab === "comments" && <CommentsTab />}
             {activeTab === "shop" && <ShopTab />}
             {activeTab === "reports" && <ReportsTab />}
+            {activeTab === "finance" && <FinanceTab />}
           </AnimatePresence>
         </div>
       </main>
@@ -133,6 +149,7 @@ function OverviewTab() {
           { label: "Creators", value: stats.totalCreators, icon: Activity, color: "text-pink-600" },
           { label: "Products", value: stats.totalProducts, icon: Package, color: "text-amber-600" },
           { label: "Pending Reports", value: stats.pendingReports, icon: Flag, color: "text-red-600" },
+          { label: "Gross Revenue", value: formatCurrency(stats.grossRevenue), icon: DollarSign, color: "text-emerald-600" },
         ].map((stat, i) => (
           <div key={i} className="rounded-2xl border border-gray-200 bg-white p-6">
             <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100", stat.color)}>
@@ -142,6 +159,159 @@ function OverviewTab() {
             <p className="mt-1 text-2xl font-black text-black">{stat.value}</p>
           </div>
         ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function FinanceTab() {
+  const adminQueryArgs = useAdminQueryArgs();
+  const report = useQuery(api.admin.getFinancialReport, adminQueryArgs);
+
+  if (!report) {
+    return <LoadingState />;
+  }
+
+  const maxDailyRevenue = Math.max(...report.recentDailyRevenue.map((entry) => entry.amount), 1);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="space-y-8"
+    >
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {[
+          { label: "Total Revenue", value: formatCurrency(report.totalRevenue), icon: DollarSign, color: "text-emerald-600" },
+          { label: "Transactions", value: report.totalTransactions.toLocaleString(), icon: CreditCard, color: "text-blue-600" },
+          { label: "Last 7 Days", value: formatCurrency(report.last7DaysRevenue), icon: TrendingUp, color: "text-purple-600" },
+          { label: "Last 30 Days", value: formatCurrency(report.last30DaysRevenue), icon: Activity, color: "text-pink-600" },
+          { label: "Active Subscriptions", value: report.activeSubscriptions.toLocaleString(), icon: Repeat, color: "text-amber-600" },
+          { label: "Pending Deliveries", value: report.pendingDeliveries.toLocaleString(), icon: Truck, color: "text-red-600" },
+        ].map((stat) => (
+          <div key={stat.label} className="rounded-2xl border border-gray-200 bg-white p-6">
+            <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100", stat.color)}>
+              <stat.icon size={20} />
+            </div>
+            <p className="mt-4 text-sm font-medium text-gray-500">{stat.label}</p>
+            <p className="mt-1 text-2xl font-black text-black">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-black">Revenue Last 7 Days</h3>
+              <p className="text-sm text-gray-500">Recent completed payment volume</p>
+            </div>
+            <TrendingUp size={18} className="text-gray-400" />
+          </div>
+          <div className="space-y-4">
+            {report.recentDailyRevenue.map((entry) => (
+              <div key={entry.label} className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-gray-600">{entry.label}</span>
+                  <span className="font-bold text-black">{formatCurrency(entry.amount)}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className="h-full rounded-full bg-black transition-all"
+                    style={{ width: `${Math.max((entry.amount / maxDailyRevenue) * 100, entry.amount > 0 ? 8 : 0)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-black">Revenue by Payment Type</h3>
+            <p className="text-sm text-gray-500">Where the money is coming from</p>
+          </div>
+          <div className="space-y-3">
+            {[
+              { label: "Tips", value: report.revenueByType.tip },
+              { label: "Memberships", value: report.revenueByType.membership },
+              { label: "Products", value: report.revenueByType.product },
+              { label: "Goals", value: report.revenueByType.goal },
+              { label: "Wishlists", value: report.revenueByType.wishlist },
+              { label: "Subscriptions", value: report.revenueByType.subscription },
+            ].map((entry) => (
+              <div key={entry.label} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                <span className="text-sm font-medium text-gray-600">{entry.label}</span>
+                <span className="text-sm font-bold text-black">{formatCurrency(entry.value)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-black">Top Earning Creators</h3>
+            <p className="text-sm text-gray-500">Based on recorded completed payments</p>
+          </div>
+          {report.topCreators.length === 0 ? (
+            <EmptyState message="No creator revenue recorded yet" />
+          ) : (
+            <div className="space-y-3">
+              {report.topCreators.map((creator, index) => (
+                <div key={creator.creatorId} className="flex items-center justify-between rounded-xl border border-gray-100 px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-black">{creator.creatorName}</p>
+                      <p className="text-xs text-gray-500">@{creator.creatorUsername} · {creator.transactions} transactions</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-black text-black">{formatCurrency(creator.revenue)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-black">Recent Transactions</h3>
+            <p className="text-sm text-gray-500">Latest completed payment receipts</p>
+          </div>
+          {report.recentTransactions.length === 0 ? (
+            <EmptyState message="No transactions found" />
+          ) : (
+            <div className="space-y-3">
+              {report.recentTransactions.map((transaction) => (
+                <div key={transaction.reference} className="rounded-xl border border-gray-100 px-4 py-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase text-gray-700">
+                          {transaction.type}
+                        </span>
+                        {transaction.creatorUsername && (
+                          <span className="text-xs text-gray-500">@{transaction.creatorUsername}</span>
+                        )}
+                      </div>
+                      <p className="mt-2 text-sm font-bold text-black">{transaction.email}</p>
+                      <p className="text-xs text-gray-500">{formatDateTime(transaction.fulfilledAt)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-black text-black">{formatCurrency(transaction.amount)}</p>
+                      <p className="text-xs text-gray-500">{transaction.reference}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   );

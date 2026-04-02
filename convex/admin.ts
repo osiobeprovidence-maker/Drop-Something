@@ -49,8 +49,10 @@ export const getOverviewStats = query({
     const creators = await ctx.db.query("creators").collect();
     const products = await ctx.db.query("products").collect();
     const reports = await ctx.db.query("reports").collect();
+    const receipts = await ctx.db.query("paymentReceipts").collect();
 
     const pendingReports = reports.filter((report) => report.status === "pending").length;
+    const grossRevenue = receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
 
     return {
       totalUsers: users.length,
@@ -59,6 +61,129 @@ export const getOverviewStats = query({
       totalCreators: creators.length,
       totalProducts: products.length,
       pendingReports,
+      grossRevenue,
+    };
+  },
+});
+
+export const getFinancialReport = query({
+  args: {
+    sessionToken: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    void args;
+    await requireAdmin(ctx);
+
+    const [receipts, creators, subscriptions] = await Promise.all([
+      ctx.db.query("paymentReceipts").collect(),
+      ctx.db.query("creators").collect(),
+      ctx.db.query("subscriptions").collect(),
+    ]);
+
+    const sortedReceipts = [...receipts].sort((left, right) => right.fulfilledAt - left.fulfilledAt);
+    const now = Date.now();
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+    const revenueByType = {
+      tip: 0,
+      membership: 0,
+      product: 0,
+      goal: 0,
+      wishlist: 0,
+      subscription: 0,
+    };
+
+    const creatorRevenue = new Map<
+      string,
+      {
+        creatorId: string;
+        creatorName: string;
+        creatorUsername: string;
+        revenue: number;
+        transactions: number;
+      }
+    >();
+
+    for (const receipt of sortedReceipts) {
+      revenueByType[receipt.type] += receipt.amount;
+
+      if (!receipt.creatorId) {
+        continue;
+      }
+
+      const creator = creators.find((entry) => entry._id === receipt.creatorId);
+      const key = receipt.creatorId;
+      const existing = creatorRevenue.get(key);
+
+      if (existing) {
+        existing.revenue += receipt.amount;
+        existing.transactions += 1;
+        continue;
+      }
+
+      creatorRevenue.set(key, {
+        creatorId: receipt.creatorId,
+        creatorName: creator?.name || "Unknown",
+        creatorUsername: creator?.username || "unknown",
+        revenue: receipt.amount,
+        transactions: 1,
+      });
+    }
+
+    const topCreators = Array.from(creatorRevenue.values())
+      .sort((left, right) => right.revenue - left.revenue)
+      .slice(0, 5);
+
+    const recentTransactions = await Promise.all(
+      sortedReceipts.slice(0, 12).map(async (receipt) => {
+        const creator = receipt.creatorId ? await ctx.db.get(receipt.creatorId) : null;
+
+        return {
+          ...receipt,
+          creatorName: creator?.name || null,
+          creatorUsername: creator?.username || null,
+        };
+      }),
+    );
+
+    const recentDailyRevenue = Array.from({ length: 7 }, (_, offset) => {
+      const start = new Date(now - (6 - offset) * 24 * 60 * 60 * 1000);
+      start.setHours(0, 0, 0, 0);
+      const end = start.getTime() + 24 * 60 * 60 * 1000;
+
+      const amount = sortedReceipts.reduce((sum, receipt) => {
+        if (receipt.fulfilledAt >= start.getTime() && receipt.fulfilledAt < end) {
+          return sum + receipt.amount;
+        }
+        return sum;
+      }, 0);
+
+      return {
+        label: start.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        amount,
+      };
+    });
+
+    return {
+      totalRevenue: sortedReceipts.reduce((sum, receipt) => sum + receipt.amount, 0),
+      totalTransactions: sortedReceipts.length,
+      last7DaysRevenue: sortedReceipts
+        .filter((receipt) => receipt.fulfilledAt >= sevenDaysAgo)
+        .reduce((sum, receipt) => sum + receipt.amount, 0),
+      last30DaysRevenue: sortedReceipts
+        .filter((receipt) => receipt.fulfilledAt >= thirtyDaysAgo)
+        .reduce((sum, receipt) => sum + receipt.amount, 0),
+      activeSubscriptions: subscriptions.filter(
+        (subscription) => subscription.status === "active" && subscription.expiresAt >= now,
+      ).length,
+      pendingDeliveries: sortedReceipts.filter(
+        (receipt) => receipt.deliveryRequired && !receipt.deliveryAddressId,
+      ).length,
+      revenueByType,
+      topCreators,
+      recentTransactions,
+      recentDailyRevenue,
     };
   },
 });
