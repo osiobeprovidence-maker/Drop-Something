@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, FileText, MessageCircle, ShoppingBag,
-  Flag, LogOut, Shield, Ban, Trash2, Check, X, AlertCircle,
+  Flag, Shield, Ban, Trash2, Check, X, AlertCircle,
   Activity, Package
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
@@ -18,9 +19,9 @@ function useAdminQueryArgs() {
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { adminLogout } = useAdmin();
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -65,13 +66,11 @@ export default function AdminDashboard() {
 
           <div className="mt-auto border-t border-gray-200 pt-4">
             <button
-              onClick={() => {
-                void adminLogout();
-              }}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
+              onClick={() => navigate("/dashboard")}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
             >
-              <LogOut size={20} />
-              Logout
+              <LayoutDashboard size={20} />
+              Back to Dashboard
             </button>
           </div>
         </div>
