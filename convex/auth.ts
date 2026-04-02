@@ -18,6 +18,14 @@ function fallbackUsernameFromEmail(email: string) {
   return email.split("@")[0] || "user";
 }
 
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function normalizeTokenIdentifier(value: string) {
+  return value.trim();
+}
+
 function normalizeUsername(value: string) {
   const normalized = value
     .toLowerCase()
@@ -79,17 +87,38 @@ export function withEffectiveRole(user: UserDoc): AuthenticatedUser {
 }
 
 export async function findUserByEmail(ctx: AuthCtx, email: string) {
-  return await ctx.db
+  const normalizedEmail = normalizeEmail(email);
+  const indexedMatch = await ctx.db
     .query("users")
-    .withIndex("by_email", (q) => q.eq("email", email.toLowerCase()))
+    .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
     .unique();
+
+  if (indexedMatch) {
+    return indexedMatch;
+  }
+
+  const users = await ctx.db.query("users").collect();
+  return users.find((user) => normalizeEmail(user.email) === normalizedEmail) ?? null;
 }
 
 async function findUserByTokenIdentifier(ctx: AuthCtx, tokenIdentifier: string) {
-  return await ctx.db
+  const normalizedTokenIdentifier = normalizeTokenIdentifier(tokenIdentifier);
+  const indexedMatch = await ctx.db
     .query("users")
-    .withIndex("by_token", (q) => q.eq("tokenIdentifier", tokenIdentifier))
+    .withIndex("by_token", (q) => q.eq("tokenIdentifier", normalizedTokenIdentifier))
     .unique();
+
+  if (indexedMatch) {
+    return indexedMatch;
+  }
+
+  const users = await ctx.db.query("users").collect();
+  return (
+    users.find(
+      (user) =>
+        normalizeTokenIdentifier(user.tokenIdentifier) === normalizedTokenIdentifier,
+    ) ?? null
+  );
 }
 
 export async function findUserByUsername(ctx: AuthCtx, username: string) {
@@ -120,16 +149,77 @@ async function generateUniqueUsername(
   throw new Error("Unable to generate a unique username");
 }
 
+async function getCreatorProfileForUser(ctx: AuthCtx, userId: UserDoc["_id"]) {
+  return await ctx.db
+    .query("creators")
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
+    .unique();
+}
+
+async function resolveUserForIdentity(
+  ctx: AuthCtx,
+  identity: NonNullable<Awaited<ReturnType<AuthCtx["auth"]["getUserIdentity"]>>>,
+) {
+  const normalizedEmail = normalizeEmail(identity.email ?? "");
+  const normalizedTokenIdentifier = normalizeTokenIdentifier(identity.subject);
+  const users = await ctx.db.query("users").collect();
+
+  const candidates = users.filter((user) => {
+    const emailMatches = normalizeEmail(user.email) === normalizedEmail;
+    const tokenMatches =
+      normalizeTokenIdentifier(user.tokenIdentifier) === normalizedTokenIdentifier;
+    return emailMatches || tokenMatches;
+  });
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const candidatesWithCreator = await Promise.all(
+    candidates.map(async (candidate) => ({
+      user: candidate,
+      creatorProfile: await getCreatorProfileForUser(ctx, candidate._id),
+      emailMatches: normalizeEmail(candidate.email) === normalizedEmail,
+      tokenMatches:
+        normalizeTokenIdentifier(candidate.tokenIdentifier) ===
+        normalizedTokenIdentifier,
+    })),
+  );
+
+  candidatesWithCreator.sort((left, right) => {
+    const leftHasCreator = left.creatorProfile ? 1 : 0;
+    const rightHasCreator = right.creatorProfile ? 1 : 0;
+
+    if (leftHasCreator !== rightHasCreator) {
+      return rightHasCreator - leftHasCreator;
+    }
+
+    const leftEmailMatch = left.emailMatches ? 1 : 0;
+    const rightEmailMatch = right.emailMatches ? 1 : 0;
+    if (leftEmailMatch !== rightEmailMatch) {
+      return rightEmailMatch - leftEmailMatch;
+    }
+
+    const leftTokenMatch = left.tokenMatches ? 1 : 0;
+    const rightTokenMatch = right.tokenMatches ? 1 : 0;
+    if (leftTokenMatch !== rightTokenMatch) {
+      return rightTokenMatch - leftTokenMatch;
+    }
+
+    return left.user._creationTime - right.user._creationTime;
+  });
+
+  return candidatesWithCreator[0] ?? null;
+}
+
 export async function getCurrentUserOrNull(ctx: AuthCtx) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity?.email) {
     return null;
   }
 
-  const email = identity.email.toLowerCase();
-  const user =
-    (await findUserByEmail(ctx, email)) ||
-    (await findUserByTokenIdentifier(ctx, identity.subject));
+  const resolvedUser = await resolveUserForIdentity(ctx, identity);
+  const user = resolvedUser?.user ?? null;
 
   return user ? withEffectiveRole(user) : null;
 }
@@ -140,10 +230,8 @@ export async function requireAuthenticatedUser(ctx: AuthCtx) {
     throw new Error("Unauthorized: Authentication required");
   }
 
-  const email = identity.email.toLowerCase();
-  const user =
-    (await findUserByEmail(ctx, email)) ||
-    (await findUserByTokenIdentifier(ctx, identity.subject));
+  const resolvedUser = await resolveUserForIdentity(ctx, identity);
+  const user = resolvedUser?.user ?? null;
 
   if (!user) {
     throw new Error("Unauthorized: User record not found");
@@ -193,28 +281,15 @@ export async function ensureUserFromIdentity(
     throw new Error("Unauthorized: Authentication required");
   }
 
-  const email = identity.email.toLowerCase();
-  const existingByEmail = await findUserByEmail(ctx, email);
-  const existingByToken = await findUserByTokenIdentifier(ctx, identity.subject);
-
-  if (
-    existingByEmail &&
-    existingByToken &&
-    existingByEmail._id !== existingByToken._id
-  ) {
-    throw new Error(
-      "Data integrity error: email and tokenIdentifier point to different users",
-    );
-  }
-
-  const existingUser = existingByEmail || existingByToken;
+  const email = normalizeEmail(identity.email);
+  const resolvedUser = await resolveUserForIdentity(ctx, identity);
+  const existingUser = resolvedUser?.user ?? null;
   const fallbackName = profile?.name || identity.name || fallbackUsernameFromEmail(email);
 
   if (existingUser) {
-    const creatorProfile = await ctx.db
-      .query("creators")
-      .withIndex("by_userId", (q) => q.eq("userId", existingUser._id))
-      .unique();
+    const creatorProfile =
+      resolvedUser?.creatorProfile ??
+      (await getCreatorProfileForUser(ctx, existingUser._id));
 
     const desiredUsername =
       existingUser.username ||
