@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { User, FileText, ArrowRight, ImageIcon, Camera, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useMutation, useQuery } from "convex/react";
@@ -12,24 +12,22 @@ const PENDING_DELIVERY_KEY = "dropsomething.pendingDeliverySignup";
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { convexUserId, user, reloadUser, signOut } = useAuth();
-  
-  // Initialize state from localStorage if available
+  const { convexUserId, user, reloadUser, signOut, authSyncError } = useAuth();
+
   const [step, setStep] = useState(() => {
     const saved = localStorage.getItem("onboarding_step");
-    return saved ? parseInt(saved) : 1;
+    return saved ? parseInt(saved, 10) : 1;
   });
   const [username, setUsername] = useState(() => localStorage.getItem("onboarding_username") || "");
   const [bio, setBio] = useState(() => localStorage.getItem("onboarding_bio") || "");
   const [avatarUrl, setAvatarUrl] = useState(() => localStorage.getItem("onboarding_avatarUrl") || "");
   const [localPreview, setLocalPreview] = useState<string | null>(null);
-  
+
   const [isVerifying, setIsVerifying] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  
-  // Persist state to localStorage whenever it changes
+
   useEffect(() => {
     localStorage.setItem("onboarding_step", step.toString());
     localStorage.setItem("onboarding_username", username);
@@ -38,18 +36,22 @@ export default function Onboarding() {
   }, [step, username, bio, avatarUrl]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const generateUploadUrl = useMutation(api.creators.generateUploadUrl);
   const createCreator = useMutation(api.creators.createCreator);
 
-  // Get public URL for the storage ID if it exists
-  const convexAvatarUrl = useQuery(api.creators.getFileUrl, 
-    (avatarUrl && !avatarUrl.startsWith("http") && !avatarUrl.startsWith("data:")) 
-      ? { storageId: avatarUrl } 
-      : "skip"
+  const convexAvatarUrl = useQuery(
+    api.creators.getFileUrl,
+    avatarUrl && !avatarUrl.startsWith("http") && !avatarUrl.startsWith("data:")
+      ? { storageId: avatarUrl }
+      : "skip",
   );
 
-  const avatarDisplayUrl = localPreview || convexAvatarUrl || (avatarUrl.startsWith("http") ? avatarUrl : null) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
+  const avatarDisplayUrl =
+    localPreview ||
+    convexAvatarUrl ||
+    (avatarUrl.startsWith("http") ? avatarUrl : null) ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
 
   const handleLogout = async () => {
     await signOut();
@@ -75,48 +77,47 @@ export default function Onboarding() {
   const handleNext = async () => {
     if (step < 3) {
       setStep(step + 1);
-    } else {
-      if (!convexUserId) {
-        setError("Your account is still syncing. Please wait a moment and try again.");
-        return;
+      return;
+    }
+
+    if (!convexUserId) {
+      setError(authSyncError || "Your account is still syncing. Please wait a moment and try again.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const finalAvatar =
+        avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
+
+      await createCreator({
+        userId: convexUserId,
+        username: username.toLowerCase(),
+        name: username,
+        bio,
+        avatar: finalAvatar,
+        coverImage: "https://picsum.photos/seed/cover/1200/400",
+        pageStyle: "hybrid",
+      });
+
+      localStorage.removeItem("onboarding_step");
+      localStorage.removeItem("onboarding_username");
+      localStorage.removeItem("onboarding_bio");
+      localStorage.removeItem("onboarding_avatarUrl");
+
+      if (localStorage.getItem(PENDING_DELIVERY_KEY)) {
+        navigate("/settings?tab=delivery&source=checkout");
+      } else {
+        navigate("/dashboard");
       }
-      
-      setIsLoading(true);
-      setError("");
-      
-      try {
-        // Use the storageId (avatarUrl) for the database if available, 
-        // otherwise fallback to a default avatar
-        const finalAvatar = avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username || "default"}`;
-
-        await createCreator({
-          userId: convexUserId,
-          username: username.toLowerCase(),
-          name: username,
-          bio: bio,
-          avatar: finalAvatar,
-          coverImage: "https://picsum.photos/seed/cover/1200/400",
-          pageStyle: "hybrid",
-        });
-
-        // Clear localStorage on success
-        localStorage.removeItem("onboarding_step");
-        localStorage.removeItem("onboarding_username");
-        localStorage.removeItem("onboarding_bio");
-        localStorage.removeItem("onboarding_avatarUrl");
-
-        if (localStorage.getItem(PENDING_DELIVERY_KEY)) {
-          navigate("/settings?tab=delivery&source=checkout");
-        } else {
-          navigate("/dashboard");
-        }
-      } catch (err: any) {
-        console.error("Onboarding error:", err);
-        setError(err.message || "Failed to complete setup. Username might be taken.");
-        setStep(1); // Go back to username step
-      } finally {
-        setIsLoading(false);
-      }
+    } catch (err: unknown) {
+      console.error("Onboarding error:", err);
+      setError(err instanceof Error ? err.message : "Failed to complete setup. Username might be taken.");
+      setStep(1);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -124,13 +125,11 @@ export default function Onboarding() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size (limit to 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError("Image size must be less than 5MB.");
       return;
     }
 
-    // Set immediate local preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setLocalPreview(reader.result as string);
@@ -140,26 +139,22 @@ export default function Onboarding() {
     setIsUploading(true);
     setError("");
     try {
-      // 1. Get upload URL from Convex
       const postUrl = await generateUploadUrl();
-      
-      // 2. Post file to Convex storage
+
       const result = await fetch(postUrl, {
         method: "POST",
         headers: { "Content-Type": file.type },
         body: file,
       });
-      
+
       if (!result.ok) throw new Error("Upload failed");
-      
+
       const { storageId } = await result.json();
-      
-      // 3. Store the storageId
       setAvatarUrl(storageId);
     } catch (err) {
       console.error("Upload error:", err);
       setError("Failed to upload image. Please try again.");
-      setLocalPreview(null); // Clear preview on error
+      setLocalPreview(null);
     } finally {
       setIsUploading(false);
     }
@@ -175,12 +170,12 @@ export default function Onboarding() {
                 key={i}
                 className={cn(
                   "h-1.5 w-10 sm:w-12 rounded-full transition-all duration-500",
-                  step >= i ? "bg-black" : "bg-black/10"
+                  step >= i ? "bg-black" : "bg-black/10",
                 )}
               />
             ))}
           </div>
-          <button 
+          <button
             onClick={handleLogout}
             className="text-xs font-bold text-black/40 hover:text-black transition-colors"
           >
@@ -212,16 +207,17 @@ export default function Onboarding() {
                 <p className="mt-2 text-sm text-black/40">This will be your unique URL on DropSomething.</p>
               </div>
 
-              {/* Email Verification Banner */}
               {!user?.emailVerified && (
                 <div className="rounded-2xl bg-amber-50 p-4 border border-amber-100">
                   <div className="flex items-center gap-3">
                     <AlertCircle className="text-amber-500 shrink-0" size={20} />
                     <div className="flex-1">
                       <p className="text-xs font-bold text-amber-800">Email not verified</p>
-                      <p className="text-[10px] text-amber-600 mt-0.5">Please check your inbox to verify your account.</p>
+                      <p className="text-[10px] text-amber-600 mt-0.5">
+                        Please check your inbox to verify your account.
+                      </p>
                     </div>
-                    <button 
+                    <button
                       onClick={checkEmailVerification}
                       disabled={isVerifying}
                       className="text-[10px] font-bold text-amber-700 underline underline-offset-2 disabled:opacity-50"
@@ -233,7 +229,9 @@ export default function Onboarding() {
               )}
 
               <div className="relative mt-8">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-black/20">dropsomething.com/</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-black/20">
+                  dropsomething.com/
+                </span>
                 <input
                   type="text"
                   value={username}
@@ -252,7 +250,9 @@ export default function Onboarding() {
                   <FileText size={32} />
                 </div>
                 <h2 className="mt-6 text-3xl font-extrabold text-black">Tell us about yourself</h2>
-                <p className="mt-2 text-sm text-black/40">A short bio helps your audience connect with you.</p>
+                <p className="mt-2 text-sm text-black/40">
+                  A short bio helps your audience connect with you.
+                </p>
               </div>
               <div className="mt-8">
                 <textarea
@@ -291,7 +291,9 @@ export default function Onboarding() {
                   {isUploading ? (
                     <div className="flex flex-col items-center justify-center text-black/40">
                       <Loader2 size={32} className="animate-spin" />
-                      <span className="mt-2 text-[10px] font-bold uppercase tracking-widest">Uploading...</span>
+                      <span className="mt-2 text-[10px] font-bold uppercase tracking-widest">
+                        Uploading...
+                      </span>
                     </div>
                   ) : avatarUrl ? (
                     <img src={avatarDisplayUrl} alt="Avatar Preview" className="h-full w-full object-cover" />

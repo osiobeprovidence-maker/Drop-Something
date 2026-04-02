@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { 
-  onAuthStateChanged, 
+import {
+  onAuthStateChanged,
   User as FirebaseUser,
-  signOut as firebaseSignOut 
+  signOut as firebaseSignOut,
 } from "firebase/auth";
-import { auth } from "../lib/firebase";
-import { setupFirebaseAuthWithConvex } from "../lib/convex";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { auth } from "../lib/firebase";
+import { setupFirebaseAuthWithConvex } from "../lib/convex";
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -18,20 +18,35 @@ interface AuthContextType {
   reloadUser: () => Promise<void>;
   isNewUser: boolean;
   hasProfile: boolean;
+  authSyncError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const USER_SYNC_RETRY_DELAYS_MS = [200, 500, 1000, 1500];
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "We couldn't sync your account. Please try again.";
+}
+
+async function wait(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [convexUserId, setConvexUserId] = useState<Id<"users"> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
-  
+  const [authSyncError, setAuthSyncError] = useState<string | null>(null);
+
   const storeUser = useMutation(api.users.storeUser);
-  // Query to check if the user has a creator profile
-  const creator = useQuery(api.creators.getCreatorByUserId, { 
-    userId: convexUserId || undefined
+  const creator = useQuery(api.creators.getCreatorByUserId, {
+    userId: convexUserId || undefined,
   });
 
   const isCreatorLoading = convexUserId !== null && creator === undefined;
@@ -46,43 +61,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      // 1. Immediately update the Firebase user state
       setUser(firebaseUser);
-      
-      // 2. Set up Convex authentication with Firebase token
+      setAuthSyncError(null);
+
       await setupFirebaseAuthWithConvex(firebaseUser);
-      
-      // 3. If no user, we're definitely not loading anymore
+
       if (!firebaseUser) {
         setConvexUserId(null);
         setIsLoading(false);
         setIsNewUser(false);
+        setAuthSyncError(null);
         return;
       }
 
-      // 4. Sync with Convex in the background
       try {
-        const result = await storeUser({
-          username: firebaseUser.displayName || undefined,
-          name: firebaseUser.displayName || "Anonymous",
-          image: firebaseUser.photoURL || undefined,
-        });
-        
-        // storeUser now returns an object with id and isNew
-        let newId: any = null;
-        if (typeof result === "object" && result !== null) {
-          newId = (result as any).id;
-          setConvexUserId(newId);
-          setIsNewUser((result as any).isNew);
-        } else {
-          newId = result as any;
-          setConvexUserId(newId);
+        let result: Awaited<ReturnType<typeof storeUser>> | null = null;
+
+        for (let attempt = 0; attempt <= USER_SYNC_RETRY_DELAYS_MS.length; attempt += 1) {
+          try {
+            result = await storeUser({
+              username: firebaseUser.displayName || undefined,
+              name: firebaseUser.displayName || "Anonymous",
+              image: firebaseUser.photoURL || undefined,
+            });
+            break;
+          } catch (error) {
+            const isLastAttempt = attempt === USER_SYNC_RETRY_DELAYS_MS.length;
+
+            console.error(
+              `[AuthContext] Error storing user in Convex (attempt ${attempt + 1})`,
+              error,
+            );
+
+            if (isLastAttempt) {
+              throw error;
+            }
+
+            await setupFirebaseAuthWithConvex(firebaseUser);
+            await wait(USER_SYNC_RETRY_DELAYS_MS[attempt]);
+          }
         }
 
+        if (!result) {
+          throw new Error("Account sync did not complete.");
+        }
+
+        const newId = result.id;
+        setConvexUserId(newId);
+        setIsNewUser(Boolean(result.isNew));
+
+        setAuthSyncError(null);
       } catch (error) {
+        setConvexUserId(null);
+        setIsNewUser(false);
+        setAuthSyncError(getErrorMessage(error));
         console.error("Error storing user in Convex:", error);
       } finally {
-        // 5. Always resolve loading state once we've tried to sync
         setIsLoading(false);
       }
     });
@@ -95,15 +129,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      convexUserId, 
-      isLoading: isLoading || isCreatorLoading, 
-      signOut, 
-      reloadUser, 
-      isNewUser, 
-      hasProfile 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        convexUserId,
+        isLoading: isLoading || isCreatorLoading,
+        signOut,
+        reloadUser,
+        isNewUser,
+        hasProfile,
+        authSyncError,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
