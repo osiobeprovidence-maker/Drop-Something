@@ -13,7 +13,7 @@ import {
   LayoutDashboard, User, Heart, Users, Target, ShoppingBag, Link as LinkIcon,
   LogOut, Plus, Edit2, Trash2, Check, Settings, Shield,
   TrendingUp, DollarSign, Image as ImageIcon, ExternalLink, Copy, Share2,
-  Globe, Package, FileText, X, Menu, Square, Search, Loader2, Sparkles
+  Globe, Package, FileText, X, Menu, Square, Search, Loader2
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
@@ -25,7 +25,6 @@ import { useScrollLock } from "@/src/hooks/useScrollLock";
 import SlateTab from "./SlateTab";
 import ShopTab from "./ShopTab";
 import WishlistTab from "./WishlistTab";
-import ShowcaseEditor from "@/src/components/ShowcaseEditor";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -103,16 +102,6 @@ export default function Dashboard() {
     creatorId: convexCreator?._id as Id<"creators"> | undefined
   });
 
-  // Showcase queries and mutations
-  const showcase = useQuery(api.showcases.getShowcase, {
-    creatorId: convexCreator?._id as Id<"creators"> | undefined
-  });
-  const showcaseWithContent = useQuery(api.showcases.getShowcaseWithContent, {
-    creatorId: convexCreator?._id as Id<"creators"> | undefined
-  });
-  const upsertShowcase = useMutation(api.showcases.upsertShowcase);
-  const generateShowcase = useMutation(api.showcases.generateShowcase);
-
   const createSeries = async (args: {
     creatorId: Id<"creators">;
     title: string;
@@ -180,9 +169,6 @@ export default function Dashboard() {
   const [showSaved, setShowSaved] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isShowcaseGenerating, setIsShowcaseGenerating] = useState(false);
-  const [isShowcaseSaving, setIsShowcaseSaving] = useState(false);
-  const [showShowcaseEditor, setShowShowcaseEditor] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   // Profile form local state
@@ -304,7 +290,6 @@ export default function Dashboard() {
   const menuItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "my-page", label: "My Page", icon: Globe },
-    { id: "showcase", label: "Showcase", icon: Sparkles },
     { id: "profile", label: "Profile", icon: User },
     { id: "about", label: "About Us", icon: FileText },
     { id: "links", label: "Links", icon: LinkIcon },
@@ -661,50 +646,6 @@ export default function Dashboard() {
     ticketType?: string;
   }) => {
     await updateProduct({ productId: id as Id<"products">, ...data });
-  };
-
-  // Showcase handlers
-  const handleSaveShowcase = async (data: any) => {
-    if (!convexCreator) return;
-    setIsShowcaseSaving(true);
-    try {
-      await upsertShowcase({
-        creatorId: convexCreator._id,
-        tokenIdentifier: user?.uid,
-        role: data.role,
-        location: data.location,
-        about: data.about,
-        hireLink: data.hireLink,
-        messageLink: data.messageLink,
-        skills: data.skills,
-        featuredSlateIds: data.featuredSlateIds,
-        projects: data.projects,
-        sectionOrder: data.sectionOrder,
-        hiddenSections: data.hiddenSections,
-      });
-      setShowShowcaseEditor(false);
-    } catch (err) {
-      console.error("Failed to save showcase:", err);
-      alert("Failed to save showcase. Please try again.");
-    } finally {
-      setIsShowcaseSaving(false);
-    }
-  };
-
-  const handleGenerateShowcase = async () => {
-    if (!convexCreator) return;
-    setIsShowcaseGenerating(true);
-    try {
-      await generateShowcase({
-        creatorId: convexCreator._id,
-        tokenIdentifier: user?.uid,
-      });
-    } catch (err) {
-      console.error("Failed to generate showcase:", err);
-      alert("Failed to generate showcase. Please try again.");
-    } finally {
-      setIsShowcaseGenerating(false);
-    }
   };
 
   useEffect(() => {
@@ -1319,121 +1260,9 @@ export default function Dashboard() {
               />
             )}
 
-            {activeTab === "showcase" && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-black text-black">Showcase</h2>
-                    <p className="text-sm text-black/40 mt-1">
-                      Your portfolio built from your work
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={`/${convexCreator.username}/showcase`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-black/10 bg-white text-black font-bold text-sm hover:bg-black/5 transition-colors"
-                    >
-                      <ExternalLink size={16} />
-                      Preview
-                    </a>
-                    <button
-                      onClick={() => setShowShowcaseEditor(true)}
-                      className="flex items-center gap-2 px-6 py-2 rounded-full bg-black text-white font-bold text-sm hover:bg-gray-900 transition-colors"
-                    >
-                      <Edit2 size={16} />
-                      Edit Showcase
-                    </button>
-                  </div>
-                </div>
-
-                {/* Showcase Preview Card */}
-                <div className="rounded-3xl border border-black/5 bg-white p-8 shadow-sm">
-                  {showcase ? (
-                    <div className="text-center">
-                      <div className="w-24 h-24 mx-auto rounded-3xl overflow-hidden border-4 border-white shadow-lg">
-                        <img
-                          src={convexCreator.avatar}
-                          alt={convexCreator.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <h3 className="text-2xl font-black text-black mt-4">
-                        {convexCreator.name}
-                      </h3>
-                      {showcase.role && (
-                        <p className="text-black/60 mt-2">{showcase.role}</p>
-                      )}
-                      <div className="flex items-center justify-center gap-6 mt-6">
-                        <div className="text-center">
-                          <p className="text-2xl font-black text-black">
-                            {showcase.featuredSlateIds.length}
-                          </p>
-                          <p className="text-xs text-black/40">Featured Works</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-black text-black">
-                            {showcase.skills.length}
-                          </p>
-                          <p className="text-xs text-black/40">Skills</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-black text-black">
-                            {showcase.projects.length}
-                          </p>
-                          <p className="text-xs text-black/40">Projects</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setShowShowcaseEditor(true)}
-                        className="mt-6 px-6 py-3 rounded-full bg-black text-white font-bold text-sm hover:bg-gray-900 transition-colors"
-                      >
-                        Edit Your Showcase
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                        <Sparkles size={32} className="text-purple-600" />
-                      </div>
-                      <h3 className="text-xl font-bold text-black mt-4">
-                        Create Your Showcase
-                      </h3>
-                      <p className="text-black/40 mt-2 max-w-md mx-auto">
-                        Build a beautiful portfolio automatically from your work. 
-                        Showcase your skills, featured projects, and social proof.
-                      </p>
-                      <button
-                        onClick={handleGenerateShowcase}
-                        disabled={isShowcaseGenerating}
-                        className="mt-6 flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-sm hover:opacity-90 disabled:opacity-50 mx-auto"
-                      >
-                        <Sparkles size={16} />
-                        {isShowcaseGenerating ? "Generating..." : "Generate My Showcase"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </AnimatePresence>
         </div>
       </main>
-
-      {/* Showcase Editor Modal */}
-      {showShowcaseEditor && (
-        <ShowcaseEditor
-          convexCreator={convexCreator}
-          slates={slates || []}
-          showcase={showcase}
-          onSave={handleSaveShowcase}
-          onGenerate={handleGenerateShowcase}
-          isGenerating={isShowcaseGenerating}
-          isSaving={isShowcaseSaving}
-          onClose={() => setShowShowcaseEditor(false)}
-        />
-      )}
 
       {/* CRUD Modal */}
       <AnimatePresence>

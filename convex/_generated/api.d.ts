@@ -16,7 +16,6 @@ import type * as paystack from "../paystack.js";
 import type * as reset from "../reset.js";
 import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
-import type * as showcases from "../showcases.js";
 import type * as slates from "../slates.js";
 import type * as users from "../users.js";
 import type * as wishlist from "../wishlist.js";
@@ -36,7 +35,6 @@ declare const fullApi: ApiFromModules<{
   reset: typeof reset;
   seed: typeof seed;
   settings: typeof settings;
-  showcases: typeof showcases;
   slates: typeof slates;
   users: typeof users;
   wishlist: typeof wishlist;

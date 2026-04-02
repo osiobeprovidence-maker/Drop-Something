@@ -183,24 +183,6 @@ export default defineSchema({
     coverImage: v.optional(v.string()),
   }).index("by_creatorId", ["creatorId"]),
 
-  showcases: defineTable({
-    creatorId: v.id("creators"),
-    role: v.optional(v.string()),
-    location: v.optional(v.string()),
-    about: v.optional(v.string()),
-    hireLink: v.optional(v.string()),
-    messageLink: v.optional(v.string()),
-    skills: v.array(v.string()),
-    featuredSlateIds: v.array(v.id("slates")),
-    projects: v.array(v.object({
-      id: v.string(),
-      title: v.string(),
-      story: v.string(),
-      timeframe: v.optional(v.string()),
-    })),
-    sectionOrder: v.array(v.string()),
-    hiddenSections: v.array(v.string()),
-  }).index("by_creatorId", ["creatorId"]),
   slates: defineTable({
     creatorId: v.id("creators"),
     title: v.optional(v.string()),
