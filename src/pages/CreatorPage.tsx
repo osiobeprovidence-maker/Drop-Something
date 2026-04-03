@@ -15,7 +15,9 @@ import { Id } from "@/convex/_generated/dataModel";
 import { useFollow } from "@/src/context/FollowContext";
 import { useAuth } from "@/src/context/AuthContext";
 import { useAdmin } from "@/src/context/AdminContext";
+import { PaymentTrustNotice } from "@/src/components/marketing/PaymentTrustNotice";
 import { PaystackPayment } from "@/src/lib/PaystackPayment";
+import { buildCreatorSeriesPath } from "@/src/lib/creatorRoutes";
 
 const PENDING_DELIVERY_KEY = "dropsomething.pendingDeliverySignup";
 
@@ -691,6 +693,8 @@ export default function CreatorPage() {
                         No account needed to support. We only ask you to create one later if a paid physical order needs delivery details.
                       </p>
 
+                      <PaymentTrustNotice compact />
+
                       <PaystackPayment
                         email={checkoutEmail.trim()}
                         amount={finalAmount}
@@ -828,7 +832,7 @@ export default function CreatorPage() {
                                 ) : null}
                                 <div className="mt-5">
                                   <Link
-                                    to={`/${displayCreator.username}/series/${series._id}`}
+                                  to={buildCreatorSeriesPath(displayCreator.username, series._id)}
                                     className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-bold text-white"
                                   >
                                     Open Series
@@ -1549,5 +1553,3 @@ export default function CreatorPage() {
     </div>
   );
 }
-
-

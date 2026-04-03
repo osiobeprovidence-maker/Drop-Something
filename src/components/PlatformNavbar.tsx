@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Coffee, Menu, X, Search, Info, Users, HelpCircle, Shield } from "lucide-react";
+import { Coffee, Menu, X, Search, Info, Users, HelpCircle, Shield, Mail } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -40,7 +40,9 @@ export const PlatformNavbar = () => {
     { name: "Home", href: "/", icon: Coffee },
     { name: "Explore", href: "/explore", icon: Search },
     { name: "How it Works", href: "/how-it-works", icon: Info },
+    { name: "About", href: "/about", icon: Info },
     { name: "Creators", href: "/creators", icon: Users },
+    { name: "Contact", href: "/contact", icon: Mail },
     { name: "FAQ", href: "/faq", icon: HelpCircle },
   ];
 
@@ -105,7 +107,7 @@ export const PlatformNavbar = () => {
         </div>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex md:items-center md:gap-8">
+        <div className="hidden md:flex md:items-center md:gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.name}

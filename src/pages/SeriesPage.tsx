@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/src/lib/utils";
+import { buildCreatorPath } from "@/src/lib/creatorRoutes";
 import { ArrowLeft, ChevronLeft, ChevronRight, Lock, PlayCircle } from "lucide-react";
 
 type SeriesEntry = {
@@ -82,7 +83,7 @@ export default function SeriesPage() {
         <h1 className="text-2xl font-black text-black">Series not found</h1>
         <p className="mt-2 text-sm text-black/50">This series does not exist or is no longer available.</p>
         <Link
-          to={username ? `/${username}` : "/explore"}
+          to={buildCreatorPath(username)}
           className="mt-6 inline-flex rounded-full bg-black px-5 py-3 text-sm font-bold text-white"
         >
           Back
@@ -151,7 +152,7 @@ export default function SeriesPage() {
       <div className="border-b border-black/5 bg-white">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
           <Link
-            to={`/${creator.username}`}
+            to={buildCreatorPath(creator.username)}
             className="inline-flex items-center gap-2 text-sm font-bold text-black/50 transition-colors hover:text-black"
           >
             <ArrowLeft size={16} />

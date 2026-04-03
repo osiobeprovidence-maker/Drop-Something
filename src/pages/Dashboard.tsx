@@ -22,6 +22,7 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useScrollLock } from "@/src/hooks/useScrollLock";
+import { buildCreatorPath } from "@/src/lib/creatorRoutes";
 import SlateTab from "./SlateTab";
 import ShopTab from "./ShopTab";
 import WishlistTab from "./WishlistTab";
@@ -263,7 +264,7 @@ export default function Dashboard() {
 
   const copyToClipboard = () => {
     const username = profile?.username || user?.displayName;
-    const url = `${window.location.origin}/${username}`;
+    const url = `${window.location.origin}${buildCreatorPath(username)}`;
     navigator.clipboard.writeText(url);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
@@ -271,7 +272,7 @@ export default function Dashboard() {
 
   const sharePage = async () => {
     const username = profile?.username || user?.displayName;
-    const url = `${window.location.origin}/${username}`;
+    const url = `${window.location.origin}${buildCreatorPath(username)}`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -871,7 +872,7 @@ export default function Dashboard() {
                     <h2 className="text-lg font-bold text-black">Quick Actions</h2>
                     <div className="mt-6 grid grid-cols-2 gap-4">
                       <a
-                        href={`/${profile.username}`}
+                        href={buildCreatorPath(profile.username)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-black/5 bg-black/5 p-6 transition-colors hover:bg-black hover:text-white"
@@ -907,7 +908,7 @@ export default function Dashboard() {
                     </div>
                     <h2 className="mt-4 text-2xl font-black text-black">@{profile.username}</h2>
                     <a
-                      href={`/${profile.username}`}
+                      href={buildCreatorPath(profile.username)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-sm font-bold text-black/40 hover:text-black transition-colors"
@@ -919,7 +920,7 @@ export default function Dashboard() {
 
                     <div className="mt-8 flex w-full flex-col gap-3">
                       <a
-                        href={`/${profile.username}`}
+                        href={buildCreatorPath(profile.username)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex w-full items-center justify-center gap-2 rounded-2xl bg-black py-4 font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98]"

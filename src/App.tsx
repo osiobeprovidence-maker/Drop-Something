@@ -15,15 +15,21 @@ import HowItWorks from "./pages/HowItWorks";
 import CreatorsInfo from "./pages/CreatorsInfo";
 import FAQ from "./pages/FAQ";
 import SeriesPage from "./pages/SeriesPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
+import RefundPolicyPage from "./pages/RefundPolicyPage";
 import { ThemeProvider } from "./context/ThemeContext";
 import { FollowProvider } from "./context/FollowContext";
 import { DataProvider } from "./context/DataContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { AdminProvider } from "./context/AdminContext";
+import { buildCreatorPath, isReservedCreatorPath } from "./lib/creatorRoutes";
 
 function LegacyShowcaseRedirect() {
   const { username } = useParams();
-  return <Navigate to={`/${username ?? ""}`} replace />;
+  return <Navigate to={buildCreatorPath(username)} replace />;
 }
 
 function AppContent() {
@@ -32,8 +38,6 @@ function AppContent() {
   const path = location.pathname;
   
   // Reserved platform paths
-  const reservedPaths = ["explore", "how-it-works", "creators", "faq", "dashboard", "admin", "login", "signup", "onboarding", "settings"];
-
   // Extract segments
   const segments = path.split("/").filter(Boolean);
   const firstSegment = segments[0];
@@ -53,8 +57,10 @@ function AppContent() {
 
   // A creator page is a single segment path that is NOT a reserved platform path
   const isCreatorPage =
-    !reservedPaths.includes(firstSegment) &&
-    (segments.length === 1 || (segments.length === 3 && segments[1] === "series"));
+    (firstSegment === "creator" &&
+      (segments.length === 2 || (segments.length === 4 && segments[2] === "series"))) ||
+    (!isReservedCreatorPath(firstSegment) &&
+      (segments.length === 1 || (segments.length === 3 && segments[1] === "series")));
 
   // Determine which navbar to show
   let navbar = null;
@@ -100,12 +106,20 @@ function AppContent() {
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/creators" element={<CreatorsInfo />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/refunds" element={<RefundPolicyPage />} />
           <Route path="/login" element={<Auth mode="login" />} />
           <Route path="/signup" element={<Auth mode="signup" />} />
           <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute />} />
+          <Route path="/creator/:username/series/:seriesId" element={<SeriesPage />} />
+          <Route path="/creator/:username/showcase" element={<LegacyShowcaseRedirect />} />
+          <Route path="/creator/:username" element={<CreatorPage />} />
           <Route path="/:username/series/:seriesId" element={<SeriesPage />} />
           <Route path="/:username/showcase" element={<LegacyShowcaseRedirect />} />
           <Route path="/:username" element={<CreatorPage />} />

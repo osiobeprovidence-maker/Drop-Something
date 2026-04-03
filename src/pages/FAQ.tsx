@@ -6,19 +6,19 @@ import { Link } from "react-router-dom";
 const faqs = [
   {
     question: "What is DropSomething?",
-    answer: "DropSomething is a simple platform for creators to receive support from their audience. It's designed to be minimal, fast, and easy to use.",
+    answer: "DropSomething is a creator support platform that helps creators share one page where supporters can send tips, payments, and messages.",
   },
   {
     question: "How do I receive support?",
-    answer: "Once you create your page, you'll get a unique link (e.g., dropsomething.com/yourname). Share this link with your audience, and they can 'drop' support directly to you.",
+    answer: "Once you create your page, you get a shareable DropSomething link that supporters can use to open your page and send support.",
   },
   {
     question: "What are the fees?",
-    answer: "DropSomething is free to start. We take a small platform fee on transactions to keep the service running and improving. Check our pricing page for details.",
+    answer: "DropSomething is free to start. Final fee and payout terms should be reviewed on your published pricing or policy pages before launch.",
   },
   {
     question: "How do I get paid?",
-    answer: "Support is sent directly to your connected payment account. We support various payment methods depending on your region.",
+    answer: "Payments are processed through Paystack in the current implementation, and payout details should follow the payment and creator setup you configure on the platform.",
   },
   {
     question: "Can I use DropSomething for my community?",
@@ -26,7 +26,7 @@ const faqs = [
   },
   {
     question: "Is it secure?",
-    answer: "Yes, we use industry-standard encryption and secure payment processors to ensure all transactions and data are protected.",
+    answer: "DropSomething uses a third-party payment provider for checkout, and the site now surfaces contact, policy, and payment trust information more clearly for users before payment.",
   },
 ];
 

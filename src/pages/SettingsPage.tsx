@@ -15,6 +15,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { auth } from "@/src/lib/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { PaystackPayment } from "@/src/lib/PaystackPayment";
+import { PaymentTrustNotice } from "@/src/components/marketing/PaymentTrustNotice";
 
 const PENDING_DELIVERY_KEY = "dropsomething.pendingDeliverySignup";
 
@@ -903,6 +904,8 @@ function SubscriptionTab({ subscription, convexUserId, userEmail }: { subscripti
           </button>
         )}
       </div>
+
+      <PaymentTrustNotice compact />
 
       <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-3">

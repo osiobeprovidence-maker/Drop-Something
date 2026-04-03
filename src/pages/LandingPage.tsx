@@ -1,365 +1,351 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Coffee, Heart, MessageSquare, Zap, Users, ShieldCheck, ShoppingBag, Target, ArrowRight, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  CircleHelp,
+  Heart,
+  LockKeyhole,
+  MessageSquare,
+  ShieldCheck,
+  Wallet,
+} from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { PaymentTrustNotice } from "@/src/components/marketing/PaymentTrustNotice";
+import { StatsGrid } from "@/src/components/marketing/StatsGrid";
+import { TestimonialsGrid } from "@/src/components/marketing/TestimonialsGrid";
+import {
+  HERO_SUBTEXT,
+  PLATFORM_PAYMENT_PROVIDER,
+  PLATFORM_STAT_SEEDS,
+  TESTIMONIAL_SEEDS,
+  TRUST_STRIP_ITEMS,
+} from "@/src/content/siteContent";
 
 export default function LandingPage() {
   const [tipAmount, setTipAmount] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [recentSupporters, setRecentSupporters] = useState([
-    { name: "John D.", amount: 1000, message: "Love your content! Keep it up! 🔥", emoji: "🔥" },
-    { name: "Sarah W.", amount: 500, message: "Thanks for the tips!", emoji: "☕" },
-    { name: "Mike R.", amount: 2000, message: "This helped me so much.", emoji: "🙌" },
+    { name: "Preview supporter", amount: 1000, message: "Love your work. Keep going." },
+    { name: "Preview supporter", amount: 500, message: "Simple, fast, and easy to use." },
+    { name: "Preview supporter", amount: 2000, message: "Happy to support the next release." },
   ]);
 
   const handleDropSomething = () => {
     if (!tipAmount) return;
-    const newSupporter = {
-      name: "You",
-      amount: tipAmount,
-      message: message || "Just dropped something!",
-      emoji: "💖",
-    };
-    setRecentSupporters([newSupporter, ...recentSupporters.slice(0, 2)]);
-    setMessage("");
+
+    setRecentSupporters((prev) => [
+      {
+        name: "You",
+        amount: tipAmount,
+        message: message || "Just dropped support.",
+      },
+      ...prev.slice(0, 2),
+    ]);
     setTipAmount(null);
+    setMessage("");
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white transition-colors duration-300">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden px-4 pb-16 pt-8 sm:px-6 lg:px-8 lg:pb-32 lg:pt-24">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col items-center text-center">
+    <div className="flex min-h-screen flex-col bg-[#FCFCFB]">
+      <section className="relative overflow-hidden border-b border-black/5 bg-white px-4 pb-14 pt-10 sm:px-6 lg:px-8 lg:pb-20 lg:pt-16">
+        <div className="absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.08),transparent_60%)]" />
+        <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[minmax(0,1fr)_460px] lg:items-center">
+          <div className="max-w-2xl">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 rounded-full bg-black/5 px-4 py-1.5 text-sm font-medium text-black/60"
+              transition={{ duration: 0.35 }}
+              className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-black/[0.03] px-4 py-2 text-sm font-semibold text-black/68"
             >
-              <Zap size={14} className="text-black" />
-              <span>Support the hustle. Drop Something.</span>
+              <BadgeCheck size={14} />
+              Trusted creator support pages
             </motion.div>
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="mt-8 text-5xl font-extrabold tracking-tight text-black sm:text-7xl"
+              transition={{ duration: 0.4, delay: 0.05 }}
+              className="mt-6 text-5xl font-black tracking-tight text-black sm:text-6xl lg:text-7xl"
             >
-              Support the hustle. <br />
-              <span className="text-black/40">Drop Something.</span>
+              Support the hustle.
+              <span className="block text-black/42">Drop Something.</span>
             </motion.h1>
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="mt-6 max-w-2xl text-lg leading-relaxed text-black/60 sm:text-xl"
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="mt-6 max-w-xl text-lg leading-relaxed text-black/64 sm:text-xl"
             >
-              A simple way to support creators and communities you love. Send small tips, leave messages, and help creators keep creating.
+              {HERO_SUBTEXT}
             </motion.p>
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="mt-10 flex flex-col gap-4 sm:flex-row"
+              transition={{ duration: 0.4, delay: 0.15 }}
+              className="mt-8 flex flex-col gap-4 sm:flex-row"
             >
               <Link
                 to="/signup"
-                className="flex h-14 items-center justify-center rounded-full bg-black px-8 text-base font-semibold text-white transition-transform hover:scale-105 active:scale-95"
+                className="inline-flex h-14 items-center justify-center rounded-full bg-black px-8 text-base font-bold text-white transition-transform hover:scale-[1.01] active:scale-[0.99]"
               >
-                Create Your Page
+                Create your page
               </Link>
-              <a
-                href="/explore"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-14 items-center justify-center rounded-full border border-black/10 bg-white px-8 text-base font-semibold text-black transition-colors hover:bg-black/5"
+              <Link
+                to="/explore"
+                className="inline-flex h-14 items-center justify-center rounded-full border border-black/10 bg-white px-8 text-base font-bold text-black"
               >
-                Explore Creators
-              </a>
+                Explore creators
+              </Link>
             </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Interactive Support Preview */}
-      <section className="bg-black/5 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">
-                Experience the connection.
-              </h2>
-              <p className="mt-4 text-lg text-black/60">
-                Supporters can send tips and messages in seconds. See it in action with this live preview.
-              </p>
-              <div className="mt-10 space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black text-white">
-                    <Heart size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-black">Instant Support</h3>
-                    <p className="text-sm text-black/60">No complicated forms. Just a few taps and you're done.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black text-white">
-                    <MessageSquare size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-black">Meaningful Messages</h3>
-                    <p className="text-sm text-black/60">Add a personal note to show your appreciation.</p>
-                  </div>
-                </div>
-              </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              {TRUST_STRIP_ITEMS.map((item) => (
+                <span
+                  key={item}
+                  className="inline-flex items-center rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-black/68"
+                >
+                  {item}
+                </span>
+              ))}
             </div>
+            <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-black/55">
+              <span className="inline-flex items-center gap-2">
+                <ShieldCheck size={16} />
+                Payments processed securely
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <Wallet size={16} />
+                Powered by {PLATFORM_PAYMENT_PROVIDER}
+              </span>
+            </div>
+          </div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="rounded-3xl bg-white p-6 shadow-2xl shadow-black/5 sm:p-8 border"
-            >
-              <div className="flex items-center gap-4 border-b border-black/5 pb-6">
-                <div className="h-16 w-16 overflow-hidden rounded-full bg-black/5">
-                  <img
-                    src="https://picsum.photos/seed/creator/200"
-                    alt="Creator"
-                    className="h-full w-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.1 }}
+            className="rounded-[2.5rem] border border-black/10 bg-[#F6F5F2] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.08)] sm:p-7"
+          >
+            <div className="rounded-[2rem] border border-black/10 bg-white p-6">
+              <div className="flex items-center justify-between border-b border-black/5 pb-5">
                 <div>
-                  <h3 className="text-xl font-bold text-black">Alex Rivera</h3>
-                  <p className="text-sm text-black/60">Creating digital art & tutorials</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/35">Support preview</p>
+                  <h2 className="mt-2 text-2xl font-black text-black">Creator page checkout</h2>
+                </div>
+                <div className="rounded-full bg-black px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white">
+                  Preview
                 </div>
               </div>
 
-              <div className="mt-8">
-                <p className="text-sm font-semibold uppercase tracking-wider text-black/40">Select amount</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  H = ₦100 · K = ₦1,000
-                </p>
-                <div className="mt-3 grid grid-cols-3 gap-3">
+              <div className="mt-6 rounded-[1.75rem] border border-black/10 bg-black/[0.03] p-5">
+                <div className="flex items-center gap-4">
+                  <div className="h-14 w-14 overflow-hidden rounded-2xl bg-black text-white" />
+                  <div>
+                    <p className="text-lg font-black text-black">Alex Rivera</p>
+                    <p className="text-sm text-black/55">Digital artist and educator</p>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid grid-cols-3 gap-3">
                   {[500, 1000, 2000].map((amount) => (
                     <button
                       key={amount}
                       onClick={() => setTipAmount(amount)}
                       className={cn(
-                        "flex h-12 items-center justify-center rounded-xl border font-semibold transition-all",
+                        "h-12 rounded-xl border text-sm font-bold transition-colors",
                         tipAmount === amount
                           ? "border-black bg-black text-white"
-                          : "border-black/10 bg-white text-black hover:border-black/30"
+                          : "border-black/10 bg-white text-black"
                       )}
                     >
-                      {amount >= 1000 ? `${amount / 1000}K` : `${amount / 100}H`}
+                      NGN {amount.toLocaleString()}
                     </button>
                   ))}
                 </div>
-                <div className="mt-6">
-                  <textarea
-                    placeholder="Say something nice..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className="w-full rounded-xl border border-black/10 bg-black/5 p-4 text-sm text-black focus:border-black/30 focus:outline-none"
-                    rows={3}
-                  />
-                </div>
+
+                <textarea
+                  rows={3}
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                  placeholder="Add a message with your support"
+                  className="mt-4 w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm focus:border-black focus:outline-none"
+                />
+
                 <button
                   onClick={handleDropSomething}
                   disabled={!tipAmount}
-                  className="mt-6 flex w-full h-14 items-center justify-center rounded-full bg-black text-base font-bold text-white transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
+                  className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-full bg-black text-sm font-bold text-white disabled:opacity-50"
                 >
-                  Drop Something
+                  Send support
                 </button>
+
+                <p className="mt-3 text-xs leading-relaxed text-black/48">
+                  Preview only. Live creator pages use the secure platform payment flow.
+                </p>
               </div>
 
-              <div className="mt-10">
-                <p className="text-sm font-semibold uppercase tracking-wider text-black/40">Recent Supporters</p>
-                <div className="mt-4 space-y-4">
-                  {recentSupporters.map((supporter, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-start gap-3 rounded-2xl bg-black/5 p-4"
-                    >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg">
-                        {supporter.emoji}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-black">
-                          {supporter.name} <span className="font-normal text-black/40">dropped</span> ₦{supporter.amount}
-                        </p>
-                        <p className="mt-1 text-sm text-black/60">{supporter.message}</p>
-                      </div>
-                    </motion.div>
+              <div className="mt-6">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/35">Recent supporter messages</p>
+                <div className="mt-4 space-y-3">
+                  {recentSupporters.map((supporter, index) => (
+                    <div key={`${supporter.name}-${index}`} className="rounded-2xl border border-black/10 bg-white p-4">
+                      <p className="text-sm font-bold text-black">
+                        {supporter.name}
+                        <span className="font-medium text-black/45"> sent NGN {supporter.amount.toLocaleString()}</span>
+                      </p>
+                      <p className="mt-1 text-sm text-black/62">{supporter.message}</p>
+                    </div>
                   ))}
                 </div>
               </div>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Simple as 1, 2, 3.</h2>
-            <p className="mt-4 text-lg text-black/60">Everything you need to start receiving support in minutes.</p>
+      <section className="px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <PaymentTrustNotice />
+        </div>
+      </section>
+
+      <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/35">How it works</p>
+            <h2 className="mt-3 text-3xl font-black text-black sm:text-4xl">A simple support flow creators can share in minutes.</h2>
           </div>
-          <div className="mt-20 grid gap-12 md:grid-cols-3">
+          <div className="grid gap-5 lg:grid-cols-3">
             {[
               {
                 step: "01",
                 title: "Create your page",
-                description: "Set up your profile, bio, and customize your support options in seconds.",
-                icon: <Users className="text-black" />,
+                description: "Set up your creator page with your profile, message, and the support options you want to offer.",
               },
               {
                 step: "02",
                 title: "Share your link",
-                description: "Put your DropSomething link in your bio, posts, or anywhere your audience is.",
-                icon: <Zap className="text-black" />,
+                description: "Put your DropSomething page in your bio, posts, videos, newsletters, and direct messages.",
               },
               {
                 step: "03",
-                title: "Receive support",
-                description: "Get instant notifications when someone drops a tip or joins your membership.",
-                icon: <Heart className="text-black" />,
+                title: "Receive tips",
+                description: "Supporters can send small payments and encouraging messages without a complicated checkout flow.",
               },
             ].map((item) => (
-              <div key={item.step} className="relative flex flex-col items-center text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-black/5 text-black">
-                  {item.icon}
-                </div>
-                <h3 className="mt-8 text-xl font-bold text-black">{item.title}</h3>
-                <p className="mt-4 text-black/60 leading-relaxed">{item.description}</p>
-                <span className="absolute -top-4 -left-4 text-6xl font-black text-black/5">{item.step}</span>
+              <div key={item.step} className="rounded-[2rem] border border-black/10 bg-white p-6">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/35">{item.step}</p>
+                <h3 className="mt-3 text-xl font-black text-black">{item.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-black/60">{item.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="bg-black py-24 text-white sm:py-32">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Built for the modern creator.</h2>
-              <p className="mt-4 text-lg text-white/60">
-                More than just tips. A complete platform to grow your community and income.
-              </p>
-              <div className="mt-12 grid gap-8 sm:grid-cols-2">
-                {[
-                  { title: "Tips + Messages", icon: <MessageSquare size={20} />, desc: "Receive one-time support with personal notes." },
-                  { title: "Memberships", icon: <Users size={20} />, desc: "Build recurring income with monthly tiers." },
-                  { title: "Goals", icon: <Target size={20} />, desc: "Crowdfund specific projects with progress tracking." },
-                  { title: "Shop", icon: <ShoppingBag size={20} />, desc: "Sell digital and physical products directly." },
-                ].map((feature) => (
-                  <div key={feature.title} className="rounded-2xl bg-white/5 p-6 border border-white/10">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white">
-                      {feature.icon}
-                    </div>
-                    <h3 className="mt-4 font-bold">{feature.title}</h3>
-                    <p className="mt-2 text-sm text-white/60">{feature.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="relative">
-              <div className="aspect-square rounded-3xl bg-gradient-to-br from-white/10 to-transparent p-1">
-                <div className="h-full w-full rounded-[calc(1.5rem-1px)] bg-black flex items-center justify-center overflow-hidden">
-                   <img 
-                    src="https://picsum.photos/seed/dashboard/800/800" 
-                    alt="Dashboard Preview" 
-                    className="opacity-50 grayscale"
-                    referrerPolicy="no-referrer"
-                   />
-                </div>
-              </div>
-            </div>
+      <section className="bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/35">Why users trust us</p>
+            <h2 className="mt-3 text-3xl font-black text-black sm:text-4xl">Trust cues that reduce friction before a supporter pays.</h2>
           </div>
-        </div>
-      </section>
 
-      {/* Creators Section */}
-      <section className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">For every kind of hustle.</h2>
-            <p className="mt-4 text-lg text-black/60">Join thousands of creators who are already dropping things.</p>
+          <div className="mt-8 grid gap-5 lg:grid-cols-2">
+            {[
+              {
+                title: "Clear payment handling",
+                description:
+                  "We surface the payment provider and explain how checkout works so supporters know what to expect before they pay.",
+                icon: LockKeyhole,
+              },
+              {
+                title: "Visible support channels",
+                description:
+                  "Support links, contact details, and dispute guidance are easy to find across the site instead of hidden in the product.",
+                icon: CircleHelp,
+              },
+              {
+                title: "Published policy pages",
+                description:
+                  "Privacy, terms, and refund guidance are linked in the public footer so creators and supporters can review the basics up front.",
+                icon: ShieldCheck,
+              },
+              {
+                title: "Platform responsibility",
+                description:
+                  "DropSomething presents itself clearly as the platform layer that helps creators receive support and helps users reach support when issues arise.",
+                icon: MessageSquare,
+              },
+            ].map((item) => (
+              <div key={item.title} className="rounded-[2rem] border border-black/10 bg-[#F7F6F3] p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white">
+                  <item.icon size={18} />
+                </div>
+                <h3 className="mt-5 text-xl font-black text-black">{item.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-black/60">{item.description}</p>
+              </div>
+            ))}
           </div>
-          <div className="mt-16 flex flex-wrap justify-center gap-4">
-            {["Content Creators", "Developers", "Writers", "Designers", "Podcasters", "Musicians", "Non-profits", "Communities"].map((cat) => (
-              <span key={cat} className="rounded-full bg-black/5 px-6 py-3 text-sm font-semibold text-black">
-                {cat}
+
+          <div className="mt-8 rounded-[2rem] border border-black/10 bg-black p-6 text-white sm:p-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/78">
+                HTTPS / security badge area
               </span>
-            ))}
+              <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/78">
+                Launch checklist
+              </span>
+            </div>
+            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-white/72">
+              Verify that your live domain keeps HTTPS enabled, your support inbox is active, and your policy pages are approved before launch. These checks help reinforce platform legitimacy for creators and supporters.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Trust Section */}
-      <section className="bg-black/5 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-12 md:grid-cols-3">
-            {[
-              { title: "Your supporters belong to you", desc: "We don't hide your data. Export your supporter list anytime.", icon: <Users className="text-black" /> },
-              { title: "Instant payments", desc: "Receive your funds directly to your bank account or wallet.", icon: <Zap className="text-black" /> },
-              { title: "No complicated setup", desc: "Go live in under 2 minutes. No technical skills required.", icon: <ShieldCheck className="text-black" /> },
-            ].map((trust) => (
-              <div key={trust.title} className="flex flex-col items-center text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-black shadow-sm border">
-                  {trust.icon}
-                </div>
-                <h3 className="mt-6 font-bold text-black">{trust.title}</h3>
-                <p className="mt-2 text-sm text-black/60">{trust.desc}</p>
-              </div>
-            ))}
+      <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/35">Platform stats</p>
+            <h2 className="mt-3 text-3xl font-black text-black sm:text-4xl">Reusable stats blocks are ready for verified numbers.</h2>
           </div>
+          <StatsGrid items={PLATFORM_STAT_SEEDS} />
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-24 sm:py-32">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-center text-3xl font-bold tracking-tight text-black sm:text-4xl">Frequently Asked Questions</h2>
-          <div className="mt-16 space-y-4">
-            {[
-              { q: "Is DropSomething free to use?", a: "Yes! Creating a page is completely free. We only take a small platform fee on transactions to keep the lights on." },
-              { q: "How do I get paid?", a: "We support instant payouts to local bank accounts and popular digital wallets." },
-              { q: "Can I use it for my non-profit?", a: "Absolutely. Many communities and non-profits use DropSomething for fundraising and donations." },
-              { q: "Do I need a website?", a: "Nope. Your DropSomething page is your website. Just share the link!" },
-            ].map((faq, i) => (
-              <div key={i} className="rounded-2xl border border-black/5 bg-white p-6">
-                <h3 className="font-bold text-black">{faq.q}</h3>
-                <p className="mt-2 text-sm text-black/60">{faq.a}</p>
-              </div>
-            ))}
+      <section className="bg-white px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/35">Social proof</p>
+            <h2 className="mt-3 text-3xl font-black text-black sm:text-4xl">Reusable testimonial cards are in place for approved customer proof.</h2>
           </div>
+          <TestimonialsGrid items={TESTIMONIAL_SEEDS} />
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="px-4 py-24 sm:px-6 lg:px-8 lg:py-32">
-        <div className="mx-auto max-w-5xl overflow-hidden rounded-[3rem] bg-black px-8 py-20 text-center text-white sm:px-16 border">
-          <h2 className="text-4xl font-extrabold tracking-tight sm:text-6xl">Start receiving support today.</h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
-            Join the community of creators who are building their future, one drop at a time.
+      <section className="px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-6xl rounded-[2.75rem] bg-black px-8 py-14 text-white sm:px-14">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/50">Final CTA</p>
+          <h2 className="mt-4 max-w-2xl text-4xl font-black tracking-tight sm:text-5xl">
+            Give creators one trusted link for audience support.
+          </h2>
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/68">
+            Create your page, share it anywhere, and let supporters send small payments through a clearer, more trustworthy flow.
           </p>
-          <div className="mt-10 flex flex-col items-center gap-4">
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <Link
               to="/signup"
-              className="flex h-16 w-full max-w-xs items-center justify-center rounded-full bg-white text-lg font-bold text-black transition-transform hover:scale-105 active:scale-95"
+              className="inline-flex h-14 items-center justify-center rounded-full bg-white px-8 text-base font-bold text-black"
             >
-              Create Your Page
+              Create your page
             </Link>
-            <p className="text-sm text-white/40">No credit card required. Setup in 2 minutes.</p>
+            <Link
+              to="/about"
+              className="inline-flex h-14 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-8 text-base font-bold text-white"
+            >
+              Learn more about the platform
+              <ArrowRight size={16} />
+            </Link>
           </div>
         </div>
       </section>

@@ -11,6 +11,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useScrollLock } from "@/src/hooks/useScrollLock";
+import { buildCreatorPath } from "@/src/lib/creatorRoutes";
 
 interface SlatePost {
   _id: Id<"slates">;
@@ -393,7 +394,7 @@ export default function Explore() {
                       className="group relative flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-[2.5rem] border border-black/5 bg-white p-6 transition-all hover:shadow-xl hover:shadow-black/5"
                     >
                       <a
-                        href={`/${creator.username}`}
+                        href={buildCreatorPath(creator.username)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="absolute inset-0 z-0 rounded-[2.5rem]"
@@ -418,7 +419,7 @@ export default function Explore() {
                           </div>
                           <div className="flex items-center gap-2 sm:flex-nowrap sm:justify-end sm:shrink-0">
                             <a
-                              href={`/${creator.username}`}
+                              href={buildCreatorPath(creator.username)}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -575,7 +576,7 @@ function PeopleToFollow({
             className="flex flex-col items-center gap-2 min-w-[80px]"
           >
             <a
-              href={`/${creator.username}`}
+              href={buildCreatorPath(creator.username)}
               target="_blank"
               rel="noopener noreferrer"
               className="h-14 w-14 rounded-full overflow-hidden bg-gray-100 shrink-0"
@@ -640,7 +641,7 @@ function PostCard({
       {/* Creator Header */}
       <div className="flex items-center justify-between mb-4 px-4 sm:px-6">
         <a
-          href={`/${displayUsername}`}
+          href={buildCreatorPath(displayUsername)}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3"
@@ -753,7 +754,7 @@ function PostCard({
           <MessageCircle size={20} className="group-hover:scale-110 transition-transform" />
         </button>
         <a
-          href={`/${displayUsername}`}
+          href={buildCreatorPath(displayUsername)}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors ml-auto group"

@@ -7,6 +7,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "../context/AuthContext";
 import { auth } from "@/src/lib/firebase";
+import { PaymentTrustNotice } from "@/src/components/marketing/PaymentTrustNotice";
 
 const PENDING_DELIVERY_KEY = "dropsomething.pendingDeliverySignup";
 
@@ -336,6 +337,8 @@ export default function Onboarding() {
               </div>
             )}
           </button>
+
+          <PaymentTrustNotice className="mt-6" compact />
         </motion.div>
       </div>
     </div>

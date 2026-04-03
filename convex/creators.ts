@@ -2,12 +2,50 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin } from "./auth";
 
+const RESERVED_CREATOR_USERNAMES = new Set([
+  "about",
+  "contact",
+  "creator",
+  "explore",
+  "how-it-works",
+  "creators",
+  "faq",
+  "dashboard",
+  "admin",
+  "login",
+  "signup",
+  "onboarding",
+  "settings",
+  "privacy",
+  "terms",
+  "refunds",
+]);
+
+function normalizeCreatorUsername(username: string) {
+  return username.trim().toLowerCase();
+}
+
+function validateCreatorUsername(username: string) {
+  const normalizedUsername = normalizeCreatorUsername(username);
+
+  if (!normalizedUsername) {
+    throw new Error("Username is required.");
+  }
+
+  if (RESERVED_CREATOR_USERNAMES.has(normalizedUsername)) {
+    throw new Error("That username is reserved. Please choose another one.");
+  }
+
+  return normalizedUsername;
+}
+
 export const getCreatorByUsername = query({
   args: { username: v.string() },
   handler: async (ctx, args) => {
+    const normalizedUsername = normalizeCreatorUsername(args.username);
     const creator = await ctx.db
       .query("creators")
-      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .withIndex("by_username", (q) => q.eq("username", normalizedUsername))
       .unique();
     if (!creator) return null;
 
@@ -121,10 +159,11 @@ export const createCreator = mutation({
     pageStyle: v.union(v.literal("support"), v.literal("shop"), v.literal("goal"), v.literal("hybrid")),
   },
   handler: async (ctx, args) => {
+    const username = validateCreatorUsername(args.username);
     // Check if username already exists
     const existing = await ctx.db
       .query("creators")
-      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .withIndex("by_username", (q) => q.eq("username", username))
       .unique();
     
     if (existing) {
@@ -133,6 +172,7 @@ export const createCreator = mutation({
 
     return await ctx.db.insert("creators", {
       ...args,
+      username,
       about: args.about ?? args.bio,
       totalRevenue: 0,
       supporterCount: 0,
@@ -199,6 +239,7 @@ export const updateCreator = mutation({
   },
   handler: async (ctx, args) => {
     const { creatorId, ...updates } = args;
+    const username = updates.username ? validateCreatorUsername(updates.username) : undefined;
 
     // Get current creator to check if username is actually changing
     const currentCreator = await ctx.db.get(creatorId);
@@ -207,10 +248,10 @@ export const updateCreator = mutation({
     }
 
     // Check username uniqueness ONLY if username is being changed
-    if (updates.username && updates.username !== currentCreator.username) {
+    if (username && username !== currentCreator.username) {
       const existing = await ctx.db
         .query("creators")
-        .withIndex("by_username", (q) => q.eq("username", updates.username!))
+        .withIndex("by_username", (q) => q.eq("username", username))
         .unique();
 
       if (existing) {
@@ -218,7 +259,10 @@ export const updateCreator = mutation({
       }
     }
 
-    return await ctx.db.patch(creatorId, updates);
+    return await ctx.db.patch(creatorId, {
+      ...updates,
+      ...(username ? { username } : {}),
+    });
   },
 });
 
@@ -480,7 +524,7 @@ export const ensureCreatorProfile = mutation({
         .query("creators")
         .withIndex("by_username", (q) => q.eq("username", username))
         .unique();
-      if (!taken) break;
+      if (!taken && !RESERVED_CREATOR_USERNAMES.has(username)) break;
       username = `${baseUsername}_${counter}`;
       counter++;
     }
@@ -508,6 +552,7 @@ export const assignCreatorToEmail = mutation({
   args: { username: v.string(), email: v.string() },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
+    const username = normalizeCreatorUsername(args.username);
 
     // Find the target user by email
     const targetUser = await ctx.db
@@ -522,7 +567,7 @@ export const assignCreatorToEmail = mutation({
     // Find the creator by username
     const creator = await ctx.db
       .query("creators")
-      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .withIndex("by_username", (q) => q.eq("username", username))
       .unique();
 
     if (!creator) {
