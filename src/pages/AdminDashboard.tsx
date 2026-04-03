@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, FileText, MessageCircle, ShoppingBag,
   Flag, Shield, Ban, Trash2, Check, X, AlertCircle,
-  Activity, Package, DollarSign, CreditCard, TrendingUp, Repeat, Truck
+  Activity, Package, DollarSign, CreditCard, TrendingUp, Repeat, Truck, Menu
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAdmin } from "@/src/context/AdminContext";
@@ -35,10 +35,42 @@ function useAdminQueryArgs() {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const syncSidebarWithViewport = () => {
+      setIsSidebarOpen(window.innerWidth >= 768);
+    };
+
+    syncSidebarWithViewport();
+    window.addEventListener("resize", syncSidebarWithViewport);
+    return () => window.removeEventListener("resize", syncSidebarWithViewport);
+  }, []);
+
+  const handleTabSelect = (tab: AdminTab) => {
+    setActiveTab(tab);
+
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            aria-label="Close admin menu overlay"
+          />
+        )}
+      </AnimatePresence>
+
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-200 bg-white transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
@@ -46,11 +78,21 @@ export default function AdminDashboard() {
         )}
       >
         <div className="flex h-full flex-col p-4">
-          <div className="flex items-center gap-2 px-4 py-6">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white">
-              <Shield size={18} />
+          <div className="flex items-center justify-between gap-2 px-4 py-6">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white">
+                <Shield size={18} />
+              </div>
+              <span className="text-lg font-bold text-black">Admin Panel</span>
             </div>
-            <span className="text-lg font-bold text-black">Admin Panel</span>
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(false)}
+              className="rounded-xl p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+              aria-label="Close admin menu"
+            >
+              <X size={20} />
+            </button>
           </div>
 
           <nav className="mt-4 flex flex-col gap-1">
@@ -65,7 +107,7 @@ export default function AdminDashboard() {
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id as AdminTab)}
+                onClick={() => handleTabSelect(item.id as AdminTab)}
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
                   activeTab === item.id
@@ -98,8 +140,9 @@ export default function AdminDashboard() {
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 className="rounded-xl p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+                aria-label={isSidebarOpen ? "Close admin menu" : "Open admin menu"}
               >
-                <LayoutDashboard size={24} />
+                {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
               <h1 className="text-xl font-bold capitalize text-black">{activeTab}</h1>
             </div>
