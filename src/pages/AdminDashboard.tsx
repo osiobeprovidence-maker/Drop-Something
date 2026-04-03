@@ -187,9 +187,10 @@ function OverviewTab() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[
           { label: "Total Users", value: stats.totalUsers, icon: Users, color: "text-blue-600" },
+          { label: "Pages Created", value: stats.totalPagesCreated, icon: Activity, color: "text-pink-600" },
+          { label: "Users Without Page", value: stats.usersWithoutPages, icon: AlertCircle, color: "text-orange-600" },
           { label: "Slate Posts", value: stats.totalSlates, icon: FileText, color: "text-purple-600" },
           { label: "Comments", value: stats.totalComments, icon: MessageCircle, color: "text-green-600" },
-          { label: "Creators", value: stats.totalCreators, icon: Activity, color: "text-pink-600" },
           { label: "Products", value: stats.totalProducts, icon: Package, color: "text-amber-600" },
           { label: "Pending Reports", value: stats.pendingReports, icon: Flag, color: "text-red-600" },
           { label: "Gross Revenue", value: formatCurrency(stats.grossRevenue), icon: DollarSign, color: "text-emerald-600" },

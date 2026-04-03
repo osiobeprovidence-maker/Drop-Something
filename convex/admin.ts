@@ -53,12 +53,16 @@ export const getOverviewStats = query({
 
     const pendingReports = reports.filter((report) => report.status === "pending").length;
     const grossRevenue = receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
+    const userIdsWithPages = new Set(creators.map((creator) => creator.userId));
+    const usersWithoutPages = users.filter((user) => !userIdsWithPages.has(user._id)).length;
 
     return {
       totalUsers: users.length,
       totalSlates: slates.length,
       totalComments: comments.length,
       totalCreators: creators.length,
+      totalPagesCreated: creators.length,
+      usersWithoutPages,
       totalProducts: products.length,
       pendingReports,
       grossRevenue,
