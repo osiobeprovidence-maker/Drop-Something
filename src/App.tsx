@@ -36,49 +36,39 @@ function AppContent() {
   const location = useLocation();
   const { user, hasProfile, isLoading } = useAuth();
   const path = location.pathname;
-  
-  // Reserved platform paths
-  // Extract segments
+
   const segments = path.split("/").filter(Boolean);
   const firstSegment = segments[0];
 
-  // If user is logged in but hasn't finished onboarding, redirect them to onboarding
-  // except if they are already on onboarding, login, signup, or settings pages
   const isAuthPage = ["login", "signup", "onboarding", "settings"].includes(firstSegment);
-  
+
   if (!isLoading && user && !hasProfile && !isAuthPage) {
     return <Navigate to="/onboarding" replace />;
   }
-  
-  // Page type detection
+
   const isDashboardPage = firstSegment === "dashboard";
   const isAdminPage = firstSegment === "admin";
   const isSettingsPage = firstSegment === "settings";
+  const isExplorePage = firstSegment === "explore";
 
-  // A creator page is a single segment path that is NOT a reserved platform path
   const isCreatorPage =
     (firstSegment === "creator" &&
       (segments.length === 2 || (segments.length === 4 && segments[2] === "series"))) ||
     (!isReservedCreatorPath(firstSegment) &&
       (segments.length === 1 || (segments.length === 3 && segments[1] === "series")));
 
-  // Determine which navbar to show
   let navbar = null;
   let mainClass = "flex-1";
 
-  if (isAdminPage || isAuthPage || isDashboardPage || isSettingsPage) {
-    // Admin, Auth, Dashboard, and Settings pages handle their own navigation or have no platform navbar
+  if (isAdminPage || isAuthPage || isDashboardPage || isSettingsPage || isExplorePage) {
     navbar = null;
   } else if (isCreatorPage) {
-    // Creator pages have no header as requested
     navbar = null;
   } else {
-    // All other platform pages (Landing, Explore, etc.)
     navbar = <PlatformNavbar />;
     mainClass = "flex-1 pt-16";
   }
 
-  // If we're loading, show a centered spinner but keep the layout
   if (isLoading) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-white">
@@ -98,7 +88,7 @@ function AppContent() {
   return (
     <div className="flex min-h-screen flex-col bg-white transition-colors duration-300">
       {navbar}
-      
+
       <main className={mainClass}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -125,8 +115,8 @@ function AppContent() {
           <Route path="/:username" element={<CreatorPage />} />
         </Routes>
       </main>
-      
-      {!isCreatorPage && !isAuthPage && !isDashboardPage && !isAdminPage && !isSettingsPage && <Footer />}
+
+      {!isCreatorPage && !isAuthPage && !isDashboardPage && !isAdminPage && !isSettingsPage && !isExplorePage && <Footer />}
     </div>
   );
 }
