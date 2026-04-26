@@ -108,7 +108,7 @@ export const PlatformNavbar = () => {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex md:items-center md:gap-6">
-          {navLinks.map((link) => (
+          {!isSignedIn && navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.href}
@@ -221,31 +221,33 @@ export const PlatformNavbar = () => {
                 </div>
 
                 <div className="flex-1 space-y-1">
-                  <div className="space-y-1">
-                    <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-black/30 mb-2">Navigation</p>
-                    {navLinks.map((link) => (
-                      <Link
-                        key={link.name}
-                        to={link.href}
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-base font-semibold text-black hover:bg-black/5"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <link.icon size={20} className="text-black/40" />
-                        {link.name}
-                      </Link>
-                    ))}
-                    {/* Admin Link - Only for super admin */}
-                    {showAdminButton && (
-                      <Link
-                        to="/admin"
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-base font-bold text-white bg-red-500 hover:bg-red-600"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <Shield size={20} className="text-white" />
-                        Admin Panel
-                      </Link>
-                    )}
-                  </div>
+                  {!isSignedIn && (
+                    <div className="space-y-1">
+                      <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-black/30 mb-2">Navigation</p>
+                      {navLinks.map((link) => (
+                        <Link
+                          key={link.name}
+                          to={link.href}
+                          className="flex items-center gap-3 rounded-xl px-3 py-3 text-base font-semibold text-black hover:bg-black/5"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          <link.icon size={20} className="text-black/40" />
+                          {link.name}
+                        </Link>
+                      ))}
+                      {/* Admin Link - Only for super admin */}
+                      {showAdminButton && (
+                        <Link
+                          to="/admin"
+                          className="flex items-center gap-3 rounded-xl px-3 py-3 text-base font-bold text-white bg-red-500 hover:bg-red-600"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          <Shield size={20} className="text-white" />
+                          Admin Panel
+                        </Link>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-auto pt-6 border-t border-black/5">

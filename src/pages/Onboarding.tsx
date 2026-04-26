@@ -111,7 +111,7 @@ export default function Onboarding() {
       if (localStorage.getItem(PENDING_DELIVERY_KEY)) {
         navigate("/settings?tab=delivery&source=checkout");
       } else {
-        navigate("/dashboard");
+        navigate("/explore");
       }
     } catch (err: unknown) {
       console.error("Onboarding error:", err);
